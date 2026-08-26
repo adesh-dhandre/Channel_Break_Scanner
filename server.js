@@ -1,5 +1,7 @@
+require("dotenv").config();
 
-const express = require("express");
+const express =
+    require("express");
 
 const scannerRoutes =
     require("./routes/scannerRoutes");
@@ -12,10 +14,6 @@ const testRoutes =
 
 const liveRoutes =
     require("./routes/liveRoutes");
-
-const {
-    startScanScheduler
-} = require("./services/scanScheduler");
 
 
 const app =
@@ -41,28 +39,28 @@ app.use(
 // ======================================================
 
 
-// NSE Scanner
+// NSE manual scanner
 app.use(
     "/api/scanner",
     scannerRoutes
 );
 
 
-// Crypto Scanner
+// Crypto manual scanner
 app.use(
     "/api/crypto",
     cryptoRoutes
 );
 
 
-// Single Symbol Testing
+// Single-symbol testing
 app.use(
     "/api/test",
     testRoutes
 );
 
 
-// Automatic live scheduler results
+// Live / cron routes
 app.use(
     "/api/live",
     liveRoutes
@@ -84,8 +82,8 @@ app.get(
             message:
                 "Channel Break Scanner API is running.",
 
-            scheduler:
-                "ACTIVE",
+            automation:
+                "EXTERNAL_CRON",
 
             endpoints: {
 
@@ -95,7 +93,10 @@ app.get(
                         "GET /api/live/status",
 
                     results:
-                        "GET /api/live/results"
+                        "GET /api/live/results",
+
+                    trigger:
+                        "POST /api/live/trigger"
 
                 },
 
@@ -138,6 +139,16 @@ app.get(
 
 // ======================================================
 // START SERVER
+//
+// IMPORTANT:
+//
+// No internal setInterval scheduler here.
+//
+// cron-job.org will call:
+//
+// POST /api/live/trigger
+//
+// every 5 minutes.
 // ======================================================
 
 app.listen(
@@ -148,19 +159,9 @@ app.listen(
             `Server running on http://localhost:${PORT}`
         );
 
-
-        // ==============================================
-        // AUTOMATIC LIVE SCANNER
-        //
-        // Crypto:
-        // Every 5 minutes, 24/7
-        //
-        // NSE:
-        // Every 5 minutes during
-        // 09:15 - 15:30 IST
-        // ==============================================
-
-        startScanScheduler();
+        console.log(
+            "Automation mode: external cron trigger"
+        );
 
     }
 );
