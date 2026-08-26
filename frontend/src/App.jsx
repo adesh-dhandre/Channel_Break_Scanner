@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
+
 import "./App.css";
-import ChartModal from "./components/ChartModal";
+
 
 const TIMEFRAMES = [
   "ALL",
@@ -11,34 +16,431 @@ const TIMEFRAMES = [
   "2h"
 ];
 
+
+// ======================================================
+// POPULAR CRYPTO DISPLAY DATA
+// ======================================================
+
+const COIN_INFO = {
+
+  BTC: {
+    name: "Bitcoin",
+    badge: "₿"
+  },
+
+  ETH: {
+    name: "Ethereum",
+    badge: "Ξ"
+  },
+
+  SOL: {
+    name: "Solana",
+    badge: "S"
+  },
+
+  BNB: {
+    name: "BNB",
+    badge: "B"
+  },
+
+  XRP: {
+    name: "XRP",
+    badge: "X"
+  },
+
+  DOGE: {
+    name: "Dogecoin",
+    badge: "Ð"
+  },
+
+  ADA: {
+    name: "Cardano",
+    badge: "A"
+  },
+
+  AVAX: {
+    name: "Avalanche",
+    badge: "A"
+  },
+
+  LINK: {
+    name: "Chainlink",
+    badge: "L"
+  },
+
+  DOT: {
+    name: "Polkadot",
+    badge: "D"
+  },
+
+  LTC: {
+    name: "Litecoin",
+    badge: "Ł"
+  },
+
+  BCH: {
+    name: "Bitcoin Cash",
+    badge: "B"
+  },
+
+  TRX: {
+    name: "TRON",
+    badge: "T"
+  },
+
+  TON: {
+    name: "Toncoin",
+    badge: "T"
+  },
+
+  STX: {
+    name: "Stacks",
+    badge: "S"
+  }
+
+};
+
+
+// ======================================================
+// HELPERS
+// ======================================================
+
+function cleanCryptoSymbol(setup) {
+
+  if (setup?.symbol) {
+
+    return String(
+      setup.symbol
+    )
+      .replace(/\.NS$/i, "")
+      .toUpperCase();
+
+  }
+
+
+  const pair =
+    String(
+      setup?.tradingPair || ""
+    ).toUpperCase();
+
+
+  if (
+    pair.endsWith("USDT")
+  ) {
+
+    return pair.slice(
+      0,
+      -4
+    );
+  }
+
+
+  return pair || "UNKNOWN";
+}
+
+
+function displaySymbol(setup) {
+
+  if (!setup) {
+    return "-";
+  }
+
+
+  if (
+    setup.tradingPair
+  ) {
+
+    return setup.tradingPair;
+  }
+
+
+  return String(
+    setup.symbol || "-"
+  ).replace(
+    /\.NS$/i,
+    ""
+  );
+}
+
+
+function getCoinInfo(setup) {
+
+  const symbol =
+    cleanCryptoSymbol(
+      setup
+    );
+
+
+  const known =
+    COIN_INFO[
+      symbol
+    ];
+
+
+  if (known) {
+
+    return {
+      symbol,
+      name:
+        known.name,
+      badge:
+        known.badge
+    };
+  }
+
+
+  return {
+
+    symbol,
+
+    name:
+      setup?.name &&
+      setup.name !== symbol
+        ? setup.name
+        : `${symbol} Futures`,
+
+    badge:
+      symbol
+        .charAt(0)
+        .toUpperCase() ||
+      "◆"
+
+  };
+}
+
+
+function displayStructure(setup) {
+
+  if (
+    setup?.uptrendScenario
+  ) {
+
+    return setup
+      .uptrendScenario;
+  }
+
+
+  return "Ascending Channel";
+}
+
+
+function formatDate(value) {
+
+  if (!value) {
+    return "-";
+  }
+
+
+  const date =
+    new Date(
+      value
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return "-";
+  }
+
+
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    {
+      timeZone:
+        "Asia/Kolkata",
+
+      day:
+        "2-digit",
+
+      month:
+        "short",
+
+      hour:
+        "2-digit",
+
+      minute:
+        "2-digit",
+
+      hour12:
+        true
+    }
+  ).format(
+    date
+  );
+}
+
+
+function getSetupFreshness(
+  setup
+) {
+
+  const age =
+    Number(
+      setup?.candlesSinceFlashSell
+    );
+
+
+  if (
+    Number.isFinite(age) &&
+    age <= 1
+  ) {
+
+    return {
+      label: "Very Fresh",
+      className: "fresh"
+    };
+  }
+
+
+  if (
+    Number.isFinite(age) &&
+    age <= 3
+  ) {
+
+    return {
+      label: "Fresh Setup",
+      className: "fresh"
+    };
+  }
+
+
+  return {
+    label: "Active Setup",
+    className: "active"
+  };
+}
+
+
+// ======================================================
+// APP
+// ======================================================
+
 function App() {
 
-  const [market, setMarket] = useState("NSE");
+  const [
+    market,
+    setMarket
+  ] =
+    useState(
+      "NSE"
+    );
 
-  const [nseState, setNseState] = useState(null);
 
-  const [cryptoStatus, setCryptoStatus] = useState(null);
-  const [cryptoResults, setCryptoResults] = useState([]);
+  const [
+    nseState,
+    setNseState
+  ] =
+    useState(
+      null
+    );
 
-  const [selectedTimeframe, setSelectedTimeframe] =
-    useState("ALL");
 
-  const [search, setSearch] = useState("");
+  const [
+    cryptoStatus,
+    setCryptoStatus
+  ] =
+    useState(
+      null
+    );
 
-  const [loading, setLoading] = useState(true);
 
-  const [runningNse, setRunningNse] = useState(false);
-  const [runningCrypto, setRunningCrypto] = useState(false);
+  const [
+    cryptoResults,
+    setCryptoResults
+  ] =
+    useState(
+      []
+    );
 
-  const [error, setError] = useState("");
 
-  const [chartSetup, setChartSetup] = useState(null);
-  const [chartCandles, setChartCandles] = useState([]);
-  const [chartLoading, setChartLoading] = useState(false);
+  const [
+    liveStatus,
+    setLiveStatus
+  ] =
+    useState(
+      null
+    );
+
+
+  const [
+    liveResults,
+    setLiveResults
+  ] =
+    useState({
+
+      nse: {
+        count: 0,
+        results: []
+      },
+
+      crypto: {
+        count: 0,
+        results: []
+      }
+
+    });
+
+
+  const [
+    selectedTimeframe,
+    setSelectedTimeframe
+  ] =
+    useState(
+      "ALL"
+    );
+
+
+  const [
+    search,
+    setSearch
+  ] =
+    useState(
+      ""
+    );
+
+
+  const [
+    loading,
+    setLoading
+  ] =
+    useState(
+      true
+    );
+
+
+  const [
+    runningNse,
+    setRunningNse
+  ] =
+    useState(
+      false
+    );
+
+
+  const [
+    runningCrypto,
+    setRunningCrypto
+  ] =
+    useState(
+      false
+    );
+
+
+  const [
+    error,
+    setError
+  ] =
+    useState(
+      ""
+    );
 
 
   // ====================================================
-  // FETCH NSE STATUS
+  // API LOADERS
   // ====================================================
 
   async function fetchNseStatus() {
@@ -46,15 +448,13 @@ function App() {
     try {
 
       const response =
-        await fetch("/api/scanner/status");
+        await fetch(
+          "/api/scanner/status"
+        );
 
 
       if (!response.ok) {
-
-        throw new Error(
-          "Unable to load NSE scanner status."
-        );
-
+        return;
       }
 
 
@@ -63,37 +463,33 @@ function App() {
 
 
       setNseState(
-        result.data
+        result.data ||
+        result
       );
 
 
     } catch (err) {
 
-      console.error(err);
+      console.error(
+        err
+      );
 
     }
-
   }
 
-
-  // ====================================================
-  // FETCH CRYPTO STATUS
-  // ====================================================
 
   async function fetchCryptoStatus() {
 
     try {
 
       const response =
-        await fetch("/api/crypto/status");
+        await fetch(
+          "/api/crypto/status"
+        );
 
 
       if (!response.ok) {
-
-        throw new Error(
-          "Unable to load crypto scanner status."
-        );
-
+        return;
       }
 
 
@@ -108,31 +504,26 @@ function App() {
 
     } catch (err) {
 
-      console.error(err);
+      console.error(
+        err
+      );
 
     }
-
   }
 
-
-  // ====================================================
-  // FETCH CRYPTO RESULTS
-  // ====================================================
 
   async function fetchCryptoResults() {
 
     try {
 
       const response =
-        await fetch("/api/crypto/results");
+        await fetch(
+          "/api/crypto/results"
+        );
 
 
       if (!response.ok) {
-
-        throw new Error(
-          "Unable to load crypto results."
-        );
-
+        return;
       }
 
 
@@ -141,21 +532,103 @@ function App() {
 
 
       setCryptoResults(
-        result.results || []
+        result.results ||
+        []
       );
 
 
     } catch (err) {
 
-      console.error(err);
+      console.error(
+        err
+      );
 
     }
+  }
 
+
+  async function fetchLiveStatus() {
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/live/status"
+        );
+
+
+      if (!response.ok) {
+        return;
+      }
+
+
+      const result =
+        await response.json();
+
+
+      setLiveStatus(
+        result
+      );
+
+
+    } catch (err) {
+
+      console.error(
+        err
+      );
+
+    }
+  }
+
+
+  async function fetchLiveResults() {
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/live/results"
+        );
+
+
+      if (!response.ok) {
+        return;
+      }
+
+
+      const result =
+        await response.json();
+
+
+      setLiveResults({
+
+        nse:
+          result.nse || {
+            count: 0,
+            results: []
+          },
+
+        crypto:
+          result.crypto || {
+            count: 0,
+            results: []
+          }
+
+      });
+
+
+    } catch (err) {
+
+      console.error(
+        err
+      );
+
+    }
   }
 
 
   // ====================================================
-  // INITIAL DATA
+  // REFRESH
   // ====================================================
 
   async function refreshAll() {
@@ -163,47 +636,67 @@ function App() {
     try {
 
       await Promise.all([
+
         fetchNseStatus(),
+
         fetchCryptoStatus(),
-        fetchCryptoResults()
+
+        fetchCryptoResults(),
+
+        fetchLiveStatus(),
+
+        fetchLiveResults()
+
       ]);
+
 
       setError("");
 
+
     } catch (err) {
 
-      console.error(err);
+      console.error(
+        err
+      );
+
 
       setError(
         "Unable to connect to scanner backend."
       );
 
+
     } finally {
 
-      setLoading(false);
+      setLoading(
+        false
+      );
 
     }
-
   }
 
 
   // ====================================================
-  // RUN NSE SCANNER
+  // MANUAL NSE SCAN
   // ====================================================
 
   async function runNseScanner() {
 
     if (
       runningNse ||
-      nseState?.scanning
+      nseState?.scanning ||
+      liveStatus?.nseRunning
     ) {
+
       return;
     }
 
 
     try {
 
-      setRunningNse(true);
+      setRunningNse(
+        true
+      );
+
       setError("");
 
 
@@ -211,7 +704,8 @@ function App() {
         await fetch(
           "/api/scanner/run",
           {
-            method: "POST"
+            method:
+              "POST"
           }
         );
 
@@ -226,47 +720,56 @@ function App() {
           result.message ||
           "Unable to start NSE scanner."
         );
-
       }
 
 
-      await fetchNseStatus();
+      await refreshAll();
 
 
     } catch (err) {
 
-      console.error(err);
+      console.error(
+        err
+      );
+
 
       setError(
         err.message
       );
 
+
     } finally {
 
-      setRunningNse(false);
+      setRunningNse(
+        false
+      );
 
     }
-
   }
 
 
   // ====================================================
-  // RUN CRYPTO SCANNER
+  // MANUAL CRYPTO SCAN
   // ====================================================
 
   async function runCryptoScanner() {
 
     if (
       runningCrypto ||
-      cryptoStatus?.running
+      cryptoStatus?.running ||
+      liveStatus?.cryptoRunning
     ) {
+
       return;
     }
 
 
     try {
 
-      setRunningCrypto(true);
+      setRunningCrypto(
+        true
+      );
+
       setError("");
 
 
@@ -274,7 +777,8 @@ function App() {
         await fetch(
           "/api/crypto/scan",
           {
-            method: "POST"
+            method:
+              "POST"
           }
         );
 
@@ -289,104 +793,31 @@ function App() {
           result.message ||
           "Unable to start crypto scanner."
         );
-
       }
 
 
-      await fetchCryptoStatus();
+      await refreshAll();
 
 
     } catch (err) {
 
-      console.error(err);
+      console.error(
+        err
+      );
+
 
       setError(
         err.message
       );
 
-    } finally {
-
-      setRunningCrypto(false);
-
-    }
-
-  }
-
-
-  // ====================================================
-  // OPEN NSE CHART
-  // ====================================================
-
-  async function openChart(setup) {
-
-    if (market !== "NSE") {
-      return;
-    }
-
-
-    try {
-
-      setChartSetup(setup);
-      setChartCandles([]);
-      setChartLoading(true);
-      setError("");
-
-
-      const response =
-        await fetch(
-          `/api/scanner/chart/${encodeURIComponent(
-            setup.symbol
-          )}?timeframe=${setup.timeframe}`
-        );
-
-
-      const result =
-        await response.json();
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          result.message ||
-          "Unable to load chart."
-        );
-
-      }
-
-
-      setChartCandles(
-        result.data.candles || []
-      );
-
-
-    } catch (err) {
-
-      console.error(err);
-
-      setError(
-        err.message
-      );
-
-      setChartSetup(null);
 
     } finally {
 
-      setChartLoading(false);
+      setRunningCrypto(
+        false
+      );
 
     }
-
-  }
-
-
-  // ====================================================
-  // CLOSE CHART
-  // ====================================================
-
-  function closeChart() {
-
-    setChartSetup(null);
-    setChartCandles([]);
-
   }
 
 
@@ -394,94 +825,132 @@ function App() {
   // POLLING
   // ====================================================
 
-  useEffect(() => {
+  useEffect(
+    () => {
 
-    refreshAll();
-
-
-    const interval =
-      setInterval(
-        async () => {
-
-          await Promise.all([
-            fetchNseStatus(),
-            fetchCryptoStatus(),
-            fetchCryptoResults()
-          ]);
-
-        },
-        5000
-      );
+      refreshAll();
 
 
-    return () =>
-      clearInterval(interval);
+      const timer =
+        setInterval(
+          refreshAll,
+          5000
+        );
 
-  }, []);
 
+      return () =>
+        clearInterval(
+          timer
+        );
 
-  useEffect(() => {
-
-    setSelectedTimeframe("ALL");
-    setSearch("");
-
-  }, [market]);
+    },
+    []
+  );
 
 
   // ====================================================
-  // MARKET STATE
+  // CURRENT MARKET
   // ====================================================
 
   const isNse =
-    market === "NSE";
-
-
-  const activeSetups =
-    isNse
-      ? nseState?.activeSetups || []
-      : cryptoResults;
+    market ===
+    "NSE";
 
 
   const isScanning =
     isNse
       ? (
           runningNse ||
-          nseState?.scanning
+          nseState
+            ?.scanning ||
+          liveStatus
+            ?.nseRunning
         )
       : (
           runningCrypto ||
-          cryptoStatus?.running
+          cryptoStatus
+            ?.running ||
+          liveStatus
+            ?.cryptoRunning
         );
 
 
   // ====================================================
-  // FILTER RESULTS
+  // ACTIVE SETUPS
+  // ====================================================
+
+  const activeSetups =
+    useMemo(
+      () => {
+
+        if (isNse) {
+
+          const live =
+            liveResults
+              ?.nse
+              ?.results;
+
+
+          if (
+            Array.isArray(
+              live
+            ) &&
+            live.length > 0
+          ) {
+
+            return live;
+          }
+
+
+          return (
+            nseState
+              ?.activeSetups ||
+            nseState
+              ?.results ||
+            []
+          );
+        }
+
+
+        const live =
+          liveResults
+            ?.crypto
+            ?.results;
+
+
+        if (
+          Array.isArray(
+            live
+          ) &&
+          live.length > 0
+        ) {
+
+          return live;
+        }
+
+
+        return (
+          cryptoResults ||
+          []
+        );
+
+      },
+      [
+        isNse,
+        nseState,
+        cryptoResults,
+        liveResults
+      ]
+    );
+
+
+  // ====================================================
+  // FILTERED SETUPS
   // ====================================================
 
   const filteredSetups =
-    useMemo(() => {
-
-      let rows =
-        [...activeSetups];
-
-
-      if (
-        selectedTimeframe !== "ALL"
-      ) {
-
-        rows =
-          rows.filter(
-            setup =>
-              setup.timeframe ===
-              selectedTimeframe
-          );
-
-      }
-
-
-      if (
-        search.trim()
-      ) {
+    useMemo(
+      () => {
 
         const query =
           search
@@ -489,179 +958,162 @@ function App() {
             .toLowerCase();
 
 
-        rows =
-          rows.filter(
-            setup => {
+        return activeSetups.filter(
+          setup => {
 
-              const symbol =
-                (
-                  setup.tradingPair ||
-                  setup.symbol ||
-                  ""
-                )
-                  .toLowerCase();
+            const timeframeMatch =
+              selectedTimeframe ===
+                "ALL" ||
+              setup.timeframe ===
+                selectedTimeframe;
 
 
-              const name =
-                (
-                  setup.name ||
-                  ""
-                )
-                  .toLowerCase();
-
-
-              return (
-                symbol.includes(query) ||
-                name.includes(query)
+            const coin =
+              getCoinInfo(
+                setup
               );
 
-            }
-          );
 
-      }
-
-
-      return rows;
-
-    }, [
-      activeSetups,
-      selectedTimeframe,
-      search
-    ]);
-
-
-  // ====================================================
-  // HELPERS
-  // ====================================================
-
-  function formatDate(date) {
-
-    if (!date) {
-
-      return "Not scanned yet";
-
-    }
+            const searchable =
+              [
+                setup.symbol,
+                setup.tradingPair,
+                setup.name,
+                coin.symbol,
+                coin.name
+              ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
 
 
-    return new Date(date)
-      .toLocaleString(
-        "en-IN",
-        {
-          timeZone:
-            "Asia/Kolkata",
-
-          dateStyle:
-            "medium",
-
-          timeStyle:
-            "short"
-        }
-      );
-
-  }
+            const searchMatch =
+              !query ||
+              searchable.includes(
+                query
+              );
 
 
-  function displaySymbol(setup) {
+            return (
+              timeframeMatch &&
+              searchMatch
+            );
 
-    if (isNse) {
+          }
+        );
 
-      return (
-        setup.symbol
-          ?.replace(
-            ".NS",
-            ""
-          ) ||
-        "-"
-      );
-
-    }
-
-
-    return (
-      setup.tradingPair ||
-      setup.symbol ||
-      "-"
+      },
+      [
+        activeSetups,
+        search,
+        selectedTimeframe
+      ]
     );
 
-  }
-
-
-  function displayStructure(setup) {
-
-    if (
-      !setup.uptrendScenario
-    ) {
-
-      return "-";
-
-    }
-
-
-    if (
-      setup.uptrendScenario ===
-      "HH1_HL1_HH2"
-    ) {
-
-      return "HH1 → HL1 → HH2";
-
-    }
-
-
-    if (
-      setup.uptrendScenario ===
-      "HH1_HL1_HH2_HL2_NEW_HH"
-    ) {
-
-      return "HH1 → HL1 → HH2 → HL2 → HH";
-
-    }
-
-
-    return setup.uptrendScenario
-      .replaceAll(
-        "_",
-        " → "
-      );
-
-  }
-
 
   // ====================================================
-  // STATS
+  // KPI DATA
   // ====================================================
+
+  const nseLiveStats =
+    liveStatus
+      ?.lastNseResult ||
+    {};
+
+
+  const cryptoLiveStats =
+    liveStatus
+      ?.lastCryptoResult ||
+    {};
+
 
   const totalScanned =
     isNse
-      ? nseState?.totalStocksScanned || 0
-      : cryptoStatus?.stats?.scannedCoins || 0;
+      ? (
+          nseLiveStats
+            .scannedStocks ??
+          nseState
+            ?.scannedStocks ??
+          nseState
+            ?.stats
+            ?.scannedStocks ??
+          0
+        )
+      : (
+          cryptoLiveStats
+            .scannedCoins ??
+          cryptoStatus
+            ?.stats
+            ?.scannedCoins ??
+          0
+        );
 
 
   const successful =
     isNse
-      ? nseState?.successfulStocks || 0
-      : cryptoStatus?.stats?.successfulCoins || 0;
+      ? (
+          nseLiveStats
+            .successfulStocks ??
+          nseState
+            ?.successfulStocks ??
+          nseState
+            ?.stats
+            ?.successfulStocks ??
+          0
+        )
+      : (
+          cryptoLiveStats
+            .successfulCoins ??
+          cryptoStatus
+            ?.stats
+            ?.successfulCoins ??
+          0
+        );
 
 
   const failed =
     isNse
-      ? nseState?.failedStocks || 0
-      : cryptoStatus?.stats?.failedCoins || 0;
-
-
-  const activeCount =
-    activeSetups.length;
+      ? (
+          nseLiveStats
+            .failedStocks ??
+          nseState
+            ?.failedStocks ??
+          nseState
+            ?.stats
+            ?.failedStocks ??
+          0
+        )
+      : (
+          cryptoLiveStats
+            .failedCoins ??
+          cryptoStatus
+            ?.stats
+            ?.failedCoins ??
+          0
+        );
 
 
   const scanDuration =
     isNse
-      ? nseState?.scanDurationSeconds || 0
-      : cryptoStatus?.stats?.scanDurationSeconds || 0;
+      ? (
+          nseLiveStats
+            .scanDurationSeconds ??
+          nseState
+            ?.scanDurationSeconds ??
+          0
+        )
+      : (
+          cryptoLiveStats
+            .scanDurationSeconds ??
+          cryptoStatus
+            ?.stats
+            ?.scanDurationSeconds ??
+          0
+        );
 
 
-  const lastCompleted =
-    isNse
-      ? nseState?.lastScanCompletedAt
-      : cryptoStatus?.completedAt;
+  const activeCount =
+    activeSetups.length;
 
 
   const successRate =
@@ -676,28 +1128,25 @@ function App() {
       : "0.0";
 
 
+  const lastCompleted =
+    isNse
+      ? (
+          liveStatus
+            ?.lastNseCompletedAt ||
+          nseState
+            ?.completedAt
+        )
+      : (
+          liveStatus
+            ?.lastCryptoCompletedAt ||
+          cryptoStatus
+            ?.completedAt
+        );
+
+
   // ====================================================
-  // LOADING
+  // RENDER
   // ====================================================
-
-  if (loading) {
-
-    return (
-
-      <div className="pageLoader">
-
-        <div className="loaderRing" />
-
-        <p>
-          Loading Channel Break Scanner...
-        </p>
-
-      </div>
-
-    );
-
-  }
-
 
   return (
 
@@ -710,66 +1159,46 @@ function App() {
 
       <aside className="sidebar">
 
+        <div>
 
-        <div className="brand">
+          <div className="brand">
 
-          <div className="brandIcon">
-            ↗
+            <div className="brandIcon">
+              ↗
+            </div>
+
+            <div>
+
+              <strong>
+                CHANNEL BREAK
+              </strong>
+
+              <span>
+                SCANNER
+              </span>
+
+            </div>
+
           </div>
 
-          <div>
 
-            <strong>
-              CHANNEL BREAK
-            </strong>
+          <nav className="sideNav">
 
-            <span>
-              SCANNER
-            </span>
+            <button className="sideNavItem active">
+              ◫ Dashboard
+            </button>
 
-          </div>
+            <button className="sideNavItem selected">
+              ◉ Live Scanner
+            </button>
+
+            <button className="sideNavItem">
+              ◷ Signal Monitor
+            </button>
+
+          </nav>
 
         </div>
-
-
-        <nav className="sideNav">
-
-          <button className="sideNavItem active">
-            <span>▦</span>
-            Dashboard
-          </button>
-
-
-          <button
-            className={
-              isNse
-                ? "sideNavItem selected"
-                : "sideNavItem"
-            }
-            onClick={() =>
-              setMarket("NSE")
-            }
-          >
-            <span>▥</span>
-            NSE F&O
-          </button>
-
-
-          <button
-            className={
-              !isNse
-                ? "sideNavItem selected"
-                : "sideNavItem"
-            }
-            onClick={() =>
-              setMarket("CRYPTO")
-            }
-          >
-            <span>₿</span>
-            Crypto Futures
-          </button>
-
-        </nav>
 
 
         <div className="sidebarBottom">
@@ -781,8 +1210,11 @@ function App() {
             </span>
 
             <strong>
+
               <span className="greenDot" />
+
               All Systems Operational
+
             </strong>
 
           </div>
@@ -803,10 +1235,6 @@ function App() {
 
       <main className="mainContent">
 
-
-        {/* ================================================= */}
-        {/* HEADER */}
-        {/* ================================================= */}
 
         <header className="mainHeader">
 
@@ -853,10 +1281,6 @@ function App() {
         </header>
 
 
-        {/* ================================================= */}
-        {/* ERROR */}
-        {/* ================================================= */}
-
         {
           error && (
 
@@ -881,11 +1305,10 @@ function App() {
 
 
         {/* ================================================= */}
-        {/* MARKET SELECTOR + SCAN CONTROL */}
+        {/* MARKET CONTROL */}
         {/* ================================================= */}
 
         <section className="marketControlRow">
-
 
           <div className="marketSwitch">
 
@@ -897,7 +1320,9 @@ function App() {
                   : "marketChoice"
               }
               onClick={() =>
-                setMarket("NSE")
+                setMarket(
+                  "NSE"
+                )
               }
             >
 
@@ -912,7 +1337,12 @@ function App() {
                 </strong>
 
                 <span>
-                  208 Stocks
+                  {
+                    isNse &&
+                    totalScanned > 0
+                      ? `${totalScanned} Stocks`
+                      : "F&O Stocks"
+                  }
                 </span>
 
               </div>
@@ -927,7 +1357,9 @@ function App() {
                   : "marketChoice"
               }
               onClick={() =>
-                setMarket("CRYPTO")
+                setMarket(
+                  "CRYPTO"
+                )
               }
             >
 
@@ -942,7 +1374,12 @@ function App() {
                 </strong>
 
                 <span>
-                  109 Coins
+                  {
+                    !isNse &&
+                    totalScanned > 0
+                      ? `${totalScanned} Contracts`
+                      : "USDT Perpetuals"
+                  }
                 </span>
 
               </div>
@@ -1004,7 +1441,8 @@ function App() {
               }
 
               disabled={
-                isScanning
+                isScanning ||
+                loading
               }
             >
 
@@ -1028,7 +1466,7 @@ function App() {
 
 
         {/* ================================================= */}
-        {/* KPI CARDS */}
+        {/* KPI */}
         {/* ================================================= */}
 
         <section className="kpiGrid">
@@ -1046,7 +1484,7 @@ function App() {
                 {
                   isNse
                     ? "F&O Stocks Scanned"
-                    : "Crypto Coins Scanned"
+                    : "Futures Contracts"
                 }
               </span>
 
@@ -1130,6 +1568,7 @@ function App() {
               </strong>
 
               <small className="negativeText">
+
                 {
                   totalScanned > 0
                     ? (
@@ -1141,6 +1580,7 @@ function App() {
                       ).toFixed(1)
                     : "0.0"
                 }% failure rate
+
               </small>
 
             </div>
@@ -1161,11 +1601,13 @@ function App() {
               </span>
 
               <strong>
+
                 {
                   scanDuration > 0
                     ? `${scanDuration}s`
                     : "-"
                 }
+
               </strong>
 
               <small>
@@ -1180,11 +1622,10 @@ function App() {
 
 
         {/* ================================================= */}
-        {/* FILTER BAR */}
+        {/* FILTER */}
         {/* ================================================= */}
 
         <section className="filterBar">
-
 
           <div className="timeframeFilters">
 
@@ -1193,7 +1634,6 @@ function App() {
                 timeframe => (
 
                   <button
-
                     key={timeframe}
 
                     className={
@@ -1208,11 +1648,11 @@ function App() {
                         timeframe
                       )
                     }
-
                   >
 
                     {
-                      timeframe === "ALL"
+                      timeframe ===
+                      "ALL"
                         ? "All"
                         : timeframe
                             .toUpperCase()
@@ -1235,16 +1675,23 @@ function App() {
 
             <input
               type="text"
+
               placeholder={
                 isNse
                   ? "Search stock..."
-                  : "Search crypto..."
+                  : "Search symbol or pair..."
               }
-              value={search}
+
+              value={
+                search
+              }
+
               onChange={
                 event =>
                   setSearch(
-                    event.target.value
+                    event
+                      .target
+                      .value
                   )
               }
             />
@@ -1255,11 +1702,10 @@ function App() {
 
 
         {/* ================================================= */}
-        {/* RESULTS PANEL */}
+        {/* RESULTS */}
         {/* ================================================= */}
 
         <section className="resultsPanel">
-
 
           <div className="resultsHeader">
 
@@ -1270,11 +1716,13 @@ function App() {
               </h2>
 
               <p>
+
                 {
                   isNse
                     ? "NSE F&O"
                     : "Binance USDT Perpetual Futures"
                 }
+
               </p>
 
             </div>
@@ -1292,10 +1740,6 @@ function App() {
 
           </div>
 
-
-          {/* ================================================= */}
-          {/* EMPTY */}
-          {/* ================================================= */}
 
           {
             filteredSetups.length === 0 && (
@@ -1315,7 +1759,7 @@ function App() {
                   {
                     isScanning
                       ? "Scanner is currently processing market data."
-                      : "Run the scanner or adjust the timeframe filter."
+                      : "Waiting for a fresh channel-break setup."
                   }
 
                 </p>
@@ -1345,9 +1789,17 @@ function App() {
                         {
                           isNse
                             ? "SYMBOL"
-                            : "PAIR"
+                            : "COIN"
                         }
                       </th>
+
+                      {
+                        !isNse && (
+                          <th>
+                            PAIR
+                          </th>
+                        )
+                      }
 
                       <th>
                         TIMEFRAME
@@ -1366,20 +1818,16 @@ function App() {
                       </th>
 
                       <th>
-                        BASE CANDLES
+                        BASE
                       </th>
 
                       <th>
-                        SETUP AGE
+                        AGE
                       </th>
 
-                      {
-                        isNse && (
-                          <th>
-                            CHART
-                          </th>
-                        )
-                      }
+                      <th>
+                        QUICK INFO
+                      </th>
 
                     </tr>
 
@@ -1393,94 +1841,399 @@ function App() {
                         (
                           setup,
                           index
-                        ) => (
+                        ) => {
 
-                          <tr
-                            key={
-                              `${displaySymbol(setup)}-${setup.timeframe}-${index}`
-                            }
-                          >
+                          const coin =
+                            getCoinInfo(
+                              setup
+                            );
 
-                            <td>
 
-                              <div className="symbolBlock">
+                          const freshness =
+                            getSetupFreshness(
+                              setup
+                            );
 
-                                <strong>
 
-                                  {
-                                    displaySymbol(
-                                      setup
-                                    )
+                          return (
+
+                            <tr
+                              key={
+                                `${displaySymbol(setup)}-${setup.timeframe}-${index}`
+                              }
+                            >
+
+                              <td>
+
+                                {
+                                  isNse ? (
+
+                                    <div className="symbolBlock">
+
+                                      <strong>
+                                        {
+                                          String(
+                                            setup.symbol ||
+                                            "-"
+                                          ).replace(
+                                            /\.NS$/i,
+                                            ""
+                                          )
+                                        }
+                                      </strong>
+
+                                      <span>
+                                        NSE F&O
+                                      </span>
+
+                                    </div>
+
+                                  ) : (
+
+                                    <div className="coinIdentity">
+
+                                      <div className="coinBadge">
+                                        {
+                                          coin.badge
+                                        }
+                                      </div>
+
+                                      <div className="symbolBlock">
+
+                                        <strong>
+                                          {
+                                            coin.name
+                                          }
+                                        </strong>
+
+                                        <span>
+                                          {
+                                            coin.symbol
+                                          }
+                                        </span>
+
+                                      </div>
+
+                                    </div>
+
+                                  )
+                                }
+
+                              </td>
+
+
+                              {
+                                !isNse && (
+
+                                  <td>
+
+                                    <div className="pairBlock">
+
+                                      <strong>
+                                        {
+                                          setup.tradingPair ||
+                                          `${coin.symbol}USDT`
+                                        }
+                                      </strong>
+
+                                      <span>
+                                        Perpetual
+                                      </span>
+
+                                    </div>
+
+                                  </td>
+
+                                )
+                              }
+
+
+                              <td>
+
+                                <span
+                                  className={
+                                    `tfBadge tf-${setup.timeframe}`
                                   }
-
-                                </strong>
-
-                                <span>
+                                >
 
                                   {
-                                    isNse
-                                      ? "NSE F&O"
-                                      : setup.name ||
-                                        "Crypto Futures"
+                                    setup
+                                      .timeframe
+                                      ?.toUpperCase()
                                   }
 
                                 </span>
 
+                              </td>
+
+
+                              <td>
+
+                                <span className="prePhaseBadge">
+                                  {
+                                    setup.status
+                                  }
+                                </span>
+
+                              </td>
+
+
+                              <td>
+
+                                <span className="structureText">
+
+                                  {
+                                    displayStructure(
+                                      setup
+                                    )
+                                  }
+
+                                </span>
+
+                              </td>
+
+
+                              <td>
+
+                                <span className="flashValue">
+
+                                  {
+                                    setup
+                                      .flashSellDropPercent ??
+                                    "-"
+                                  }
+
+                                  {
+                                    setup
+                                      .flashSellDropPercent !=
+                                    null
+                                      ? "%"
+                                      : ""
+                                  }
+
+                                </span>
+
+                              </td>
+
+
+                              <td>
+
+                                <span className="baseValue">
+
+                                  {
+                                    setup.baseCandles ??
+                                    setup.baseCandlesFound ??
+                                    "-"
+                                  }
+
+                                </span>
+
+                              </td>
+
+
+                              <td>
+
+                                <span className="ageValue">
+
+                                  {
+                                    setup
+                                      .candlesSinceFlashSell ??
+                                    "-"
+                                  }
+
+                                  {
+                                    setup
+                                      .candlesSinceFlashSell !=
+                                    null
+                                      ? " candles"
+                                      : ""
+                                  }
+
+                                </span>
+
+                              </td>
+
+
+                              <td>
+
+                                <div className="quickInfo">
+
+                                  <span
+                                    className={
+                                      `quickInfoStatus ${freshness.className}`
+                                    }
+                                  >
+                                    ⚡ {
+                                      freshness.label
+                                    }
+                                  </span>
+
+                                  <small>
+
+                                    {
+                                      setup.baseCandles > 0 ||
+                                      setup.baseCandlesFound > 0
+                                        ? "Base confirmed after channel break"
+                                        : "Watching post-break structure"
+                                    }
+
+                                  </small>
+
+                                </div>
+
+                              </td>
+
+                            </tr>
+
+                          );
+
+                        }
+                      )
+                    }
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            )
+          }
+
+
+          {/* ================================================= */}
+          {/* MOBILE */}
+          {/* ================================================= */}
+
+          {
+            filteredSetups.length > 0 && (
+
+              <div className="mobileSetupList">
+
+                {
+                  filteredSetups.map(
+                    (
+                      setup,
+                      index
+                    ) => {
+
+                      const coin =
+                        getCoinInfo(
+                          setup
+                        );
+
+
+                      const freshness =
+                        getSetupFreshness(
+                          setup
+                        );
+
+
+                      return (
+
+                        <article
+                          className="mobileSetupCard"
+
+                          key={
+                            `mobile-${displaySymbol(setup)}-${setup.timeframe}-${index}`
+                          }
+                        >
+
+                          <div className="mobileSetupTop">
+
+                            <div className="mobileCoinHeading">
+
+                              {
+                                !isNse && (
+
+                                  <div className="coinBadge mobile">
+                                    {
+                                      coin.badge
+                                    }
+                                  </div>
+
+                                )
+                              }
+
+                              <div>
+
+                                <span className="mobileMarketLabel">
+
+                                  {
+                                    isNse
+                                      ? "NSE F&O"
+                                      : setup.tradingPair ||
+                                        `${coin.symbol}USDT`
+                                  }
+
+                                </span>
+
+                                <h3>
+
+                                  {
+                                    isNse
+                                      ? String(
+                                          setup.symbol ||
+                                          "-"
+                                        ).replace(
+                                          /\.NS$/i,
+                                          ""
+                                        )
+                                      : coin.name
+                                  }
+
+                                </h3>
+
+                                {
+                                  !isNse && (
+
+                                    <span className="mobileCoinSymbol">
+                                      {coin.symbol}
+                                    </span>
+
+                                  )
+                                }
+
                               </div>
 
-                            </td>
+                            </div>
 
 
-                            <td>
+                            <span className="prePhaseBadge">
+                              {
+                                setup.status
+                              }
+                            </span>
 
-                              <span
-                                className={
-                                  `tfBadge tf-${setup.timeframe}`
-                                }
-                              >
+                          </div>
 
+
+                          <div className="mobileSetupGrid">
+
+                            <div>
+
+                              <span>
+                                Timeframe
+                              </span>
+
+                              <strong>
                                 {
                                   setup
                                     .timeframe
                                     ?.toUpperCase()
                                 }
+                              </strong>
 
+                            </div>
+
+
+                            <div>
+
+                              <span>
+                                Flash Sell
                               </span>
 
-                            </td>
-
-
-                            <td>
-
-                              <span className="prePhaseBadge">
-
-                                {
-                                  setup.status
-                                }
-
-                              </span>
-
-                            </td>
-
-
-                            <td>
-
-                              <span className="structureText">
-
-                                {
-                                  displayStructure(
-                                    setup
-                                  )
-                                }
-
-                              </span>
-
-                            </td>
-
-
-                            <td>
-
-                              <span className="flashValue">
+                              <strong className="flashValue">
 
                                 {
                                   setup
@@ -1496,25 +2249,37 @@ function App() {
                                     : ""
                                 }
 
+                              </strong>
+
+                            </div>
+
+
+                            <div>
+
+                              <span>
+                                Base
                               </span>
 
-                            </td>
+                              <strong>
+
+                                {
+                                  setup.baseCandles ??
+                                  setup.baseCandlesFound ??
+                                  "-"
+                                }
+
+                              </strong>
+
+                            </div>
 
 
-                            <td>
+                            <div>
 
-                              {
-                                setup.baseCandles ??
-                                setup.baseCandlesFound ??
-                                "-"
-                              }
+                              <span>
+                                Age
+                              </span>
 
-                            </td>
-
-
-                            <td>
-
-                              <span className="ageValue">
+                              <strong>
 
                                 {
                                   setup
@@ -1522,210 +2287,62 @@ function App() {
                                   "-"
                                 }
 
-                                {
-                                  setup
-                                    .candlesSinceFlashSell !=
-                                  null
-                                    ? " candles"
-                                    : ""
-                                }
+                              </strong>
 
-                              </span>
+                            </div>
 
-                            </td>
+                          </div>
 
 
-                            {
-                              isNse && (
+                          <div className="mobileStructure">
 
-                                <td>
+                            <span>
+                              Structure
+                            </span>
 
-                                  <button
-                                    className="chartButton"
-                                    onClick={() =>
-                                      openChart(
-                                        setup
-                                      )
-                                    }
-                                  >
-
-                                    ↗ View Chart
-
-                                  </button>
-
-                                </td>
-
-                              )
-                            }
-
-                          </tr>
-
-                        )
-                      )
-                    }
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )
-          }
-
-
-          {/* ================================================= */}
-          {/* MOBILE CARDS */}
-          {/* ================================================= */}
-
-          {
-            filteredSetups.length > 0 && (
-
-              <div className="mobileSetupList">
-
-                {
-                  filteredSetups.map(
-                    (
-                      setup,
-                      index
-                    ) => (
-
-                      <article
-                        className="mobileSetupCard"
-                        key={
-                          `mobile-${displaySymbol(setup)}-${setup.timeframe}-${index}`
-                        }
-                      >
-
-                        <div className="mobileSetupTop">
-
-                          <div>
-
-                            <span className="mobileMarketLabel">
-
+                            <strong>
                               {
-                                isNse
-                                  ? "NSE F&O"
-                                  : "CRYPTO FUTURES"
+                                displayStructure(
+                                  setup
+                                )
+                              }
+                            </strong>
+
+                          </div>
+
+
+                          <div className="mobileQuickInfo">
+
+                            <span
+                              className={
+                                `quickInfoStatus ${freshness.className}`
+                              }
+                            >
+
+                              ⚡ {
+                                freshness.label
                               }
 
                             </span>
 
-                            <h3>
+                            <small>
+
                               {
-                                displaySymbol(
-                                  setup
-                                )
+                                setup.baseCandles > 0 ||
+                                setup.baseCandlesFound > 0
+                                  ? "Base confirmed after channel break"
+                                  : "Watching post-break structure"
                               }
-                            </h3>
+
+                            </small>
 
                           </div>
 
+                        </article>
 
-                          <span className="prePhaseBadge">
+                      );
 
-                            {
-                              setup.status
-                            }
-
-                          </span>
-
-                        </div>
-
-
-                        <div className="mobileSetupGrid">
-
-                          <div>
-                            <span>Timeframe</span>
-                            <strong>
-                              {
-                                setup
-                                  .timeframe
-                                  ?.toUpperCase()
-                              }
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span>Flash Sell</span>
-                            <strong className="flashValue">
-                              {
-                                setup
-                                  .flashSellDropPercent ??
-                                "-"
-                              }
-                              {
-                                setup
-                                  .flashSellDropPercent !=
-                                null
-                                  ? "%"
-                                  : ""
-                              }
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span>Base</span>
-                            <strong>
-                              {
-                                setup.baseCandles ??
-                                setup.baseCandlesFound ??
-                                "-"
-                              }
-                            </strong>
-                          </div>
-
-                          <div>
-                            <span>Age</span>
-                            <strong>
-                              {
-                                setup
-                                  .candlesSinceFlashSell ??
-                                "-"
-                              }
-                            </strong>
-                          </div>
-
-                        </div>
-
-
-                        <div className="mobileStructure">
-
-                          <span>
-                            Structure
-                          </span>
-
-                          <strong>
-                            {
-                              displayStructure(
-                                setup
-                              )
-                            }
-                          </strong>
-
-                        </div>
-
-
-                        {
-                          isNse && (
-
-                            <button
-                              className="mobileChartAction"
-                              onClick={() =>
-                                openChart(
-                                  setup
-                                )
-                              }
-                            >
-                              View Chart
-                            </button>
-
-                          )
-                        }
-
-                      </article>
-
-                    )
+                    }
                   )
                 }
 
@@ -1738,7 +2355,7 @@ function App() {
           <footer className="resultsFooter">
 
             <span>
-              ↻ Auto-refreshing every 5 seconds
+              ↻ Dashboard refreshes every 5 seconds
             </span>
 
           </footer>
@@ -1747,47 +2364,11 @@ function App() {
 
       </main>
 
-
-      {/* ================================================= */}
-      {/* CHART */}
-      {/* ================================================= */}
-
-      {
-        chartSetup && (
-
-          <ChartModal
-
-            open={true}
-
-            symbol={
-              chartSetup.symbol
-            }
-
-            timeframe={
-              chartSetup.timeframe
-            }
-
-            candles={
-              chartCandles
-            }
-
-            loading={
-              chartLoading
-            }
-
-            onClose={
-              closeChart
-            }
-
-          />
-
-        )
-      }
-
     </div>
 
   );
 
 }
+
 
 export default App;

@@ -3,6 +3,9 @@ require("dotenv").config();
 const express =
     require("express");
 
+const path =
+    require("path");
+
 const scannerRoutes =
     require("./routes/scannerRoutes");
 
@@ -26,6 +29,18 @@ const PORT =
 
 
 // ======================================================
+// PATHS
+// ======================================================
+
+const FRONTEND_DIST =
+    path.join(
+        __dirname,
+        "frontend",
+        "dist"
+    );
+
+
+// ======================================================
 // MIDDLEWARE
 // ======================================================
 
@@ -35,32 +50,31 @@ app.use(
 
 
 // ======================================================
-// ROUTES
+// API ROUTES
 // ======================================================
 
-
-// NSE manual scanner
+// NSE Scanner
 app.use(
     "/api/scanner",
     scannerRoutes
 );
 
 
-// Crypto manual scanner
+// Crypto Scanner
 app.use(
     "/api/crypto",
     cryptoRoutes
 );
 
 
-// Single-symbol testing
+// Single Symbol Testing
 app.use(
     "/api/test",
     testRoutes
 );
 
 
-// Live / cron routes
+// Live / Cron Routes
 app.use(
     "/api/live",
     liveRoutes
@@ -68,71 +82,60 @@ app.use(
 
 
 // ======================================================
-// HOME
+// FRONTEND STATIC FILES
 // ======================================================
 
-app.get(
-    "/",
+app.use(
+    express.static(
+        FRONTEND_DIST
+    )
+);
+
+
+// ======================================================
+// API 404
+//
+// Prevent unknown /api routes from falling through
+// to React index.html.
+// ======================================================
+
+app.use(
+    "/api",
     (req, res) => {
 
-        return res.json({
+        return res
+            .status(404)
+            .json({
 
-            success: true,
+                success: false,
 
-            message:
-                "Channel Break Scanner API is running.",
+                error:
+                    "API endpoint not found"
 
-            automation:
-                "EXTERNAL_CRON",
+            });
+    }
+);
 
-            endpoints: {
 
-                live: {
+// ======================================================
+// REACT FALLBACK
+//
+// Express 5:
+// Do not use app.get("*").
+//
+// This middleware handles every remaining browser route
+// and returns the React application.
+// ======================================================
 
-                    status:
-                        "GET /api/live/status",
+app.use(
+    (req, res) => {
 
-                    results:
-                        "GET /api/live/results",
-
-                    trigger:
-                        "POST /api/live/trigger"
-
-                },
-
-                nse: {
-
-                    run:
-                        "POST /api/scanner/run",
-
-                    status:
-                        "GET /api/scanner/status"
-
-                },
-
-                crypto: {
-
-                    scan:
-                        "POST /api/crypto/scan",
-
-                    status:
-                        "GET /api/crypto/status",
-
-                    results:
-                        "GET /api/crypto/results"
-
-                },
-
-                testing: {
-
-                    setup:
-                        "GET /api/test/setup?market=NSE&symbol=MRF.NS&timeframe=1h"
-
-                }
-
-            }
-
-        });
+        return res.sendFile(
+            path.join(
+                FRONTEND_DIST,
+                "index.html"
+            )
+        );
     }
 );
 
@@ -140,9 +143,7 @@ app.get(
 // ======================================================
 // START SERVER
 //
-// IMPORTANT:
-//
-// No internal setInterval scheduler here.
+// No internal scheduler.
 //
 // cron-job.org will call:
 //
@@ -157,6 +158,10 @@ app.listen(
 
         console.log(
             `Server running on http://localhost:${PORT}`
+        );
+
+        console.log(
+            "Frontend: React production build"
         );
 
         console.log(

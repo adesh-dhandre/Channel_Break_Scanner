@@ -4,24 +4,7 @@ const {
 
 
 // ======================================================
-// CONFIG
-// ======================================================
-
-// Maximum number of Binance USDT perpetual markets
-// we want to scan.
-//
-// We can increase/decrease this later depending
-// on live scan duration.
-
-const MAX_CRYPTO_SYMBOLS =
-    200;
-
-
-// ======================================================
 // EXCLUDED BASE ASSETS
-//
-// Stablecoins and assets we don't want treated
-// as normal crypto trading candidates.
 // ======================================================
 
 const EXCLUDED_SYMBOLS =
@@ -47,9 +30,7 @@ const EXCLUDED_SYMBOLS =
 
 
 // ======================================================
-// LEVERAGED / SPECIAL TOKEN FILTER
-//
-// Avoid obvious leveraged-token style symbols.
+// EXCLUDED SYMBOL FILTER
 // ======================================================
 
 function isExcludedSymbol(
@@ -57,6 +38,7 @@ function isExcludedSymbol(
 ) {
 
     if (!symbol) {
+
         return true;
     }
 
@@ -108,20 +90,28 @@ function isExcludedSymbol(
 
 
 // ======================================================
-// NORMALIZE BINANCE SYMBOL MAP
+// BUILD BINANCE FUTURES UNIVERSE
+// ======================================================
 //
-// getUsdtPerpetualSymbols() currently returns a Map:
+// Expected input:
 //
-// BASE ASSET -> TRADING PAIR
+// Map {
+//     "BTC" => "BTCUSDT",
+//     "ETH" => "ETHUSDT",
+//     ...
+// }
 //
-// Example:
+// Output:
 //
-// BTC -> BTCUSDT
-// ETH -> ETHUSDT
-// SOL -> SOLUSDT
+// [
+//     {
+//         symbol: "BTC",
+//         tradingPair: "BTCUSDT",
+//         market: "BINANCE_USDT_PERPETUAL"
+//     },
+//     ...
+// ]
 //
-// We convert that into the same object structure
-// expected by cryptoScannerService.
 // ======================================================
 
 function buildUniverseFromBinance(
@@ -178,9 +168,9 @@ function buildUniverseFromBinance(
         }
 
 
-        // ------------------------------------------
-        // Stablecoin / fiat / special token filter
-        // ------------------------------------------
+        // ==============================================
+        // EXCLUDE STABLECOINS / FIAT / SPECIAL TOKENS
+        // ==============================================
 
         if (
             isExcludedSymbol(
@@ -192,9 +182,9 @@ function buildUniverseFromBinance(
         }
 
 
-        // ------------------------------------------
-        // We only want USDT perpetual pairs
-        // ------------------------------------------
+        // ==============================================
+        // ONLY USDT FUTURES
+        // ==============================================
 
         if (
             !pair.endsWith(
@@ -206,9 +196,9 @@ function buildUniverseFromBinance(
         }
 
 
-        // ------------------------------------------
-        // Prevent duplicate trading pairs
-        // ------------------------------------------
+        // ==============================================
+        // PREVENT DUPLICATES
+        // ==============================================
 
         if (
             usedTradingPairs.has(
@@ -227,8 +217,6 @@ function buildUniverseFromBinance(
 
         universe.push({
 
-            // We no longer have CoinGecko
-            // market-cap rank here.
             rank:
                 null,
 
@@ -261,17 +249,23 @@ function buildUniverseFromBinance(
 
 
 // ======================================================
-// SCANNABLE CRYPTO UNIVERSE
+// GET COMPLETE BINANCE USDT PERPETUAL UNIVERSE
+// ======================================================
 //
-// Binance Futures is now the PRIMARY source.
+// IMPORTANT:
 //
-// CoinGecko is NOT required.
+// There is NO 200-symbol limit anymore.
+//
+// Every currently available Binance USDT perpetual
+// contract returned by Binance is included, except
+// excluded symbols above.
+//
 // ======================================================
 
 async function getScannableCryptoUniverse() {
 
     console.log(
-        "Fetching Binance USDT perpetual universe..."
+        "Fetching complete Binance USDT perpetual universe..."
     );
 
 
@@ -296,45 +290,23 @@ async function getScannableCryptoUniverse() {
 
 
     console.log(
-        `Binance USDT perpetual markets found: ${universe.length}`
+        `Binance USDT perpetual markets selected: ${universe.length}`
     );
 
 
-    // ==================================================
-    // LIMIT UNIVERSE
-    //
-    // Important:
-    //
-    // This is NOT market-cap ranking anymore.
-    //
-    // We are simply limiting the Binance universe
-    // so we can measure scanner performance first.
-    // ==================================================
-
-    const scannableUniverse =
-        universe.slice(
-            0,
-            MAX_CRYPTO_SYMBOLS
-        );
-
-
-    console.log(
-        `Crypto markets selected for scan: ${scannableUniverse.length}`
-    );
-
-
-    return scannableUniverse;
+    return universe;
 }
 
 
 // ======================================================
 // COMPATIBILITY FUNCTION
+// ======================================================
 //
-// Some other file may still import
+// Kept because another service may still import
 // getTopCryptoCoins().
 //
-// Instead of breaking that code, return the
-// Binance universe in a compatible format.
+// It now returns the complete Binance futures universe.
+//
 // ======================================================
 
 async function getTopCryptoCoins() {

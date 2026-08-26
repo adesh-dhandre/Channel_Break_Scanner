@@ -18,21 +18,34 @@ const CACHE_DIR =
     );
 
 
-// First time:
-// Download enough history for timeframe calculations.
+// First initialization.
+//
+// Enough history for channel calculations.
 
-const INITIAL_CANDLE_LIMIT = 1500;
-
-
-// Later scans:
-// Only refresh the most recent candles.
-
-const REFRESH_CANDLE_LIMIT = 100;
+const INITIAL_CANDLE_LIMIT =
+    1500;
 
 
-// Keep maximum number of 5m candles locally.
+// Normal live refresh.
+//
+// IMPORTANT:
+// 99 is intentional.
+//
+// Binance kline weight:
+//
+// <100 candles = weight 1
+//
+// 100 candles would move us into the next
+// request-weight tier.
 
-const MAX_CACHE_CANDLES = 1500;
+const REFRESH_CANDLE_LIMIT =
+    99;
+
+
+// Keep local working history.
+
+const MAX_CACHE_CANDLES =
+    1500;
 
 
 // ======================================================
@@ -42,7 +55,9 @@ const MAX_CACHE_CANDLES = 1500;
 function ensureCacheDirectory() {
 
     if (
-        !fs.existsSync(CACHE_DIR)
+        !fs.existsSync(
+            CACHE_DIR
+        )
     ) {
 
         fs.mkdirSync(
@@ -51,6 +66,7 @@ function ensureCacheDirectory() {
                 recursive: true
             }
         );
+
 
         console.log(
             "Created crypto candle cache directory."
@@ -63,7 +79,9 @@ function ensureCacheDirectory() {
 // CACHE FILE
 // ======================================================
 
-function getCacheFile(symbol) {
+function getCacheFile(
+    symbol
+) {
 
     return path.join(
         CACHE_DIR,
@@ -76,29 +94,43 @@ function getCacheFile(symbol) {
 // NORMALIZE CANDLE
 // ======================================================
 
-function normalizeCandle(candle) {
+function normalizeCandle(
+    candle
+) {
 
     return {
 
         date:
             candle.date instanceof Date
                 ? candle.date
-                : new Date(candle.date),
+                : new Date(
+                    candle.date
+                ),
 
         open:
-            Number(candle.open),
+            Number(
+                candle.open
+            ),
 
         high:
-            Number(candle.high),
+            Number(
+                candle.high
+            ),
 
         low:
-            Number(candle.low),
+            Number(
+                candle.low
+            ),
 
         close:
-            Number(candle.close),
+            Number(
+                candle.close
+            ),
 
         volume:
-            Number(candle.volume)
+            Number(
+                candle.volume
+            )
 
     };
 }
@@ -108,17 +140,23 @@ function normalizeCandle(candle) {
 // LOAD CACHE
 // ======================================================
 
-function loadCandlesFromDisk(symbol) {
+function loadCandlesFromDisk(
+    symbol
+) {
 
     ensureCacheDirectory();
 
 
     const file =
-        getCacheFile(symbol);
+        getCacheFile(
+            symbol
+        );
 
 
     if (
-        !fs.existsSync(file)
+        !fs.existsSync(
+            file
+        )
     ) {
 
         return null;
@@ -135,11 +173,15 @@ function loadCandlesFromDisk(symbol) {
 
 
         const parsed =
-            JSON.parse(raw);
+            JSON.parse(
+                raw
+            );
 
 
         if (
-            !Array.isArray(parsed)
+            !Array.isArray(
+                parsed
+            )
         ) {
 
             return null;
@@ -147,11 +189,14 @@ function loadCandlesFromDisk(symbol) {
 
 
         return parsed
-            .map(normalizeCandle)
+            .map(
+                normalizeCandle
+            )
             .filter(
                 candle =>
                     !Number.isNaN(
-                        candle.date.getTime()
+                        candle.date
+                            .getTime()
                     )
             );
 
@@ -181,16 +226,21 @@ function saveCandlesToDisk(
 
 
     const file =
-        getCacheFile(symbol);
+        getCacheFile(
+            symbol
+        );
 
 
     const cleanCandles =
         candles
-            .map(normalizeCandle)
+            .map(
+                normalizeCandle
+            )
             .filter(
                 candle =>
                     !Number.isNaN(
-                        candle.date.getTime()
+                        candle.date
+                            .getTime()
                     )
             )
             .slice(
@@ -214,9 +264,6 @@ function saveCandlesToDisk(
 
 // ======================================================
 // MERGE OLD + NEW CANDLES
-//
-// Candle timestamp is the unique key.
-// New Binance candle replaces old cached candle.
 // ======================================================
 
 function mergeCandles(
@@ -234,15 +281,20 @@ function mergeCandles(
     ) {
 
         const normalized =
-            normalizeCandle(candle);
+            normalizeCandle(
+                candle
+            );
 
 
         const time =
-            normalized.date.getTime();
+            normalized.date
+                .getTime();
 
 
         if (
-            !Number.isNaN(time)
+            !Number.isNaN(
+                time
+            )
         ) {
 
             candleMap.set(
@@ -259,18 +311,24 @@ function mergeCandles(
     ) {
 
         const normalized =
-            normalizeCandle(candle);
+            normalizeCandle(
+                candle
+            );
 
 
         const time =
-            normalized.date.getTime();
+            normalized.date
+                .getTime();
 
 
         if (
-            !Number.isNaN(time)
+            !Number.isNaN(
+                time
+            )
         ) {
 
-            // Fresh Binance data wins.
+            // Fresh Binance candle replaces
+            // the cached candle with the same timestamp.
 
             candleMap.set(
                 time,
@@ -285,9 +343,14 @@ function mergeCandles(
             candleMap.values()
         )
         .sort(
-            (a, b) =>
-                a.date.getTime() -
-                b.date.getTime()
+            (
+                a,
+                b
+            ) =>
+                a.date
+                    .getTime() -
+                b.date
+                    .getTime()
         )
         .slice(
             -MAX_CACHE_CANDLES
@@ -296,16 +359,12 @@ function mergeCandles(
 
 
 // ======================================================
-// INITIALIZE SYMBOL
-//
-// FIRST RUN:
-// Binance -> 1500 candles -> disk
-//
-// LATER:
-// disk -> Binance latest 100 -> merge -> disk
+// INITIALIZE / REFRESH SYMBOL
 // ======================================================
 
-async function initializeSymbol(symbol) {
+async function initializeSymbol(
+    symbol
+) {
 
     ensureCacheDirectory();
 
@@ -316,9 +375,14 @@ async function initializeSymbol(symbol) {
         );
 
 
-    // --------------------------------------------------
-// FIRST RUN
-// --------------------------------------------------
+    // ==================================================
+    // FIRST RUN
+    //
+    // Expensive:
+    // 1500 candles.
+    //
+    // binanceFuturesService now rate-limits this safely.
+    // ==================================================
 
     if (
         !cached ||
@@ -328,6 +392,7 @@ async function initializeSymbol(symbol) {
         console.log(
             `${symbol}: no crypto cache found.`
         );
+
 
         console.log(
             `${symbol}: downloading ${INITIAL_CANDLE_LIMIT} 5m candles...`
@@ -358,9 +423,12 @@ async function initializeSymbol(symbol) {
     }
 
 
-    // --------------------------------------------------
-// REFRESH EXISTING CACHE
-// --------------------------------------------------
+    // ==================================================
+    // NORMAL LIVE REFRESH
+    //
+    // Cheap:
+    // only latest 99 candles.
+    // ==================================================
 
     console.log(
         `${symbol}: loaded ${cached.length} candles from crypto cache.`
