@@ -11,9 +11,23 @@ const {
 const FIVE_MINUTES =
     5 * 60 * 1000;
 
+const TEN_MINUTES =
+    10 * 60 * 1000;
+
 
 // Prevent scheduler from being started twice.
-let schedulerStarted = false;
+let schedulerStarted =
+    false;
+
+
+// Keep interval references.
+// Useful later if we ever need controlled shutdown.
+
+let cryptoInterval =
+    null;
+
+let nseInterval =
+    null;
 
 
 // ======================================================
@@ -49,7 +63,10 @@ function getISTParts() {
     const values = {};
 
 
-    for (const part of parts) {
+    for (
+        const part
+        of parts
+    ) {
 
         if (
             part.type !==
@@ -58,7 +75,8 @@ function getISTParts() {
 
             values[
                 part.type
-            ] = part.value;
+            ] =
+                part.value;
         }
     }
 
@@ -98,7 +116,8 @@ function isNseMarketSession() {
         weekday,
         hour,
         minute
-    } = getISTParts();
+    } =
+        getISTParts();
 
 
     const tradingDays = [
@@ -143,7 +162,100 @@ function isNseMarketSession() {
 
 
 // ======================================================
-// ONE SCHEDULER CYCLE
+// CRYPTO SCHEDULER CYCLE
+//
+// Runs every 5 minutes.
+// Crypto trades 24/7.
+// ======================================================
+
+async function runCryptoSchedulerCycle() {
+
+    const startedAt =
+        new Date();
+
+
+    console.log(
+        `\nCrypto scheduler cycle: ${startedAt.toISOString()}`
+    );
+
+
+    try {
+
+        await runCryptoScan();
+
+
+    } catch (error) {
+
+        console.error(
+            "Scheduled crypto scan failed:",
+            error.message
+        );
+    }
+}
+
+
+// ======================================================
+// NSE SCHEDULER CYCLE
+//
+// Runs every 10 minutes.
+//
+// Actual NSE scanning happens only during:
+// Monday-Friday
+// 09:15-15:30 IST.
+// ======================================================
+
+async function runNseSchedulerCycle() {
+
+    const startedAt =
+        new Date();
+
+
+    console.log(
+        `\nNSE scheduler cycle: ${startedAt.toISOString()}`
+    );
+
+
+    if (
+        !isNseMarketSession()
+    ) {
+
+        console.log(
+            "NSE scan skipped: market session closed."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        await runNseScan();
+
+
+    } catch (error) {
+
+        console.error(
+            "Scheduled NSE scan failed:",
+            error.message
+        );
+    }
+}
+
+
+// ======================================================
+// LEGACY / MANUAL FULL SCHEDULER CYCLE
+//
+// Preserved because this function was already exported.
+//
+// Calling this manually runs:
+//
+// Crypto
+// +
+// NSE if market is open.
+//
+// The recurring scheduler itself does NOT use this
+// function anymore because crypto and NSE now have
+// different cadences.
 // ======================================================
 
 async function runSchedulerCycle() {
@@ -153,46 +265,22 @@ async function runSchedulerCycle() {
 
 
     console.log(
-        `\nScheduler cycle: ${startedAt.toISOString()}`
+        `\nManual scheduler cycle: ${startedAt.toISOString()}`
     );
 
 
-    // ------------------------------------------
-    // CRYPTO
-    //
-    // Crypto runs 24/7.
-    // ------------------------------------------
+    const jobs = [
+        runCryptoSchedulerCycle()
+    ];
 
-    runCryptoScan()
-        .catch(error => {
-
-            console.error(
-                "Scheduled crypto scan failed:",
-                error.message
-            );
-
-        });
-
-
-    // ------------------------------------------
-    // NSE
-    //
-    // Only scan during Indian trading session.
-    // ------------------------------------------
 
     if (
         isNseMarketSession()
     ) {
 
-        runNseScan()
-            .catch(error => {
-
-                console.error(
-                    "Scheduled NSE scan failed:",
-                    error.message
-                );
-
-            });
+        jobs.push(
+            runNseSchedulerCycle()
+        );
 
     } else {
 
@@ -200,6 +288,11 @@ async function runSchedulerCycle() {
             "NSE scan skipped: market session closed."
         );
     }
+
+
+    await Promise.all(
+        jobs
+    );
 }
 
 
@@ -238,7 +331,7 @@ function startScanScheduler() {
     );
 
     console.log(
-        "NSE: every 5 minutes during 09:15-15:30 IST"
+        "NSE: every 10 minutes during 09:15-15:30 IST"
     );
 
     console.log(
@@ -246,15 +339,53 @@ function startScanScheduler() {
     );
 
 
-    // Run once immediately when server starts.
-    runSchedulerCycle();
+    // ==================================================
+    // INITIAL RUN
+    //
+    // Crypto:
+    // Run immediately.
+    //
+    // NSE:
+    // Run immediately only if market is open.
+    // ==================================================
+
+    runCryptoSchedulerCycle();
 
 
-    // Then every 5 minutes.
-    setInterval(
-        runSchedulerCycle,
-        FIVE_MINUTES
-    );
+    if (
+        isNseMarketSession()
+    ) {
+
+        runNseSchedulerCycle();
+
+    } else {
+
+        console.log(
+            "Initial NSE scan skipped: market session closed."
+        );
+    }
+
+
+    // ==================================================
+    // CRYPTO INTERVAL
+    // ==================================================
+
+    cryptoInterval =
+        setInterval(
+            runCryptoSchedulerCycle,
+            FIVE_MINUTES
+        );
+
+
+    // ==================================================
+    // NSE INTERVAL
+    // ==================================================
+
+    nseInterval =
+        setInterval(
+            runNseSchedulerCycle,
+            TEN_MINUTES
+        );
 }
 
 
@@ -267,6 +398,10 @@ module.exports = {
     startScanScheduler,
 
     runSchedulerCycle,
+
+    runCryptoSchedulerCycle,
+
+    runNseSchedulerCycle,
 
     isNseMarketSession,
 

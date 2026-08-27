@@ -7,6 +7,173 @@ const {
 } = require("./baseScanner");
 
 
+// ======================================================
+// BASE TYPE
+// ======================================================
+
+function getBaseType(
+    baseResult
+) {
+
+    const candles =
+        Array.isArray(
+            baseResult?.candles
+        )
+            ? baseResult.candles
+            : [];
+
+
+    const baseCandle =
+        candles.find(
+            candle =>
+                candle?.isBaseCandle === true
+        );
+
+
+    if (!baseCandle) {
+
+        return {
+            type: null,
+            date: null,
+            candle: null
+        };
+    }
+
+
+    let type =
+        "BASE";
+
+
+    if (
+        baseCandle.isHammer === true
+    ) {
+
+        type =
+            "HAMMER";
+
+    } else if (
+        baseCandle.isDoji === true
+    ) {
+
+        type =
+            "DOJI";
+
+    } else if (
+        baseCandle.hasLongLowerWick === true
+    ) {
+
+        type =
+            "LONG_LOWER_WICK";
+
+    } else if (
+        baseCandle.bearishMomentumReduced === true
+    ) {
+
+        type =
+            "MOMENTUM_REDUCTION";
+    }
+
+
+    return {
+
+        type,
+
+        date:
+            baseCandle.date ||
+            null,
+
+        candle:
+            baseCandle
+
+    };
+}
+
+
+// ======================================================
+// LIFECYCLE
+// ======================================================
+
+function getLifecycle(
+    isSetup,
+    isRecent,
+    candlesSinceFlashSell,
+    maxCandlesSinceFlashSell
+) {
+
+    if (!isRecent) {
+
+        return {
+            lifecycle:
+                "EXPIRED",
+
+            lifecycleLabel:
+                "Expired",
+
+            lifecycleTone:
+                "expired"
+        };
+    }
+
+
+    if (!isSetup) {
+
+        return {
+            lifecycle:
+                "WAITING",
+
+            lifecycleLabel:
+                "Waiting",
+
+            lifecycleTone:
+                "waiting"
+        };
+    }
+
+
+    const ratio =
+        maxCandlesSinceFlashSell > 0
+            ? (
+                candlesSinceFlashSell /
+                maxCandlesSinceFlashSell
+            )
+            : 0;
+
+
+    if (
+        ratio >=
+        0.7
+    ) {
+
+        return {
+            lifecycle:
+                "AGING",
+
+            lifecycleLabel:
+                "Aging",
+
+            lifecycleTone:
+                "aging"
+        };
+    }
+
+
+    return {
+        lifecycle:
+            "LIVE",
+
+        lifecycleLabel:
+            "Live",
+
+        lifecycleTone:
+            "live"
+    };
+}
+
+
+// ======================================================
+// PRE-PHASE DETECTOR
+// ======================================================
+
 function detectPrePhaseSetup(
     candles,
     timeframe = "1h"
@@ -18,46 +185,106 @@ function detectPrePhaseSetup(
     ) {
 
         return {
+
             timeframe,
+
             isSetup: false,
-            status: "NO_DATA",
-            ascendingChannel: false,
-            flashSell: false,
-            baseForming: false
+
+            status:
+                "NO_DATA",
+
+            lifecycle:
+                "WAITING",
+
+            lifecycleLabel:
+                "Waiting",
+
+            lifecycleTone:
+                "waiting",
+
+            ascendingChannel:
+                false,
+
+            flashSell:
+                false,
+
+            baseForming:
+                false,
+
+            baseType:
+                null,
+
+            baseStartedAt:
+                null,
+
+            baseConfirmedAt:
+                null
+
         };
     }
 
 
-    // ==========================================
-    // 1. FIND VALID ASCENDING-CHANNEL BREAKS
-    // ==========================================
+    // ==================================================
+    // ASCENDING CHANNEL BREAKS
+    // ==================================================
 
     const flashSellResults =
-        detectFlashSells(candles);
+        detectFlashSells(
+            candles
+        );
 
 
     if (
-        !Array.isArray(flashSellResults) ||
+        !Array.isArray(
+            flashSellResults
+        ) ||
         flashSellResults.length === 0
     ) {
 
         return {
+
             timeframe,
-            isSetup: false,
-            status: "NO_CHANNEL_BREAK",
 
-            ascendingChannel: false,
+            isSetup:
+                false,
 
-            flashSell: false,
+            status:
+                "NO_CHANNEL_BREAK",
 
-            baseForming: false
+            lifecycle:
+                "WAITING",
+
+            lifecycleLabel:
+                "Waiting",
+
+            lifecycleTone:
+                "waiting",
+
+            ascendingChannel:
+                false,
+
+            flashSell:
+                false,
+
+            baseForming:
+                false,
+
+            baseType:
+                null,
+
+            baseStartedAt:
+                null,
+
+            baseConfirmedAt:
+                null
+
         };
     }
 
 
-    // ==========================================
-    // 2. LATEST VALID BREAK
-    // ==========================================
+    // ==================================================
+    // LATEST VALID FLASH SELL
+    // ==================================================
 
     const latestFlashSell =
         flashSellResults[
@@ -65,16 +292,18 @@ function detectPrePhaseSetup(
         ];
 
 
-    // ==========================================
-    // 3. FIND FLASH-SELL INDEX
-    // ==========================================
+    // ==================================================
+    // FLASH INDEX
+    // ==================================================
 
     let flashIndex =
         latestFlashSell.index;
 
 
     if (
-        !Number.isInteger(flashIndex)
+        !Number.isInteger(
+            flashIndex
+        )
     ) {
 
         const flashTime =
@@ -95,44 +324,79 @@ function detectPrePhaseSetup(
 
 
     if (
-        flashIndex < 0
+        flashIndex <
+        0
     ) {
 
         return {
+
             timeframe,
-            isSetup: false,
-            status: "FLASH_SELL_NOT_FOUND",
 
-            ascendingChannel: true,
+            isSetup:
+                false,
 
-            flashSell: true,
+            status:
+                "FLASH_SELL_NOT_FOUND",
 
-            baseForming: false
+            lifecycle:
+                "WAITING",
+
+            lifecycleLabel:
+                "Waiting",
+
+            lifecycleTone:
+                "waiting",
+
+            ascendingChannel:
+                true,
+
+            flashSell:
+                true,
+
+            baseForming:
+                false,
+
+            baseType:
+                null,
+
+            baseStartedAt:
+                null,
+
+            baseConfirmedAt:
+                null
+
         };
     }
 
 
-    // ==========================================
-    // 4. RECENCY LIMIT BY TIMEFRAME
-    // ==========================================
+    // ==================================================
+    // RECENCY
+    // ==================================================
 
     const recencyLimits = {
 
-        "15m": 8,
+        "15m":
+            8,
 
-        "30m": 6,
+        "30m":
+            6,
 
-        "45m": 5,
+        "45m":
+            5,
 
-        "1h": 4,
+        "1h":
+            4,
 
-        "2h": 3
+        "2h":
+            3
 
     };
 
 
     const maxCandlesSinceFlashSell =
-        recencyLimits[timeframe] ||
+        recencyLimits[
+            timeframe
+        ] ||
         4;
 
 
@@ -147,9 +411,9 @@ function detectPrePhaseSetup(
         maxCandlesSinceFlashSell;
 
 
-    // ==========================================
-    // 5. BASE AFTER CHANNEL BREAK
-    // ==========================================
+    // ==================================================
+    // BASE
+    // ==================================================
 
     const baseResult =
         detectBaseAfterFlashSell(
@@ -163,9 +427,32 @@ function detectPrePhaseSetup(
             ?.isBaseForming === true;
 
 
-    // ==========================================
-    // 6. FINAL PRE-PHASE CONDITION
-    // ==========================================
+    const baseInfo =
+        getBaseType(
+            baseResult
+        );
+
+
+    // First qualifying base candle.
+    const baseStartedAt =
+        baseInfo.date;
+
+
+    // With our current strategy a qualifying base candle
+    // confirms the base immediately.
+    //
+    // If later we require 2-3 confirmation candles,
+    // baseConfirmedAt can become different from
+    // baseStartedAt without changing the dashboard.
+    const baseConfirmedAt =
+        baseForming
+            ? baseInfo.date
+            : null;
+
+
+    // ==================================================
+    // PRE-PHASE
+    // ==================================================
 
     const isSetup =
         isRecent &&
@@ -177,21 +464,37 @@ function detectPrePhaseSetup(
 
     if (!isRecent) {
 
-        status = "OLD_SETUP";
+        status =
+            "OLD_SETUP";
 
     } else if (!baseForming) {
 
-        status = "NO_BASE";
+        status =
+            "NO_BASE";
 
     } else {
 
-        status = "PRE_PHASE";
+        status =
+            "PRE_PHASE";
     }
 
 
-    // ==========================================
-    // 7. RETURN
-    // ==========================================
+    // ==================================================
+    // LIFECYCLE
+    // ==================================================
+
+    const lifecycleInfo =
+        getLifecycle(
+            isSetup,
+            isRecent,
+            candlesSinceFlashSell,
+            maxCandlesSinceFlashSell
+        );
+
+
+    // ==================================================
+    // RETURN
+    // ==================================================
 
     return {
 
@@ -202,7 +505,23 @@ function detectPrePhaseSetup(
         status,
 
 
+        // ----------------------------------------------
+        // LIFECYCLE
+        // ----------------------------------------------
+
+        lifecycle:
+            lifecycleInfo.lifecycle,
+
+        lifecycleLabel:
+            lifecycleInfo.lifecycleLabel,
+
+        lifecycleTone:
+            lifecycleInfo.lifecycleTone,
+
+
+        // ----------------------------------------------
         // CHANNEL
+        // ----------------------------------------------
 
         ascendingChannel:
             true,
@@ -228,12 +547,17 @@ function detectPrePhaseSetup(
                 .channelRespectRatio,
 
 
+        // ----------------------------------------------
         // FLASH SELL
+        // ----------------------------------------------
 
         flashSell:
             true,
 
         flashSellDate:
+            latestFlashSell.date,
+
+        flashSellAt:
             latestFlashSell.date,
 
         flashSellDropPercent:
@@ -255,7 +579,9 @@ function detectPrePhaseSetup(
             latestFlashSell.upperChannelValue,
 
 
-        // RECENCY
+        // ----------------------------------------------
+        // RECENCY / AGE
+        // ----------------------------------------------
 
         candlesSinceFlashSell,
 
@@ -263,10 +589,22 @@ function detectPrePhaseSetup(
 
         isRecent,
 
+        ageText:
+            `${candlesSinceFlashSell} / ${maxCandlesSinceFlashSell}`,
 
+
+        // ----------------------------------------------
         // BASE
+        // ----------------------------------------------
 
         baseForming,
+
+        baseType:
+            baseInfo.type,
+
+        baseStartedAt,
+
+        baseConfirmedAt,
 
         baseCandlesFound:
             baseResult
@@ -280,6 +618,16 @@ function detectPrePhaseSetup(
 }
 
 
+// ======================================================
+// EXPORTS
+// ======================================================
+
 module.exports = {
-    detectPrePhaseSetup
+
+    detectPrePhaseSetup,
+
+    getBaseType,
+
+    getLifecycle
+
 };

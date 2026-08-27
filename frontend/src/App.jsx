@@ -114,7 +114,6 @@ function cleanCryptoSymbol(setup) {
     )
       .replace(/\.NS$/i, "")
       .toUpperCase();
-
   }
 
 
@@ -274,44 +273,194 @@ function formatDate(value) {
 }
 
 
-function getSetupFreshness(
-  setup
-) {
+function formatTimelineDate(value) {
 
-  const age =
-    Number(
-      setup?.candlesSinceFlashSell
+  if (!value) {
+    return "-";
+  }
+
+
+  const date =
+    new Date(
+      value
     );
 
 
   if (
-    Number.isFinite(age) &&
-    age <= 1
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return "-";
+  }
+
+
+  return new Intl.DateTimeFormat(
+    "en-IN",
+    {
+      timeZone:
+        "Asia/Kolkata",
+
+      day:
+        "2-digit",
+
+      month:
+        "short",
+
+      hour:
+        "2-digit",
+
+      minute:
+        "2-digit",
+
+      hour12:
+        true
+    }
+  ).format(
+    date
+  );
+}
+
+
+function getLifecycle(setup) {
+
+  const lifecycle =
+    String(
+      setup?.lifecycle ||
+      "LIVE"
+    ).toUpperCase();
+
+
+  if (
+    lifecycle ===
+    "AGING"
   ) {
 
     return {
-      label: "Very Fresh",
-      className: "fresh"
+      key: "aging",
+      label:
+        setup?.lifecycleLabel ||
+        "Aging"
     };
   }
 
 
   if (
-    Number.isFinite(age) &&
-    age <= 3
+    lifecycle ===
+    "EXPIRED"
   ) {
 
     return {
-      label: "Fresh Setup",
-      className: "fresh"
+      key: "expired",
+      label:
+        setup?.lifecycleLabel ||
+        "Expired"
+    };
+  }
+
+
+  if (
+    lifecycle ===
+    "WAITING"
+  ) {
+
+    return {
+      key: "waiting",
+      label:
+        setup?.lifecycleLabel ||
+        "Waiting"
     };
   }
 
 
   return {
-    label: "Active Setup",
-    className: "active"
+    key: "live",
+    label:
+      setup?.lifecycleLabel ||
+      "Live"
   };
+}
+
+
+function getAgePercent(
+  setup
+) {
+
+  const current =
+    Number(
+      setup?.candlesSinceFlashSell
+    );
+
+
+  const max =
+    Number(
+      setup?.maxCandlesSinceFlashSell
+    );
+
+
+  if (
+    !Number.isFinite(current) ||
+    !Number.isFinite(max) ||
+    max <= 0
+  ) {
+
+    return 0;
+  }
+
+
+  return Math.min(
+    100,
+    Math.max(
+      0,
+      (
+        current /
+        max
+      ) *
+      100
+    )
+  );
+}
+
+
+function getAgeText(
+  setup
+) {
+
+  if (
+    setup?.ageText
+  ) {
+
+    return setup.ageText;
+  }
+
+
+  const current =
+    setup?.candlesSinceFlashSell;
+
+
+  const max =
+    setup?.maxCandlesSinceFlashSell;
+
+
+  if (
+    current != null &&
+    max != null
+  ) {
+
+    return `${current} / ${max}`;
+  }
+
+
+  if (
+    current != null
+  ) {
+
+    return `${current}`;
+  }
+
+
+  return "-";
 }
 
 
@@ -473,7 +622,6 @@ function App() {
       console.error(
         err
       );
-
     }
   }
 
@@ -507,7 +655,6 @@ function App() {
       console.error(
         err
       );
-
     }
   }
 
@@ -542,7 +689,6 @@ function App() {
       console.error(
         err
       );
-
     }
   }
 
@@ -576,7 +722,6 @@ function App() {
       console.error(
         err
       );
-
     }
   }
 
@@ -622,7 +767,6 @@ function App() {
       console.error(
         err
       );
-
     }
   }
 
@@ -670,7 +814,6 @@ function App() {
       setLoading(
         false
       );
-
     }
   }
 
@@ -743,7 +886,6 @@ function App() {
       setRunningNse(
         false
       );
-
     }
   }
 
@@ -816,7 +958,6 @@ function App() {
       setRunningCrypto(
         false
       );
-
     }
   }
 
@@ -861,17 +1002,13 @@ function App() {
     isNse
       ? (
           runningNse ||
-          nseState
-            ?.scanning ||
-          liveStatus
-            ?.nseRunning
+          nseState?.scanning ||
+          liveStatus?.nseRunning
         )
       : (
           runningCrypto ||
-          cryptoStatus
-            ?.running ||
-          liveStatus
-            ?.cryptoRunning
+          cryptoStatus?.running ||
+          liveStatus?.cryptoRunning
         );
 
 
@@ -903,10 +1040,8 @@ function App() {
 
 
           return (
-            nseState
-              ?.activeSetups ||
-            nseState
-              ?.results ||
+            nseState?.activeSetups ||
+            nseState?.results ||
             []
           );
         }
@@ -998,7 +1133,6 @@ function App() {
               timeframeMatch &&
               searchMatch
             );
-
           }
         );
 
@@ -1030,21 +1164,14 @@ function App() {
   const totalScanned =
     isNse
       ? (
-          nseLiveStats
-            .scannedStocks ??
-          nseState
-            ?.scannedStocks ??
-          nseState
-            ?.stats
-            ?.scannedStocks ??
+          nseLiveStats.scannedStocks ??
+          nseState?.scannedStocks ??
+          nseState?.stats?.scannedStocks ??
           0
         )
       : (
-          cryptoLiveStats
-            .scannedCoins ??
-          cryptoStatus
-            ?.stats
-            ?.scannedCoins ??
+          cryptoLiveStats.scannedCoins ??
+          cryptoStatus?.stats?.scannedCoins ??
           0
         );
 
@@ -1052,21 +1179,14 @@ function App() {
   const successful =
     isNse
       ? (
-          nseLiveStats
-            .successfulStocks ??
-          nseState
-            ?.successfulStocks ??
-          nseState
-            ?.stats
-            ?.successfulStocks ??
+          nseLiveStats.successfulStocks ??
+          nseState?.successfulStocks ??
+          nseState?.stats?.successfulStocks ??
           0
         )
       : (
-          cryptoLiveStats
-            .successfulCoins ??
-          cryptoStatus
-            ?.stats
-            ?.successfulCoins ??
+          cryptoLiveStats.successfulCoins ??
+          cryptoStatus?.stats?.successfulCoins ??
           0
         );
 
@@ -1074,21 +1194,14 @@ function App() {
   const failed =
     isNse
       ? (
-          nseLiveStats
-            .failedStocks ??
-          nseState
-            ?.failedStocks ??
-          nseState
-            ?.stats
-            ?.failedStocks ??
+          nseLiveStats.failedStocks ??
+          nseState?.failedStocks ??
+          nseState?.stats?.failedStocks ??
           0
         )
       : (
-          cryptoLiveStats
-            .failedCoins ??
-          cryptoStatus
-            ?.stats
-            ?.failedCoins ??
+          cryptoLiveStats.failedCoins ??
+          cryptoStatus?.stats?.failedCoins ??
           0
         );
 
@@ -1096,18 +1209,13 @@ function App() {
   const scanDuration =
     isNse
       ? (
-          nseLiveStats
-            .scanDurationSeconds ??
-          nseState
-            ?.scanDurationSeconds ??
+          nseLiveStats.scanDurationSeconds ??
+          nseState?.scanDurationSeconds ??
           0
         )
       : (
-          cryptoLiveStats
-            .scanDurationSeconds ??
-          cryptoStatus
-            ?.stats
-            ?.scanDurationSeconds ??
+          cryptoLiveStats.scanDurationSeconds ??
+          cryptoStatus?.stats?.scanDurationSeconds ??
           0
         );
 
@@ -1131,16 +1239,12 @@ function App() {
   const lastCompleted =
     isNse
       ? (
-          liveStatus
-            ?.lastNseCompletedAt ||
-          nseState
-            ?.completedAt
+          liveStatus?.lastNseCompletedAt ||
+          nseState?.completedAt
         )
       : (
-          liveStatus
-            ?.lastCryptoCompletedAt ||
-          cryptoStatus
-            ?.completedAt
+          liveStatus?.lastCryptoCompletedAt ||
+          cryptoStatus?.completedAt
         );
 
 
@@ -1151,11 +1255,6 @@ function App() {
   return (
 
     <div className="dashboardShell">
-
-
-      {/* ================================================= */}
-      {/* SIDEBAR */}
-      {/* ================================================= */}
 
       <aside className="sidebar">
 
@@ -1229,12 +1328,7 @@ function App() {
       </aside>
 
 
-      {/* ================================================= */}
-      {/* MAIN */}
-      {/* ================================================= */}
-
       <main className="mainContent">
-
 
         <header className="mainHeader">
 
@@ -1249,8 +1343,8 @@ function App() {
             </h1>
 
             <p className="headerSubtitle">
-              Fresh pre-phase setups across 15M,
-              30M, 45M, 1H and 2H timeframes.
+              Fresh pre-phase setups with lifecycle,
+              timeline and channel context.
             </p>
 
           </div>
@@ -1304,14 +1398,9 @@ function App() {
         }
 
 
-        {/* ================================================= */}
-        {/* MARKET CONTROL */}
-        {/* ================================================= */}
-
         <section className="marketControlRow">
 
           <div className="marketSwitch">
-
 
             <button
               className={
@@ -1465,12 +1554,7 @@ function App() {
         </section>
 
 
-        {/* ================================================= */}
-        {/* KPI */}
-        {/* ================================================= */}
-
         <section className="kpiGrid">
-
 
           <article className="kpiCard">
 
@@ -1621,10 +1705,6 @@ function App() {
         </section>
 
 
-        {/* ================================================= */}
-        {/* FILTER */}
-        {/* ================================================= */}
-
         <section className="filterBar">
 
           <div className="timeframeFilters">
@@ -1701,10 +1781,6 @@ function App() {
         </section>
 
 
-        {/* ================================================= */}
-        {/* RESULTS */}
-        {/* ================================================= */}
-
         <section className="resultsPanel">
 
           <div className="resultsHeader">
@@ -1770,345 +1846,10 @@ function App() {
           }
 
 
-          {/* ================================================= */}
-          {/* DESKTOP TABLE */}
-          {/* ================================================= */}
-
           {
             filteredSetups.length > 0 && (
 
-              <div className="tableWrap">
-
-                <table className="setupTable">
-
-                  <thead>
-
-                    <tr>
-
-                      <th>
-                        {
-                          isNse
-                            ? "SYMBOL"
-                            : "COIN"
-                        }
-                      </th>
-
-                      {
-                        !isNse && (
-                          <th>
-                            PAIR
-                          </th>
-                        )
-                      }
-
-                      <th>
-                        TIMEFRAME
-                      </th>
-
-                      <th>
-                        STATUS
-                      </th>
-
-                      <th>
-                        STRUCTURE
-                      </th>
-
-                      <th>
-                        FLASH SELL
-                      </th>
-
-                      <th>
-                        BASE
-                      </th>
-
-                      <th>
-                        AGE
-                      </th>
-
-                      <th>
-                        QUICK INFO
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-
-                  <tbody>
-
-                    {
-                      filteredSetups.map(
-                        (
-                          setup,
-                          index
-                        ) => {
-
-                          const coin =
-                            getCoinInfo(
-                              setup
-                            );
-
-
-                          const freshness =
-                            getSetupFreshness(
-                              setup
-                            );
-
-
-                          return (
-
-                            <tr
-                              key={
-                                `${displaySymbol(setup)}-${setup.timeframe}-${index}`
-                              }
-                            >
-
-                              <td>
-
-                                {
-                                  isNse ? (
-
-                                    <div className="symbolBlock">
-
-                                      <strong>
-                                        {
-                                          String(
-                                            setup.symbol ||
-                                            "-"
-                                          ).replace(
-                                            /\.NS$/i,
-                                            ""
-                                          )
-                                        }
-                                      </strong>
-
-                                      <span>
-                                        NSE F&O
-                                      </span>
-
-                                    </div>
-
-                                  ) : (
-
-                                    <div className="coinIdentity">
-
-                                      <div className="coinBadge">
-                                        {
-                                          coin.badge
-                                        }
-                                      </div>
-
-                                      <div className="symbolBlock">
-
-                                        <strong>
-                                          {
-                                            coin.name
-                                          }
-                                        </strong>
-
-                                        <span>
-                                          {
-                                            coin.symbol
-                                          }
-                                        </span>
-
-                                      </div>
-
-                                    </div>
-
-                                  )
-                                }
-
-                              </td>
-
-
-                              {
-                                !isNse && (
-
-                                  <td>
-
-                                    <div className="pairBlock">
-
-                                      <strong>
-                                        {
-                                          setup.tradingPair ||
-                                          `${coin.symbol}USDT`
-                                        }
-                                      </strong>
-
-                                      <span>
-                                        Perpetual
-                                      </span>
-
-                                    </div>
-
-                                  </td>
-
-                                )
-                              }
-
-
-                              <td>
-
-                                <span
-                                  className={
-                                    `tfBadge tf-${setup.timeframe}`
-                                  }
-                                >
-
-                                  {
-                                    setup
-                                      .timeframe
-                                      ?.toUpperCase()
-                                  }
-
-                                </span>
-
-                              </td>
-
-
-                              <td>
-
-                                <span className="prePhaseBadge">
-                                  {
-                                    setup.status
-                                  }
-                                </span>
-
-                              </td>
-
-
-                              <td>
-
-                                <span className="structureText">
-
-                                  {
-                                    displayStructure(
-                                      setup
-                                    )
-                                  }
-
-                                </span>
-
-                              </td>
-
-
-                              <td>
-
-                                <span className="flashValue">
-
-                                  {
-                                    setup
-                                      .flashSellDropPercent ??
-                                    "-"
-                                  }
-
-                                  {
-                                    setup
-                                      .flashSellDropPercent !=
-                                    null
-                                      ? "%"
-                                      : ""
-                                  }
-
-                                </span>
-
-                              </td>
-
-
-                              <td>
-
-                                <span className="baseValue">
-
-                                  {
-                                    setup.baseCandles ??
-                                    setup.baseCandlesFound ??
-                                    "-"
-                                  }
-
-                                </span>
-
-                              </td>
-
-
-                              <td>
-
-                                <span className="ageValue">
-
-                                  {
-                                    setup
-                                      .candlesSinceFlashSell ??
-                                    "-"
-                                  }
-
-                                  {
-                                    setup
-                                      .candlesSinceFlashSell !=
-                                    null
-                                      ? " candles"
-                                      : ""
-                                  }
-
-                                </span>
-
-                              </td>
-
-
-                              <td>
-
-                                <div className="quickInfo">
-
-                                  <span
-                                    className={
-                                      `quickInfoStatus ${freshness.className}`
-                                    }
-                                  >
-                                    ⚡ {
-                                      freshness.label
-                                    }
-                                  </span>
-
-                                  <small>
-
-                                    {
-                                      setup.baseCandles > 0 ||
-                                      setup.baseCandlesFound > 0
-                                        ? "Base confirmed after channel break"
-                                        : "Watching post-break structure"
-                                    }
-
-                                  </small>
-
-                                </div>
-
-                              </td>
-
-                            </tr>
-
-                          );
-
-                        }
-                      )
-                    }
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            )
-          }
-
-
-          {/* ================================================= */}
-          {/* MOBILE */}
-          {/* ================================================= */}
-
-          {
-            filteredSetups.length > 0 && (
-
-              <div className="mobileSetupList">
+              <div className="setupCardsGrid">
 
                 {
                   filteredSetups.map(
@@ -2123,30 +1864,54 @@ function App() {
                         );
 
 
-                      const freshness =
-                        getSetupFreshness(
+                      const lifecycle =
+                        getLifecycle(
                           setup
                         );
+
+
+                      const agePercent =
+                        getAgePercent(
+                          setup
+                        );
+
+
+                      const mainName =
+                        isNse
+                          ? String(
+                              setup.symbol ||
+                              "-"
+                            ).replace(
+                              /\.NS$/i,
+                              ""
+                            )
+                          : coin.name;
+
+
+                      const subName =
+                        isNse
+                          ? `${mainName} · NSE F&O`
+                          : `${coin.symbol} · ${setup.tradingPair || `${coin.symbol}USDT`}`;
 
 
                       return (
 
                         <article
-                          className="mobileSetupCard"
+                          className="setupLifecycleCard"
 
                           key={
-                            `mobile-${displaySymbol(setup)}-${setup.timeframe}-${index}`
+                            `${displaySymbol(setup)}-${setup.timeframe}-${setup.flashSellAt || setup.flashSellDate || index}`
                           }
                         >
 
-                          <div className="mobileSetupTop">
+                          <div className="setupCardHeader">
 
-                            <div className="mobileCoinHeading">
+                            <div className="setupIdentityRow">
 
                               {
                                 !isNse && (
 
-                                  <div className="coinBadge mobile">
+                                  <div className="coinBadge">
                                     {
                                       coin.badge
                                     }
@@ -2155,193 +1920,295 @@ function App() {
                                 )
                               }
 
+
                               <div>
 
-                                <span className="mobileMarketLabel">
-
-                                  {
-                                    isNse
-                                      ? "NSE F&O"
-                                      : setup.tradingPair ||
-                                        `${coin.symbol}USDT`
-                                  }
-
-                                </span>
-
                                 <h3>
-
-                                  {
-                                    isNse
-                                      ? String(
-                                          setup.symbol ||
-                                          "-"
-                                        ).replace(
-                                          /\.NS$/i,
-                                          ""
-                                        )
-                                      : coin.name
-                                  }
-
+                                  {mainName}
                                 </h3>
 
-                                {
-                                  !isNse && (
-
-                                    <span className="mobileCoinSymbol">
-                                      {coin.symbol}
-                                    </span>
-
-                                  )
-                                }
+                                <span className="setupSubName">
+                                  {subName}
+                                </span>
 
                               </div>
 
                             </div>
 
 
-                            <span className="prePhaseBadge">
-                              {
-                                setup.status
-                              }
-                            </span>
+                            <div className="setupBadgeStack">
 
-                          </div>
-
-
-                          <div className="mobileSetupGrid">
-
-                            <div>
-
-                              <span>
-                                Timeframe
+                              <span
+                                className={
+                                  `lifecycleBadge ${lifecycle.key}`
+                                }
+                              >
+                                <span className="lifecycleDot" />
+                                {
+                                  lifecycle.label
+                                }
                               </span>
 
-                              <strong>
-                                {
-                                  setup
-                                    .timeframe
-                                    ?.toUpperCase()
-                                }
-                              </strong>
+                              <div className="setupMiniBadges">
 
-                            </div>
+                                <span
+                                  className={
+                                    `tfBadge tf-${setup.timeframe}`
+                                  }
+                                >
+                                  {
+                                    setup
+                                      .timeframe
+                                      ?.toUpperCase()
+                                  }
+                                </span>
 
+                                <span className="prePhaseBadge">
+                                  {
+                                    setup.status
+                                  }
+                                </span>
 
-                            <div>
-
-                              <span>
-                                Flash Sell
-                              </span>
-
-                              <strong className="flashValue">
-
-                                {
-                                  setup
-                                    .flashSellDropPercent ??
-                                  "-"
-                                }
-
-                                {
-                                  setup
-                                    .flashSellDropPercent !=
-                                  null
-                                    ? "%"
-                                    : ""
-                                }
-
-                              </strong>
-
-                            </div>
-
-
-                            <div>
-
-                              <span>
-                                Base
-                              </span>
-
-                              <strong>
-
-                                {
-                                  setup.baseCandles ??
-                                  setup.baseCandlesFound ??
-                                  "-"
-                                }
-
-                              </strong>
-
-                            </div>
-
-
-                            <div>
-
-                              <span>
-                                Age
-                              </span>
-
-                              <strong>
-
-                                {
-                                  setup
-                                    .candlesSinceFlashSell ??
-                                  "-"
-                                }
-
-                              </strong>
+                              </div>
 
                             </div>
 
                           </div>
 
 
-                          <div className="mobileStructure">
+                          <div className="timeline">
 
-                            <span>
-                              Structure
-                            </span>
+                            <div className="timelineStep">
 
-                            <strong>
+                              <span className="timelineTime">
+                                {
+                                  formatTimelineDate(
+                                    setup.flashSellAt ||
+                                    setup.flashSellDate
+                                  )
+                                }
+                              </span>
+
+                              <div className="timelineNode flash">
+                                ↓
+                              </div>
+
+                              <strong>
+                                FLASH SELL
+                              </strong>
+
+                              <small className="timelineValue negative">
+                                {
+                                  setup.flashSellDropPercent != null
+                                    ? `-${Number(setup.flashSellDropPercent).toFixed(2)}%`
+                                    : "-"
+                                }
+                              </small>
+
+                            </div>
+
+
+                            <div className="timelineConnector">
+                              →
+                            </div>
+
+
+                            <div className="timelineStep">
+
+                              <span className="timelineTime">
+                                {
+                                  formatTimelineDate(
+                                    setup.baseStartedAt
+                                  )
+                                }
+                              </span>
+
+                              <div className="timelineNode base">
+                                ◇
+                              </div>
+
+                              <strong>
+                                {
+                                  setup.baseType ||
+                                  "BASE"
+                                }
+                              </strong>
+
+                              <small>
+                                Base formed
+                              </small>
+
+                            </div>
+
+
+                            <div className="timelineConnector">
+                              →
+                            </div>
+
+
+                            <div className="timelineStep">
+
+                              <span className="timelineTime">
+                                {
+                                  formatTimelineDate(
+                                    setup.detectedAt
+                                  )
+                                }
+                              </span>
+
+                              <div className="timelineNode detected">
+                                ✓
+                              </div>
+
+                              <strong>
+                                DETECTED
+                              </strong>
+
+                              <small>
+                                Scanner discovery
+                              </small>
+
+                            </div>
+
+                          </div>
+
+
+                          <div className="ageSection">
+
+                            <div className="ageHeader">
+
+                              <span>
+                                Setup age
+                              </span>
+
+                              <strong>
+                                {
+                                  getAgeText(
+                                    setup
+                                  )
+                                } candles
+                              </strong>
+
+                            </div>
+
+
+                            <div className="ageTrack">
+
+                              <div
+                                className={
+                                  `ageFill ${lifecycle.key}`
+                                }
+
+                                style={{
+                                  width:
+                                    `${agePercent}%`
+                                }}
+                              />
+
+                            </div>
+
+                          </div>
+
+
+                          <div className="setupContextRow">
+
+                            <div>
+
+                              <span className="contextIcon">
+                                ↗
+                              </span>
+
+                              <div>
+
+                                <strong>
+                                  {
+                                    displayStructure(
+                                      setup
+                                    )
+                                  }
+                                </strong>
+
+                                <small>
+                                  Base confirmed after lower-channel break
+                                </small>
+
+                              </div>
+
+                            </div>
+
+
+                            <div className="contextStats">
+
                               {
-                                displayStructure(
-                                  setup
+                                setup.channelRespectRatio != null && (
+
+                                  <span>
+                                    Respect{" "}
+                                    <strong>
+                                      {
+                                        Math.round(
+                                          setup.channelRespectRatio *
+                                          100
+                                        )
+                                      }%
+                                    </strong>
+                                  </span>
+
                                 )
                               }
-                            </strong>
+
+
+                              {
+                                setup.baseCandlesFound != null && (
+
+                                  <span>
+                                    Base candles{" "}
+                                    <strong>
+                                      {
+                                        setup.baseCandlesFound
+                                      }
+                                    </strong>
+                                  </span>
+
+                                )
+                              }
+
+                            </div>
 
                           </div>
 
 
-                          <div className="mobileQuickInfo">
+                          <div className="setupCardFooter">
 
-                            <span
-                              className={
-                                `quickInfoStatus ${freshness.className}`
+                            <span>
+                              Last seen{" "}
+                              {
+                                formatTimelineDate(
+                                  setup.lastSeenAt
+                                )
                               }
-                            >
-
-                              ⚡ {
-                                freshness.label
-                              }
-
                             </span>
 
-                            <small>
+                            {
+                              setup.baseConfirmedAt && (
 
-                              {
-                                setup.baseCandles > 0 ||
-                                setup.baseCandlesFound > 0
-                                  ? "Base confirmed after channel break"
-                                  : "Watching post-break structure"
-                              }
+                                <span>
+                                  Base confirmed{" "}
+                                  {
+                                    formatTimelineDate(
+                                      setup.baseConfirmedAt
+                                    )
+                                  }
+                                </span>
 
-                            </small>
+                              )
+                            }
 
                           </div>
 
                         </article>
 
                       );
-
                     }
                   )
                 }
@@ -2367,7 +2234,6 @@ function App() {
     </div>
 
   );
-
 }
 
 

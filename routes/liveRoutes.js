@@ -16,15 +16,38 @@ const router =
 
 
 // ======================================================
+// CONFIG
+// ======================================================
+//
+// External cron can call:
+//
+// POST /api/live/trigger
+//
+// every 5 minutes.
+//
+// CRYPTO:
+// Every trigger.
+//
+// NSE:
+// Maximum once every 10 minutes while market is open.
+//
+// ======================================================
+
+const NSE_SCAN_INTERVAL_MS =
+    10 * 60 * 1000;
+
+
+// ======================================================
 // CRON SECURITY
 //
 // cron-job.org must send:
 //
 // X-CRON-SECRET: <your secret>
 //
-// The secret will live in:
-// - local .env
-// - Render environment variables
+// Secret lives in:
+//
+// local .env
+// production environment variables
 //
 // Never GitHub.
 // ======================================================
@@ -63,6 +86,162 @@ function validateCronSecret(
 
 
 // ======================================================
+// CHECK WHETHER NSE SCAN IS DUE
+//
+// Rules:
+//
+// 1. Market must be open.
+// 2. Previous NSE scan must not still be running.
+// 3. If no previous scan exists, run immediately.
+// 4. Otherwise at least 10 minutes must have elapsed
+//    since the previous NSE scan started.
+//
+// We use lastNseStartedAt rather than completion time
+// because the desired cadence is scan-start to scan-start.
+// ======================================================
+
+function getNseScanDecision(
+    state
+) {
+
+    const marketOpen =
+        isNseMarketSession();
+
+
+    if (
+        !marketOpen
+    ) {
+
+        return {
+
+            marketOpen: false,
+
+            due: false,
+
+            requested: false,
+
+            reason:
+                "MARKET_CLOSED",
+
+            nextEligibleAt:
+                null
+
+        };
+    }
+
+
+    if (
+        state.nseRunning
+    ) {
+
+        return {
+
+            marketOpen: true,
+
+            due: false,
+
+            requested: false,
+
+            reason:
+                "NSE_ALREADY_RUNNING",
+
+            nextEligibleAt:
+                null
+
+        };
+    }
+
+
+    if (
+        !state.lastNseStartedAt
+    ) {
+
+        return {
+
+            marketOpen: true,
+
+            due: true,
+
+            requested: true,
+
+            reason:
+                "FIRST_SCAN",
+
+            nextEligibleAt:
+                null
+
+        };
+    }
+
+
+    const lastStartedAt =
+        new Date(
+            state.lastNseStartedAt
+        );
+
+
+    if (
+        Number.isNaN(
+            lastStartedAt.getTime()
+        )
+    ) {
+
+        return {
+
+            marketOpen: true,
+
+            due: true,
+
+            requested: true,
+
+            reason:
+                "INVALID_PREVIOUS_SCAN_TIME",
+
+            nextEligibleAt:
+                null
+
+        };
+    }
+
+
+    const nextEligibleTime =
+        lastStartedAt.getTime() +
+        NSE_SCAN_INTERVAL_MS;
+
+
+    const now =
+        Date.now();
+
+
+    const due =
+        now >=
+        nextEligibleTime;
+
+
+    return {
+
+        marketOpen: true,
+
+        due,
+
+        requested:
+            due,
+
+        reason:
+            due
+                ? "NSE_SCAN_DUE"
+                : "NSE_10_MINUTE_INTERVAL",
+
+        nextEligibleAt:
+            new Date(
+                nextEligibleTime
+            ).toISOString()
+
+    };
+}
+
+
+// ======================================================
 // LIVE SCANNER STATUS
 // ======================================================
 
@@ -74,11 +253,36 @@ router.get(
             getRunnerState();
 
 
+        const nseDecision =
+            getNseScanDecision(
+                state
+            );
+
+
         return res.json({
 
             success: true,
 
-            ...state
+            ...state,
+
+            schedule: {
+
+                cryptoIntervalMinutes:
+                    5,
+
+                nseIntervalMinutes:
+                    10,
+
+                nseMarketOpen:
+                    nseDecision.marketOpen,
+
+                nseDue:
+                    nseDecision.due,
+
+                nseNextEligibleAt:
+                    nseDecision.nextEligibleAt
+
+            }
 
         });
     }
@@ -149,22 +353,30 @@ router.get(
 //
 // POST /api/live/trigger
 //
-// Called every 5 minutes by cron-job.org.
+// Intended external schedule:
+//
+// EVERY 5 MINUTES
 //
 // CRYPTO:
-// Always runs.
+//
+// Runs every trigger unless the previous crypto scan
+// is still running.
 //
 // NSE:
+//
 // Runs only:
+//
 // Monday-Friday
-// 09:15-15:30 IST.
+// 09:15-15:30 IST
+//
+// AND
+//
+// at least 10 minutes since the previous NSE scan.
 //
 // IMPORTANT:
-// Response is sent immediately.
-// Scanning continues in background.
 //
-// This prevents cron-job.org from waiting for the
-// complete 200-symbol scan.
+// Response is returned immediately.
+// Actual scanning continues asynchronously.
 // ======================================================
 
 router.post(
@@ -198,8 +410,14 @@ router.post(
             getRunnerState();
 
 
-        const nseMarketOpen =
-            isNseMarketSession();
+        const nseDecision =
+            getNseScanDecision(
+                state
+            );
+
+
+        const cryptoRequested =
+            !state.cryptoRunning;
 
 
         // ==============================================
@@ -217,8 +435,11 @@ router.post(
 
                 crypto: {
 
+                    intervalMinutes:
+                        5,
+
                     requested:
-                        true,
+                        cryptoRequested,
 
                     alreadyRunning:
                         state.cryptoRunning
@@ -227,14 +448,26 @@ router.post(
 
                 nse: {
 
+                    intervalMinutes:
+                        10,
+
                     marketOpen:
-                        nseMarketOpen,
+                        nseDecision.marketOpen,
+
+                    due:
+                        nseDecision.due,
 
                     requested:
-                        nseMarketOpen,
+                        nseDecision.requested,
 
                     alreadyRunning:
-                        state.nseRunning
+                        state.nseRunning,
+
+                    reason:
+                        nseDecision.reason,
+
+                    nextEligibleAt:
+                        nseDecision.nextEligibleAt
 
                 },
 
@@ -247,46 +480,66 @@ router.post(
 
         // ==============================================
         // CRYPTO BACKGROUND SCAN
+        //
+        // Every 5-minute cron trigger.
+        //
+        // Do not launch another one if the previous scan
+        // is still running.
         // ==============================================
 
-        runCryptoScan()
-            .then(
-                result => {
+        if (
+            cryptoRequested
+        ) {
 
-                    console.log(
-                        "Cron crypto scan finished:",
-                        {
-                            success:
-                                result.success,
+            runCryptoScan()
+                .then(
+                    result => {
 
-                            activeSetups:
-                                result
-                                    .activeSetups
-                                    ?.length ||
-                                0
-                        }
-                    );
+                        console.log(
+                            "Cron crypto scan finished:",
+                            {
 
-                }
-            )
-            .catch(
-                error => {
+                                success:
+                                    result.success,
 
-                    console.error(
-                        "Cron crypto scan failed:",
-                        error
-                    );
+                                activeSetups:
+                                    result
+                                        .activeSetups
+                                        ?.length ||
+                                    0
 
-                }
+                            }
+                        );
+
+                    }
+                )
+                .catch(
+                    error => {
+
+                        console.error(
+                            "Cron crypto scan failed:",
+                            error
+                        );
+
+                    }
+                );
+
+        } else {
+
+            console.log(
+                "Cron crypto scan skipped: previous scan still running."
             );
+        }
 
 
         // ==============================================
         // NSE BACKGROUND SCAN
+        //
+        // Maximum once every 10 minutes.
         // ==============================================
 
         if (
-            nseMarketOpen
+            nseDecision.requested
         ) {
 
             runNseScan()
@@ -296,6 +549,7 @@ router.post(
                         console.log(
                             "Cron NSE scan finished:",
                             {
+
                                 success:
                                     result.success,
 
@@ -304,6 +558,7 @@ router.post(
                                         .activeSetups
                                         ?.length ||
                                     0
+
                             }
                         );
 
@@ -323,7 +578,7 @@ router.post(
         } else {
 
             console.log(
-                "Cron NSE scan skipped: market closed."
+                `Cron NSE scan skipped: ${nseDecision.reason}`
             );
         }
 

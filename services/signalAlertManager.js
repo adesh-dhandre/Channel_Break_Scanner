@@ -22,8 +22,14 @@ const SENT_SIGNALS_FILE =
         "sent-signals.json"
     );
 
+const DETECTED_SIGNALS_FILE =
+    path.join(
+        DATA_DIR,
+        "detected-signals.json"
+    );
 
-// Keep signal history bounded.
+
+// Keep histories bounded.
 // This is far more than we need for normal operation.
 
 const MAX_STORED_SIGNALS =
@@ -34,7 +40,21 @@ const MAX_STORED_SIGNALS =
 // MEMORY
 // ======================================================
 
+// IMPORTANT:
+//
+// sentSignals:
+// Tracks signals whose email was successfully delivered.
+//
+// detectedSignals:
+// Tracks when our scanner first discovered a PRE_PHASE
+// and when it most recently saw that same setup.
+//
+// These concepts must remain separate.
+
 const sentSignals =
+    new Map();
+
+const detectedSignals =
     new Map();
 
 
@@ -61,6 +81,42 @@ function ensureDataDirectory() {
 
 
 // ======================================================
+// NORMALIZE DATE
+// ======================================================
+
+function normalizeDate(
+    value
+) {
+
+    if (
+        !value
+    ) {
+
+        return null;
+    }
+
+
+    const date =
+        new Date(
+            value
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return value;
+    }
+
+
+    return date.toISOString();
+}
+
+
+// ======================================================
 // CREATE UNIQUE SIGNAL KEY
 //
 // Same:
@@ -68,8 +124,18 @@ function ensureDataDirectory() {
 //
 // = SAME signal.
 //
-// Therefore the scanner can run every 5 minutes without
-// repeatedly emailing the same PRE_PHASE.
+// IMPORTANT:
+//
+// Keep this identity consistent for BOTH:
+//
+// 1. detection tracking
+// 2. email duplicate protection
+//
+// We prefer flashSellDate because that is the existing
+// signal identity field.
+//
+// flashSellAt is only a safe fallback for newer setup
+// metadata.
 // ======================================================
 
 function createSignalKey(
@@ -100,6 +166,7 @@ function createSignalKey(
 
     let flashSellDate =
         setup.flashSellDate ||
+        setup.flashSellAt ||
         "NO_FLASH_DATE";
 
 
@@ -108,20 +175,18 @@ function createSignalKey(
         "NO_FLASH_DATE"
     ) {
 
-        const date =
-            new Date(
+        const normalized =
+            normalizeDate(
                 flashSellDate
             );
 
 
         if (
-            !Number.isNaN(
-                date.getTime()
-            )
+            normalized
         ) {
 
             flashSellDate =
-                date.toISOString();
+                normalized;
         }
     }
 
@@ -224,6 +289,94 @@ function loadSentSignals() {
 
 
 // ======================================================
+// LOAD DETECTED SIGNALS FROM DISK
+// ======================================================
+
+function loadDetectedSignals() {
+
+    ensureDataDirectory();
+
+
+    if (
+        !fs.existsSync(
+            DETECTED_SIGNALS_FILE
+        )
+    ) {
+
+        console.log(
+            "No previous detected-signal history found."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const raw =
+            fs.readFileSync(
+                DETECTED_SIGNALS_FILE,
+                "utf8"
+            );
+
+
+        const parsed =
+            JSON.parse(
+                raw
+            );
+
+
+        if (
+            !Array.isArray(
+                parsed
+            )
+        ) {
+
+            console.warn(
+                "detected-signals.json is invalid. Starting empty."
+            );
+
+            return;
+        }
+
+
+        for (
+            const item
+            of parsed
+        ) {
+
+            if (
+                !item ||
+                !item.key
+            ) {
+
+                continue;
+            }
+
+
+            detectedSignals.set(
+                item.key,
+                item
+            );
+        }
+
+
+        console.log(
+            `Loaded ${detectedSignals.size} previously detected signal(s).`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Could not load detected signal history:",
+            error.message
+        );
+    }
+}
+
+
+// ======================================================
 // SAVE SENT SIGNALS
 // ======================================================
 
@@ -305,6 +458,332 @@ function saveSentSignals() {
 
 
 // ======================================================
+// SAVE DETECTED SIGNALS
+// ======================================================
+
+function saveDetectedSignals() {
+
+    ensureDataDirectory();
+
+
+    try {
+
+        let records =
+            Array.from(
+                detectedSignals.values()
+            );
+
+
+        // Most recently seen records first.
+
+        records.sort(
+            (a, b) =>
+                new Date(
+                    b.lastSeenAt ||
+                    b.detectedAt ||
+                    0
+                ).getTime() -
+                new Date(
+                    a.lastSeenAt ||
+                    a.detectedAt ||
+                    0
+                ).getTime()
+        );
+
+
+        records =
+            records.slice(
+                0,
+                MAX_STORED_SIGNALS
+            );
+
+
+        // Rebuild memory if old entries were trimmed.
+
+        if (
+            records.length <
+            detectedSignals.size
+        ) {
+
+            detectedSignals.clear();
+
+
+            for (
+                const record
+                of records
+            ) {
+
+                detectedSignals.set(
+                    record.key,
+                    record
+                );
+            }
+        }
+
+
+        fs.writeFileSync(
+            DETECTED_SIGNALS_FILE,
+            JSON.stringify(
+                records,
+                null,
+                2
+            ),
+            "utf8"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Could not save detected signal history:",
+            error.message
+        );
+    }
+}
+
+
+// ======================================================
+// TRACK SETUP DETECTION
+//
+// detectedAt:
+// First exact system time our scanner discovered this
+// unique PRE_PHASE.
+//
+// NEVER changes for the same signal key.
+//
+// lastSeenAt:
+// Updated every scanner cycle where the same PRE_PHASE
+// remains visible.
+//
+// IMPORTANT:
+//
+// This does NOT mean an email was successfully sent.
+// Detection history is completely separate from
+// sentSignals.
+// ======================================================
+
+function trackSetupDetection(
+    setup
+) {
+
+    if (
+        !setup ||
+        setup.status !==
+            "PRE_PHASE"
+    ) {
+
+        return null;
+    }
+
+
+    const key =
+        createSignalKey(
+            setup
+        );
+
+
+    const now =
+        new Date()
+            .toISOString();
+
+
+    const existing =
+        detectedSignals.get(
+            key
+        );
+
+
+    let record;
+
+
+    if (
+        existing
+    ) {
+
+        record = {
+
+            ...existing,
+
+            market:
+                setup.market ||
+                existing.market ||
+                null,
+
+            symbol:
+                setup.tradingPair ||
+                setup.symbol ||
+                existing.symbol ||
+                null,
+
+            tradingPair:
+                setup.tradingPair ||
+                existing.tradingPair ||
+                null,
+
+            timeframe:
+                setup.timeframe ||
+                existing.timeframe ||
+                null,
+
+            flashSellDate:
+                normalizeDate(
+                    setup.flashSellDate
+                ) ||
+                existing.flashSellDate ||
+                null,
+
+            flashSellAt:
+                normalizeDate(
+                    setup.flashSellAt ||
+                    setup.flashSellDate
+                ) ||
+                existing.flashSellAt ||
+                null,
+
+            baseType:
+                setup.baseType ||
+                existing.baseType ||
+                null,
+
+            baseStartedAt:
+                normalizeDate(
+                    setup.baseStartedAt
+                ) ||
+                existing.baseStartedAt ||
+                null,
+
+            baseConfirmedAt:
+                normalizeDate(
+                    setup.baseConfirmedAt
+                ) ||
+                existing.baseConfirmedAt ||
+                null,
+
+            detectedAt:
+                existing.detectedAt,
+
+            lastSeenAt:
+                now
+
+        };
+
+    } else {
+
+        record = {
+
+            key,
+
+            market:
+                setup.market ||
+                null,
+
+            symbol:
+                setup.tradingPair ||
+                setup.symbol ||
+                null,
+
+            tradingPair:
+                setup.tradingPair ||
+                null,
+
+            timeframe:
+                setup.timeframe ||
+                null,
+
+            flashSellDate:
+                normalizeDate(
+                    setup.flashSellDate
+                ),
+
+            flashSellAt:
+                normalizeDate(
+                    setup.flashSellAt ||
+                    setup.flashSellDate
+                ),
+
+            baseType:
+                setup.baseType ||
+                null,
+
+            baseStartedAt:
+                normalizeDate(
+                    setup.baseStartedAt
+                ),
+
+            baseConfirmedAt:
+                normalizeDate(
+                    setup.baseConfirmedAt
+                ),
+
+            detectedAt:
+                now,
+
+            lastSeenAt:
+                now
+
+        };
+    }
+
+
+    detectedSignals.set(
+        key,
+        record
+    );
+
+
+    saveDetectedSignals();
+
+
+    // Attach persistence metadata directly to the current
+    // setup object.
+    //
+    // scanRunner receives this SAME object reference, so
+    // its activeSetups will automatically contain these
+    // fields without changing scanRunner yet.
+
+    setup.detectedAt =
+        record.detectedAt;
+
+    setup.lastSeenAt =
+        record.lastSeenAt;
+
+
+    return record;
+}
+
+
+// ======================================================
+// GET TRACKED SETUP
+// ======================================================
+
+function getTrackedSetup(
+    setup
+) {
+
+    if (
+        !setup
+    ) {
+
+        return null;
+    }
+
+
+    const key =
+        createSignalKey(
+            setup
+        );
+
+
+    return (
+        detectedSignals.get(
+            key
+        ) ||
+        null
+    );
+}
+
+
+// ======================================================
 // CHECK WHETHER SIGNAL WAS ALREADY SENT
 // ======================================================
 
@@ -362,6 +841,7 @@ function markSignalSent(
 
             flashSellDate:
                 setup.flashSellDate ||
+                setup.flashSellAt ||
                 null,
 
             sentAt:
@@ -401,6 +881,21 @@ async function processSetupAlert(
     }
 
 
+    // ==============================================
+    // TRACK DETECTION FIRST
+    //
+    // This happens independently of email delivery.
+    //
+    // If Mailjet later fails, detectedAt is still valid
+    // because the scanner genuinely discovered the setup.
+    // ==============================================
+
+    const detection =
+        trackSetupDetection(
+            setup
+        );
+
+
     const key =
         createSignalKey(
             setup
@@ -426,6 +921,14 @@ async function processSetupAlert(
 
             key,
 
+            detectedAt:
+                detection?.detectedAt ||
+                null,
+
+            lastSeenAt:
+                detection?.lastSeenAt ||
+                null,
+
             reason:
                 "ALREADY_SENT"
 
@@ -445,7 +948,7 @@ async function processSetupAlert(
         );
 
 
-        // Only store it after successful email delivery.
+        // Only store email state after successful delivery.
 
         markSignalSent(
             setup
@@ -463,7 +966,15 @@ async function processSetupAlert(
 
             duplicate: false,
 
-            key
+            key,
+
+            detectedAt:
+                detection?.detectedAt ||
+                null,
+
+            lastSeenAt:
+                detection?.lastSeenAt ||
+                null
 
         };
 
@@ -471,7 +982,11 @@ async function processSetupAlert(
     } catch (error) {
 
         // DO NOT mark failed email as sent.
-        // Next scanner cycle can retry it.
+        //
+        // Detection history remains saved.
+        //
+        // Next scanner cycle can retry the email while
+        // preserving the original detectedAt.
 
         console.error(
             `Email alert failed for ${key}:`,
@@ -486,6 +1001,14 @@ async function processSetupAlert(
             duplicate: false,
 
             key,
+
+            detectedAt:
+                detection?.detectedAt ||
+                null,
+
+            lastSeenAt:
+                detection?.lastSeenAt ||
+                null,
 
             reason:
                 "EMAIL_FAILED",
@@ -618,8 +1141,14 @@ function getAlertStats() {
         sentSignalCount:
             sentSignals.size,
 
+        detectedSignalCount:
+            detectedSignals.size,
+
         historyFile:
-            SENT_SIGNALS_FILE
+            SENT_SIGNALS_FILE,
+
+        detectionHistoryFile:
+            DETECTED_SIGNALS_FILE
 
     };
 }
@@ -631,6 +1160,8 @@ function getAlertStats() {
 
 loadSentSignals();
 
+loadDetectedSignals();
+
 
 // ======================================================
 // EXPORTS
@@ -641,6 +1172,10 @@ module.exports = {
     createSignalKey,
 
     wasSignalSent,
+
+    trackSetupDetection,
+
+    getTrackedSetup,
 
     processSetupAlert,
 

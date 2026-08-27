@@ -83,13 +83,6 @@ async function scanSingleCrypto(coin) {
 
         // ==============================================
         // BUILD CRYPTO TIMEFRAMES
-        //
-        // IMPORTANT:
-        // Crypto runs continuously 24/7.
-        //
-        // We therefore explicitly pass CRYPTO so
-        // timeframeService does NOT reset aggregation
-        // at the IST trading-day boundary.
         // ==============================================
 
         const timeframes =
@@ -159,6 +152,18 @@ async function scanSingleCrypto(coin) {
                 isSetup:
                     result.isSetup,
 
+                lifecycle:
+                    result.lifecycle ||
+                    null,
+
+                lifecycleLabel:
+                    result.lifecycleLabel ||
+                    null,
+
+                lifecycleTone:
+                    result.lifecycleTone ||
+                    null,
+
                 uptrend:
                     result.uptrend,
 
@@ -173,11 +178,20 @@ async function scanSingleCrypto(coin) {
                     result.flashSellDate ||
                     null,
 
+                flashSellAt:
+                    result.flashSellAt ||
+                    result.flashSellDate ||
+                    null,
+
                 recent:
                     result.isRecent === true,
 
                 baseForming:
-                    result.baseForming === true
+                    result.baseForming === true,
+
+                baseType:
+                    result.baseType ||
+                    null
 
             });
 
@@ -205,6 +219,18 @@ async function scanSingleCrypto(coin) {
                     status:
                         result.status,
 
+                    lifecycle:
+                        result.lifecycle ||
+                        null,
+
+                    lifecycleLabel:
+                        result.lifecycleLabel ||
+                        null,
+
+                    lifecycleTone:
+                        result.lifecycleTone ||
+                        null,
+
                     uptrendScenario:
                         result.uptrendScenario ||
                         null,
@@ -230,18 +256,64 @@ async function scanSingleCrypto(coin) {
                         null,
 
                     flashSellDate:
-                        result.flashSellDate,
+                        result.flashSellDate ||
+                        null,
+
+                    flashSellAt:
+                        result.flashSellAt ||
+                        result.flashSellDate ||
+                        null,
 
                     flashSellDropPercent:
                         result.flashSellDropPercent,
 
+                    flashSellBodyRatio:
+                        result.flashSellBodyRatio,
+
                     lowerChannelValue:
                         result.lowerChannelValue,
+
+                    channelLookback:
+                        result.channelLookback,
+
+                    highSlopePercent:
+                        result.highSlopePercent,
+
+                    lowSlopePercent:
+                        result.lowSlopePercent,
+
+                    parallelRatio:
+                        result.parallelRatio,
+
+                    channelRespectRatio:
+                        result.channelRespectRatio,
 
                     candlesSinceFlashSell:
                         result.candlesSinceFlashSell,
 
-                    baseCandles:
+                    maxCandlesSinceFlashSell:
+                        result.maxCandlesSinceFlashSell,
+
+                    ageText:
+                        result.ageText ||
+                        null,
+
+                    baseForming:
+                        result.baseForming === true,
+
+                    baseType:
+                        result.baseType ||
+                        null,
+
+                    baseStartedAt:
+                        result.baseStartedAt ||
+                        null,
+
+                    baseConfirmedAt:
+                        result.baseConfirmedAt ||
+                        null,
+
+                    baseCandlesFound:
                         result.baseCandlesFound,
 
                     market:
@@ -341,7 +413,7 @@ async function scanCryptoFutures() {
 
 
     // ==============================================
-    // GET TOP-200 ∩ BINANCE PERPETUAL UNIVERSE
+    // GET BINANCE PERPETUAL UNIVERSE
     // ==============================================
 
     const universe =

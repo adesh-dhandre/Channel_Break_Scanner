@@ -162,6 +162,10 @@ async function scanSingleSymbol(symbol) {
                 );
 
 
+            // ==========================================
+            // SUMMARY
+            // ==========================================
+
             scanSummary.push({
 
                 symbol,
@@ -172,7 +176,32 @@ async function scanSingleSymbol(symbol) {
                     result.status,
 
                 isSetup:
-                    result.isSetup
+                    result.isSetup,
+
+                lifecycle:
+                    result.lifecycle ||
+                    null,
+
+                lifecycleLabel:
+                    result.lifecycleLabel ||
+                    null,
+
+                lifecycleTone:
+                    result.lifecycleTone ||
+                    null,
+
+                flashSellDate:
+                    result.flashSellDate ||
+                    null,
+
+                flashSellAt:
+                    result.flashSellAt ||
+                    result.flashSellDate ||
+                    null,
+
+                baseType:
+                    result.baseType ||
+                    null
 
             });
 
@@ -194,17 +223,102 @@ async function scanSingleSymbol(symbol) {
                     status:
                         result.status,
 
+                    lifecycle:
+                        result.lifecycle ||
+                        null,
+
+                    lifecycleLabel:
+                        result.lifecycleLabel ||
+                        null,
+
+                    lifecycleTone:
+                        result.lifecycleTone ||
+                        null,
+
+                    uptrendScenario:
+                        result.uptrendScenario ||
+                        null,
+
+                    HH1:
+                        result.HH1 ||
+                        null,
+
+                    HL1:
+                        result.HL1 ||
+                        null,
+
+                    HH2:
+                        result.HH2 ||
+                        null,
+
+                    HL2:
+                        result.HL2 ||
+                        null,
+
+                    continuationHigh:
+                        result.continuationHigh ||
+                        null,
+
                     flashSellDate:
-                        result.flashSellDate,
+                        result.flashSellDate ||
+                        null,
+
+                    flashSellAt:
+                        result.flashSellAt ||
+                        result.flashSellDate ||
+                        null,
 
                     flashSellDropPercent:
                         result.flashSellDropPercent,
 
-                    baseCandles:
-                        result.baseCandlesFound,
+                    flashSellBodyRatio:
+                        result.flashSellBodyRatio,
+
+                    lowerChannelValue:
+                        result.lowerChannelValue,
+
+                    channelLookback:
+                        result.channelLookback,
+
+                    highSlopePercent:
+                        result.highSlopePercent,
+
+                    lowSlopePercent:
+                        result.lowSlopePercent,
+
+                    parallelRatio:
+                        result.parallelRatio,
+
+                    channelRespectRatio:
+                        result.channelRespectRatio,
 
                     candlesSinceFlashSell:
                         result.candlesSinceFlashSell,
+
+                    maxCandlesSinceFlashSell:
+                        result.maxCandlesSinceFlashSell,
+
+                    ageText:
+                        result.ageText ||
+                        null,
+
+                    baseForming:
+                        result.baseForming === true,
+
+                    baseType:
+                        result.baseType ||
+                        null,
+
+                    baseStartedAt:
+                        result.baseStartedAt ||
+                        null,
+
+                    baseConfirmedAt:
+                        result.baseConfirmedAt ||
+                        null,
+
+                    baseCandlesFound:
+                        result.baseCandlesFound,
 
                     market:
                         "NSE"
