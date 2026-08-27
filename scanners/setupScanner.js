@@ -8,6 +8,106 @@ const {
 
 
 // ======================================================
+// TIMEFRAME DURATION
+// ======================================================
+//
+// Candle.date represents candle OPEN time.
+//
+// Example:
+//
+// TradingView 30m candle:
+// open      -> 01:30 IST
+// close     -> 02:00 IST
+//
+// PRE_PHASE cannot be confirmed until the candle closes.
+//
+// Therefore:
+//
+// baseStartedAt   = candle OPEN time
+// baseConfirmedAt = candle CLOSE time
+//
+// This works for both Crypto and NSE.
+// ======================================================
+
+function getTimeframeMilliseconds(
+    timeframe
+) {
+
+    const durations = {
+
+        "5m":
+            5 * 60 * 1000,
+
+        "15m":
+            15 * 60 * 1000,
+
+        "30m":
+            30 * 60 * 1000,
+
+        "45m":
+            45 * 60 * 1000,
+
+        "1h":
+            60 * 60 * 1000,
+
+        "2h":
+            2 * 60 * 60 * 1000
+
+    };
+
+
+    return (
+        durations[
+            timeframe
+        ] ||
+        60 * 60 * 1000
+    );
+}
+
+
+// ======================================================
+// CANDLE CLOSE TIME
+// ======================================================
+
+function getCandleCloseTime(
+    candleOpenTime,
+    timeframe
+) {
+
+    if (
+        !candleOpenTime
+    ) {
+
+        return null;
+    }
+
+
+    const openTime =
+        new Date(
+            candleOpenTime
+        ).getTime();
+
+
+    if (
+        Number.isNaN(
+            openTime
+        )
+    ) {
+
+        return null;
+    }
+
+
+    return new Date(
+        openTime +
+        getTimeframeMilliseconds(
+            timeframe
+        )
+    );
+}
+
+
+// ======================================================
 // BASE TYPE
 // ======================================================
 
@@ -218,6 +318,12 @@ function detectPrePhaseSetup(
                 null,
 
             baseConfirmedAt:
+                null,
+
+            prePhaseConfirmedAt:
+                null,
+
+            detectedAt:
                 null
 
         };
@@ -276,6 +382,12 @@ function detectPrePhaseSetup(
                 null,
 
             baseConfirmedAt:
+                null,
+
+            prePhaseConfirmedAt:
+                null,
+
+            detectedAt:
                 null
 
         };
@@ -363,6 +475,12 @@ function detectPrePhaseSetup(
                 null,
 
             baseConfirmedAt:
+                null,
+
+            prePhaseConfirmedAt:
+                null,
+
+            detectedAt:
                 null
 
         };
@@ -372,8 +490,22 @@ function detectPrePhaseSetup(
     // ==================================================
     // RECENCY
     // ==================================================
+    //
+    // 5m added here.
+    //
+    // This controls how long a detected structure remains
+    // visible as a current setup.
+    //
+    // It does NOT delay detection.
+    //
+    // Detection happens immediately when the valid base
+    // candle closes.
+    // ==================================================
 
     const recencyLimits = {
+
+        "5m":
+            12,
 
         "15m":
             8,
@@ -412,6 +544,28 @@ function detectPrePhaseSetup(
 
 
     // ==================================================
+    // FLASH SELL TIMES
+    // ==================================================
+    //
+    // flashSellAt:
+    // TradingView candle OPEN timestamp.
+    //
+    // flashSellConfirmedAt:
+    // Timestamp when flash-sell candle actually closed.
+    // ==================================================
+
+    const flashSellAt =
+        latestFlashSell.date;
+
+
+    const flashSellConfirmedAt =
+        getCandleCloseTime(
+            latestFlashSell.date,
+            timeframe
+        );
+
+
+    // ==================================================
     // BASE
     // ==================================================
 
@@ -433,20 +587,29 @@ function detectPrePhaseSetup(
         );
 
 
-    // First qualifying base candle.
+    // ==================================================
+    // BASE TIMES
+    // ==================================================
+    //
+    // baseStartedAt:
+    // same timestamp as TradingView candle label.
+    //
+    // baseConfirmedAt:
+    // actual moment candle finishes.
+    //
+    // PRE_PHASE is actionable at baseConfirmedAt.
+    // ==================================================
+
     const baseStartedAt =
         baseInfo.date;
 
 
-    // With our current strategy a qualifying base candle
-    // confirms the base immediately.
-    //
-    // If later we require 2-3 confirmation candles,
-    // baseConfirmedAt can become different from
-    // baseStartedAt without changing the dashboard.
     const baseConfirmedAt =
         baseForming
-            ? baseInfo.date
+            ? getCandleCloseTime(
+                baseInfo.date,
+                timeframe
+            )
             : null;
 
 
@@ -457,6 +620,25 @@ function detectPrePhaseSetup(
     const isSetup =
         isRecent &&
         baseForming;
+
+
+    const prePhaseConfirmedAt =
+        isSetup
+            ? baseConfirmedAt
+            : null;
+
+
+    // detectedAt represents the earliest moment this
+    // structure could legally be detected using a CLOSED
+    // candle.
+    //
+    // The actual email/API scan may execute a few seconds
+    // or minutes after this depending on scan schedule.
+
+    const detectedAt =
+        isSetup
+            ? baseConfirmedAt
+            : null;
 
 
     let status;
@@ -504,11 +686,6 @@ function detectPrePhaseSetup(
 
         status,
 
-
-        // ----------------------------------------------
-        // LIFECYCLE
-        // ----------------------------------------------
-
         lifecycle:
             lifecycleInfo.lifecycle,
 
@@ -518,47 +695,35 @@ function detectPrePhaseSetup(
         lifecycleTone:
             lifecycleInfo.lifecycleTone,
 
-
-        // ----------------------------------------------
-        // CHANNEL
-        // ----------------------------------------------
-
         ascendingChannel:
             true,
 
         channelLookback:
-            latestFlashSell
-                .channelLookback,
+            latestFlashSell.channelLookback,
 
         highSlopePercent:
-            latestFlashSell
-                .highSlopePercent,
+            latestFlashSell.highSlopePercent,
 
         lowSlopePercent:
-            latestFlashSell
-                .lowSlopePercent,
+            latestFlashSell.lowSlopePercent,
 
         parallelRatio:
-            latestFlashSell
-                .parallelRatio,
+            latestFlashSell.parallelRatio,
 
         channelRespectRatio:
-            latestFlashSell
-                .channelRespectRatio,
-
-
-        // ----------------------------------------------
-        // FLASH SELL
-        // ----------------------------------------------
+            latestFlashSell.channelRespectRatio,
 
         flashSell:
             true,
 
+        // TradingView candle OPEN time
         flashSellDate:
             latestFlashSell.date,
 
-        flashSellAt:
-            latestFlashSell.date,
+        flashSellAt,
+
+        // Actual flash candle CLOSE time
+        flashSellConfirmedAt,
 
         flashSellDropPercent:
             latestFlashSell.dropPercent,
@@ -578,11 +743,6 @@ function detectPrePhaseSetup(
         upperChannelValue:
             latestFlashSell.upperChannelValue,
 
-
-        // ----------------------------------------------
-        // RECENCY / AGE
-        // ----------------------------------------------
-
         candlesSinceFlashSell,
 
         maxCandlesSinceFlashSell,
@@ -592,19 +752,21 @@ function detectPrePhaseSetup(
         ageText:
             `${candlesSinceFlashSell} / ${maxCandlesSinceFlashSell}`,
 
-
-        // ----------------------------------------------
-        // BASE
-        // ----------------------------------------------
-
         baseForming,
 
         baseType:
             baseInfo.type,
 
+        // TradingView candle OPEN time
         baseStartedAt,
 
+        // Actual candle CLOSE / confirmation time
         baseConfirmedAt,
+
+        // Earliest valid PRE_PHASE signal time
+        prePhaseConfirmedAt,
+
+        detectedAt,
 
         baseCandlesFound:
             baseResult
@@ -628,6 +790,10 @@ module.exports = {
 
     getBaseType,
 
-    getLifecycle
+    getLifecycle,
+
+    getTimeframeMilliseconds,
+
+    getCandleCloseTime
 
 };

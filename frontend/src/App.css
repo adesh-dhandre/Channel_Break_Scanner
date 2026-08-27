@@ -831,6 +831,12 @@ input {
   background: rgba(19, 108, 182, 0.12);
 }
 
+.tf-5m {
+  color: #5edfff;
+  border-color: #237d93;
+  background: rgba(27, 139, 164, 0.12);
+}
+
 .tf-15m {
   color: #52e58f;
   border-color: #1a854c;

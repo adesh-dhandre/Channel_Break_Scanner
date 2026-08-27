@@ -64,6 +64,12 @@ const MAX_CACHE_CANDLES =
     1500;
 
 
+// Binance source candles are 5 minutes.
+
+const FIVE_MINUTES_MS =
+    5 * 60 * 1000;
+
+
 // ======================================================
 // CREATE CACHE DIRECTORY
 // ======================================================
@@ -153,6 +159,88 @@ function normalizeCandle(
 
 
 // ======================================================
+// CHECK WHETHER 5M CANDLE IS CLOSED
+// ======================================================
+//
+// Binance candle.date is the candle OPEN time.
+//
+// Example:
+//
+// 01:55 candle
+// opens  -> 01:55
+// closes -> 02:00
+//
+// We must NEVER scan that candle before 02:00.
+//
+// This keeps:
+// 5m
+// 15m
+// 30m
+// 45m
+// 1h
+// 2h
+//
+// aligned with completed TradingView candles.
+// ======================================================
+
+function isClosedFiveMinuteCandle(
+    candle,
+    now = Date.now()
+) {
+
+    const openTime =
+        candle.date instanceof Date
+            ? candle.date.getTime()
+            : new Date(
+                candle.date
+            ).getTime();
+
+
+    if (
+        Number.isNaN(
+            openTime
+        )
+    ) {
+
+        return false;
+    }
+
+
+    const closeTime =
+        openTime +
+        FIVE_MINUTES_MS;
+
+
+    return (
+        closeTime <=
+        now
+    );
+}
+
+
+// ======================================================
+// REMOVE CURRENT / UNFINISHED 5M CANDLE
+// ======================================================
+
+function keepOnlyClosedCandles(
+    candles
+) {
+
+    const now =
+        Date.now();
+
+
+    return candles.filter(
+        candle =>
+            isClosedFiveMinuteCandle(
+                candle,
+                now
+            )
+    );
+}
+
+
+// ======================================================
 // LOAD CACHE
 // ======================================================
 
@@ -204,17 +292,19 @@ function loadCandlesFromDisk(
         }
 
 
-        return parsed
-            .map(
-                normalizeCandle
-            )
-            .filter(
-                candle =>
-                    !Number.isNaN(
-                        candle.date
-                            .getTime()
-                    )
-            );
+        return keepOnlyClosedCandles(
+            parsed
+                .map(
+                    normalizeCandle
+                )
+                .filter(
+                    candle =>
+                        !Number.isNaN(
+                            candle.date
+                                .getTime()
+                        )
+                )
+        );
 
 
     } catch (error) {
@@ -248,17 +338,19 @@ function saveCandlesToDisk(
 
 
     const cleanCandles =
-        candles
-            .map(
-                normalizeCandle
-            )
-            .filter(
-                candle =>
-                    !Number.isNaN(
-                        candle.date
-                            .getTime()
-                    )
-            )
+        keepOnlyClosedCandles(
+            candles
+                .map(
+                    normalizeCandle
+                )
+                .filter(
+                    candle =>
+                        !Number.isNaN(
+                            candle.date
+                                .getTime()
+                        )
+                )
+        )
             .slice(
                 -MAX_CACHE_CANDLES
             );
@@ -354,20 +446,22 @@ function mergeCandles(
     }
 
 
-    return Array
-        .from(
-            candleMap.values()
-        )
-        .sort(
-            (
-                a,
-                b
-            ) =>
-                a.date
-                    .getTime() -
-                b.date
-                    .getTime()
-        )
+    return keepOnlyClosedCandles(
+        Array
+            .from(
+                candleMap.values()
+            )
+            .sort(
+                (
+                    a,
+                    b
+                ) =>
+                    a.date
+                        .getTime() -
+                    b.date
+                        .getTime()
+            )
+    )
         .slice(
             -MAX_CACHE_CANDLES
         );
@@ -429,7 +523,7 @@ async function initializeSymbol(
 
 
         console.log(
-            `${symbol}: crypto history cached (${saved.length} candles).`
+            `${symbol}: crypto history cached (${saved.length} closed candles).`
         );
 
 
@@ -445,7 +539,7 @@ async function initializeSymbol(
     // ==================================================
 
     console.log(
-        `${symbol}: loaded ${cached.length} candles from crypto cache.`
+        `${symbol}: loaded ${cached.length} closed candles from crypto cache.`
     );
 
 
@@ -472,7 +566,7 @@ async function initializeSymbol(
 
 
     console.log(
-        `${symbol}: refreshed (${saved.length} candles).`
+        `${symbol}: refreshed (${saved.length} closed candles).`
     );
 
 
@@ -494,6 +588,10 @@ module.exports = {
 
     mergeCandles,
 
-    getCacheFile
+    getCacheFile,
+
+    isClosedFiveMinuteCandle,
+
+    keepOnlyClosedCandles
 
 };

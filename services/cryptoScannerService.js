@@ -20,6 +20,7 @@ const {
 // ======================================================
 
 const TARGET_TIMEFRAMES = [
+    "5m",
     "15m",
     "30m",
     "45m",
@@ -53,13 +54,7 @@ async function scanSingleCrypto(coin) {
     try {
 
         // ==============================================
-        // LOAD / REFRESH CRYPTO CACHE
-        //
-        // First run:
-        // Binance -> 1500 5m candles
-        //
-        // Later:
-        // cache + latest 100 Binance candles
+        // LOAD CLOSED 5M CANDLES
         // ==============================================
 
         const candles5m =
@@ -82,7 +77,7 @@ async function scanSingleCrypto(coin) {
 
 
         // ==============================================
-        // BUILD CRYPTO TIMEFRAMES
+        // BUILD TIMEFRAMES
         // ==============================================
 
         const timeframes =
@@ -174,6 +169,7 @@ async function scanSingleCrypto(coin) {
                 flashSell:
                     result.flashSell,
 
+                // TradingView candle OPEN time
                 flashSellDate:
                     result.flashSellDate ||
                     null,
@@ -181,6 +177,11 @@ async function scanSingleCrypto(coin) {
                 flashSellAt:
                     result.flashSellAt ||
                     result.flashSellDate ||
+                    null,
+
+                // Actual flash candle CLOSE time
+                flashSellConfirmedAt:
+                    result.flashSellConfirmedAt ||
                     null,
 
                 recent:
@@ -191,6 +192,26 @@ async function scanSingleCrypto(coin) {
 
                 baseType:
                     result.baseType ||
+                    null,
+
+                // TradingView base candle OPEN time
+                baseStartedAt:
+                    result.baseStartedAt ||
+                    null,
+
+                // Actual base candle CLOSE time
+                baseConfirmedAt:
+                    result.baseConfirmedAt ||
+                    null,
+
+                // Earliest valid PRE_PHASE time
+                prePhaseConfirmedAt:
+                    result.prePhaseConfirmedAt ||
+                    null,
+
+                // Earliest legal detection timestamp
+                detectedAt:
+                    result.detectedAt ||
                     null
 
             });
@@ -255,6 +276,10 @@ async function scanSingleCrypto(coin) {
                         result.continuationHigh ||
                         null,
 
+                    // ==================================
+                    // FLASH SELL TIMES
+                    // ==================================
+
                     flashSellDate:
                         result.flashSellDate ||
                         null,
@@ -262,6 +287,10 @@ async function scanSingleCrypto(coin) {
                     flashSellAt:
                         result.flashSellAt ||
                         result.flashSellDate ||
+                        null,
+
+                    flashSellConfirmedAt:
+                        result.flashSellConfirmedAt ||
                         null,
 
                     flashSellDropPercent:
@@ -298,6 +327,10 @@ async function scanSingleCrypto(coin) {
                         result.ageText ||
                         null,
 
+                    // ==================================
+                    // BASE / PRE-PHASE
+                    // ==================================
+
                     baseForming:
                         result.baseForming === true,
 
@@ -305,12 +338,24 @@ async function scanSingleCrypto(coin) {
                         result.baseType ||
                         null,
 
+                    // TradingView candle OPEN time
                     baseStartedAt:
                         result.baseStartedAt ||
                         null,
 
+                    // Candle CLOSE time
                     baseConfirmedAt:
                         result.baseConfirmedAt ||
+                        null,
+
+                    // Actionable PRE_PHASE time
+                    prePhaseConfirmedAt:
+                        result.prePhaseConfirmedAt ||
+                        null,
+
+                    // Detection timestamp
+                    detectedAt:
+                        result.detectedAt ||
                         null,
 
                     baseCandlesFound:
@@ -411,10 +456,6 @@ async function scanCryptoFutures() {
     const startedAt =
         Date.now();
 
-
-    // ==============================================
-    // GET BINANCE PERPETUAL UNIVERSE
-    // ==============================================
 
     const universe =
         await getScannableCryptoUniverse();

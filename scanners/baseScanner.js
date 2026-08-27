@@ -97,9 +97,6 @@ function detectBaseAfterFlashSell(
 
         // -----------------------------------
         // HAMMER
-        //
-        // Lower wick should dominate candle.
-        // Body should remain relatively small.
         // -----------------------------------
 
         const isHammer =
@@ -110,9 +107,6 @@ function detectBaseAfterFlashSell(
 
         // -----------------------------------
         // LONG LOWER-WICK REJECTION
-        //
-        // Allows rejection candles that are
-        // not textbook hammers.
         // -----------------------------------
 
         const hasLongLowerWick =

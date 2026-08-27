@@ -9,6 +9,7 @@ import "./App.css";
 
 const TIMEFRAMES = [
   "ALL",
+  "5m",
   "15m",
   "30m",
   "45m",
@@ -1894,6 +1895,13 @@ function App() {
                           : `${coin.symbol} · ${setup.tradingPair || `${coin.symbol}USDT`}`;
 
 
+                      const detectedTime =
+                        setup.prePhaseConfirmedAt ||
+                        setup.detectedAt ||
+                        setup.baseConfirmedAt ||
+                        null;
+
+
                       return (
 
                         <article
@@ -2035,7 +2043,7 @@ function App() {
                               </strong>
 
                               <small>
-                                Base formed
+                                Base candle
                               </small>
 
                             </div>
@@ -2051,7 +2059,7 @@ function App() {
                               <span className="timelineTime">
                                 {
                                   formatTimelineDate(
-                                    setup.detectedAt
+                                    detectedTime
                                   )
                                 }
                               </span>
@@ -2065,7 +2073,7 @@ function App() {
                               </strong>
 
                               <small>
-                                Scanner discovery
+                                Pre-phase confirmed
                               </small>
 
                             </div>
