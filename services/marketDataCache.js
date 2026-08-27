@@ -7,11 +7,27 @@ const {
 } = require("./yahooService");
 
 
+// ======================================================
+// CACHE DIRECTORY
+//
+// LOCAL:
+// project/cache
+//
+// PRODUCTION / HOSTLESS:
+// /tmp/channel-break-scanner/cache
+// ======================================================
+
 const CACHE_DIR =
-    path.join(
-        __dirname,
-        "../cache"
-    );
+    process.env.NODE_ENV === "production"
+        ? path.join(
+            "/tmp",
+            "channel-break-scanner",
+            "cache"
+        )
+        : path.join(
+            __dirname,
+            "../cache"
+        );
 
 
 const candleCache =
@@ -24,13 +40,22 @@ const candleCache =
 
 function ensureCacheDirectory() {
 
-    if (!fs.existsSync(CACHE_DIR)) {
+    if (
+        !fs.existsSync(
+            CACHE_DIR
+        )
+    ) {
 
         fs.mkdirSync(
             CACHE_DIR,
             {
                 recursive: true
             }
+        );
+
+
+        console.log(
+            `Created NSE candle cache directory: ${CACHE_DIR}`
         );
     }
 }
@@ -43,7 +68,9 @@ ensureCacheDirectory();
 // CACHE FILE PATH
 // ======================================================
 
-function getCacheFilePath(symbol) {
+function getCacheFilePath(
+    symbol
+) {
 
     const safeSymbol =
         symbol.replace(
@@ -61,43 +88,56 @@ function getCacheFilePath(symbol) {
 
 // ======================================================
 // NORMALIZE CANDLES
-//
-// IMPORTANT:
-// JSON converts Date objects to strings.
-// This restores them back to real Date objects.
 // ======================================================
 
-function normalizeCandles(candles) {
+function normalizeCandles(
+    candles
+) {
 
-    if (!Array.isArray(candles)) {
+    if (
+        !Array.isArray(
+            candles
+        )
+    ) {
+
         return [];
     }
 
 
     return candles
-        .map(candle => {
+        .map(
+            candle => {
 
-            const date =
-                candle.date instanceof Date
-                    ? candle.date
-                    : new Date(candle.date);
+                const date =
+                    candle.date instanceof Date
+                        ? candle.date
+                        : new Date(
+                            candle.date
+                        );
 
 
-            if (
-                Number.isNaN(
-                    date.getTime()
-                )
-            ) {
-                return null;
+                if (
+                    Number.isNaN(
+                        date.getTime()
+                    )
+                ) {
+
+                    return null;
+                }
+
+
+                return {
+
+                    ...candle,
+
+                    date
+
+                };
             }
-
-
-            return {
-                ...candle,
-                date
-            };
-        })
-        .filter(Boolean);
+        )
+        .filter(
+            Boolean
+        );
 }
 
 
@@ -112,6 +152,9 @@ function saveCandlesToDisk(
 
     try {
 
+        ensureCacheDirectory();
+
+
         const filePath =
             getCacheFilePath(
                 symbol
@@ -119,6 +162,7 @@ function saveCandlesToDisk(
 
 
         const data = {
+
             symbol,
 
             updatedAt:
@@ -126,14 +170,18 @@ function saveCandlesToDisk(
                     .toISOString(),
 
             candles
+
         };
 
 
         fs.writeFileSync(
             filePath,
-            JSON.stringify(data),
+            JSON.stringify(
+                data
+            ),
             "utf8"
         );
+
 
     } catch (error) {
 
@@ -155,6 +203,9 @@ function loadCandlesFromDisk(
 
     try {
 
+        ensureCacheDirectory();
+
+
         const filePath =
             getCacheFilePath(
                 symbol
@@ -166,6 +217,7 @@ function loadCandlesFromDisk(
                 filePath
             )
         ) {
+
             return null;
         }
 
@@ -188,12 +240,10 @@ function loadCandlesFromDisk(
                 parsed.candles
             )
         ) {
+
             return null;
         }
 
-
-        // CRITICAL FIX:
-        // convert date strings back to Date objects
 
         return normalizeCandles(
             parsed.candles
@@ -244,7 +294,8 @@ function mergeCandles(
     ) {
 
         const key =
-            candle.date.getTime();
+            candle.date
+                .getTime();
 
 
         mergedMap.set(
@@ -260,7 +311,8 @@ function mergeCandles(
     ) {
 
         const key =
-            candle.date.getTime();
+            candle.date
+                .getTime();
 
 
         mergedMap.set(
@@ -277,7 +329,10 @@ function mergeCandles(
 
 
     mergedCandles.sort(
-        (a, b) =>
+        (
+            a,
+            b
+        ) =>
             a.date.getTime() -
             b.date.getTime()
     );
@@ -306,6 +361,7 @@ async function initializeSymbol(
         memoryCandles &&
         memoryCandles.length
     ) {
+
         return memoryCandles;
     }
 
@@ -461,7 +517,9 @@ function getCachedCandles(
         );
 
 
-    if (memoryCandles) {
+    if (
+        memoryCandles
+    ) {
 
         return memoryCandles;
     }
@@ -473,7 +531,9 @@ function getCachedCandles(
         );
 
 
-    if (diskCandles) {
+    if (
+        diskCandles
+    ) {
 
         candleCache.set(
             symbol,
@@ -507,9 +567,12 @@ function getCacheStats() {
     ) {
 
         stats.push({
+
             symbol,
+
             candles:
                 candles.length
+
         });
     }
 
@@ -533,13 +596,23 @@ function clearMemoryCache() {
 // ======================================================
 
 module.exports = {
+
     initializeSymbol,
+
     refreshSymbol,
+
     getCachedCandles,
+
     getCacheStats,
+
     mergeCandles,
+
     normalizeCandles,
+
     loadCandlesFromDisk,
+
     saveCandlesToDisk,
+
     clearMemoryCache
+
 };

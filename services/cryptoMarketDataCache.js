@@ -9,13 +9,29 @@ const {
 // ======================================================
 // CONFIG
 // ======================================================
+//
+// LOCAL:
+// project/crypto-cache
+//
+// PRODUCTION / HOSTLESS:
+// /tmp/channel-break-scanner/crypto-cache
+//
+// Hostless application filesystem may be read-only.
+// /tmp is writable.
+// ======================================================
 
 const CACHE_DIR =
-    path.join(
-        __dirname,
-        "..",
-        "crypto-cache"
-    );
+    process.env.NODE_ENV === "production"
+        ? path.join(
+            "/tmp",
+            "channel-break-scanner",
+            "crypto-cache"
+        )
+        : path.join(
+            __dirname,
+            "..",
+            "crypto-cache"
+        );
 
 
 // First initialization.
@@ -69,7 +85,7 @@ function ensureCacheDirectory() {
 
 
         console.log(
-            "Created crypto candle cache directory."
+            `Created crypto candle cache directory: ${CACHE_DIR}`
         );
     }
 }
@@ -328,7 +344,7 @@ function mergeCandles(
         ) {
 
             // Fresh Binance candle replaces
-            // the cached candle with the same timestamp.
+            // cached candle with same timestamp.
 
             candleMap.set(
                 time,
@@ -380,8 +396,6 @@ async function initializeSymbol(
     //
     // Expensive:
     // 1500 candles.
-    //
-    // binanceFuturesService now rate-limits this safely.
     // ==================================================
 
     if (
@@ -427,7 +441,7 @@ async function initializeSymbol(
     // NORMAL LIVE REFRESH
     //
     // Cheap:
-    // only latest 99 candles.
+    // latest 99 candles.
     // ==================================================
 
     console.log(
