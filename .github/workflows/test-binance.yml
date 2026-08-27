@@ -1,0 +1,15 @@
+name: Test Binance Access
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-binance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test Binance Futures API
+        run: |
+          echo "Testing Binance Futures API..."
+          curl -i --fail-with-body \
+            "https://fapi.binance.com/fapi/v1/exchangeInfo"
