@@ -2,32 +2,19 @@
 // TIMEFRAME SERVICE
 //
 // NSE:
-// - Candles are grouped inside each IST trading day.
-// - Higher timeframe candles never span two NSE sessions.
+// - Candles remain grouped inside each IST trading day.
+// - Higher timeframe candles never span NSE sessions.
 //
 // CRYPTO:
-// - Binance futures trades 24/7.
-// - Higher timeframes are aligned to Binance / exchange
-//   UTC timeframe boundaries.
+// - Binance Futures trades continuously.
+// - Higher timeframe candles use Binance / UTC
+//   epoch-aligned boundaries.
 //
-// TradingView:
-// - User displays chart in Asia/Kolkata.
-// - TradingView converts Binance exchange boundaries to IST.
-//
-// Example:
-//
-// Binance 1h:
-// 19:00 UTC
-//
-// TradingView Asia/Kolkata:
-// 00:30 IST
-//
-// Therefore we MUST NOT re-anchor crypto candles to
-// IST midnight.
-//
-// IMPORTANT:
-// We DO NOT simply group every N candles starting from
-// the first candle in cache. That causes shifted candles.
+// PERFORMANCE:
+// - Candle timestamps are parsed once per build.
+// - Crypto candles are sorted once.
+// - NSE IST formatter is reused.
+// - Aggregation avoids repeated map/sort/date parsing.
 // ======================================================
 
 
@@ -40,12 +27,11 @@ const FIVE_MINUTES_MS =
 
 
 // ======================================================
-// IST DATE KEY
+// REUSABLE IST FORMATTER
 // ======================================================
 
-function getISTDateKey(date) {
-
-    return new Intl.DateTimeFormat(
+const IST_DATE_FORMATTER =
+    new Intl.DateTimeFormat(
         "en-CA",
         {
             timeZone:
@@ -60,21 +46,80 @@ function getISTDateKey(date) {
             day:
                 "2-digit"
         }
-    ).format(
-        new Date(date)
+    );
+
+
+// ======================================================
+// TIMESTAMP
+// ======================================================
+
+function getTimestamp(
+    candle
+) {
+
+    if (!candle) {
+
+        return NaN;
+    }
+
+
+    if (
+        Number.isFinite(
+            candle.__timestamp
+        )
+    ) {
+
+        return candle.__timestamp;
+    }
+
+
+    if (
+        candle.date instanceof Date
+    ) {
+
+        return candle.date.getTime();
+    }
+
+
+    return new Date(
+        candle.date
+    ).getTime();
+}
+
+
+// ======================================================
+// IST DATE KEY
+// ======================================================
+
+function getISTDateKey(
+    date
+) {
+
+    return IST_DATE_FORMATTER.format(
+        date instanceof Date
+            ? date
+            : new Date(date)
     );
 }
 
 
 // ======================================================
-// GROUP NSE CANDLES BY TRADING DAY
+// NORMALIZE / PREPARE CANDLES
 // ======================================================
 
-function groupCandlesByTradingDay(
+function prepareCandles(
     candles
 ) {
 
-    const days = {};
+    if (
+        !Array.isArray(candles)
+    ) {
+
+        return [];
+    }
+
+
+    const prepared = [];
 
 
     for (
@@ -82,32 +127,56 @@ function groupCandlesByTradingDay(
         of candles
     ) {
 
-        const dayKey =
-            getISTDateKey(
-                candle.date
-            );
+        if (!candle) {
 
-
-        if (
-            !days[dayKey]
-        ) {
-
-            days[dayKey] = [];
+            continue;
         }
 
 
-        days[dayKey].push(
-            candle
-        );
+        const timestamp =
+            candle.date instanceof Date
+                ? candle.date.getTime()
+                : new Date(
+                    candle.date
+                ).getTime();
+
+
+        if (
+            !Number.isFinite(
+                timestamp
+            )
+        ) {
+
+            continue;
+        }
+
+
+        prepared.push({
+
+            ...candle,
+
+            __timestamp:
+                timestamp
+
+        });
     }
 
 
-    return days;
+    prepared.sort(
+        (a, b) =>
+            a.__timestamp -
+            b.__timestamp
+    );
+
+
+    return prepared;
 }
 
 
 // ======================================================
 // CREATE AGGREGATED CANDLE
+//
+// Optimized single-pass OHLCV calculation.
 // ======================================================
 
 function createAggregatedCandle(
@@ -124,6 +193,60 @@ function createAggregatedCandle(
     }
 
 
+    let high =
+        -Infinity;
+
+    let low =
+        Infinity;
+
+    let volume =
+        0;
+
+
+    for (
+        const candle
+        of group
+    ) {
+
+        const candleHigh =
+            Number(
+                candle.high
+            );
+
+        const candleLow =
+            Number(
+                candle.low
+            );
+
+
+        if (
+            candleHigh >
+            high
+        ) {
+
+            high =
+                candleHigh;
+        }
+
+
+        if (
+            candleLow <
+            low
+        ) {
+
+            low =
+                candleLow;
+        }
+
+
+        volume +=
+            Number(
+                candle.volume ||
+                0
+            );
+    }
+
+
     return {
 
         date:
@@ -135,25 +258,9 @@ function createAggregatedCandle(
                 group[0].open
             ),
 
-        high:
-            Math.max(
-                ...group.map(
-                    candle =>
-                        Number(
-                            candle.high
-                        )
-                )
-            ),
+        high,
 
-        low:
-            Math.min(
-                ...group.map(
-                    candle =>
-                        Number(
-                            candle.low
-                        )
-                )
-            ),
+        low,
 
         close:
             Number(
@@ -162,25 +269,16 @@ function createAggregatedCandle(
                 ].close
             ),
 
-        volume:
-            group.reduce(
-                (
-                    total,
-                    candle
-                ) =>
-                    total +
-                    Number(
-                        candle.volume ||
-                        0
-                    ),
-                0
-            )
+        volume
+
     };
 }
 
 
 // ======================================================
-// CHECK CONTIGUOUS 5M CANDLES
+// CHECK COMPLETE CONTIGUOUS 5M GROUP
+//
+// Assumes group is already ordered.
 // ======================================================
 
 function isCompleteFiveMinuteGroup(
@@ -197,34 +295,26 @@ function isCompleteFiveMinuteGroup(
     }
 
 
-    const sorted =
-        [...group].sort(
-            (a, b) =>
-                new Date(a.date) -
-                new Date(b.date)
-        );
-
-
     for (
         let i = 1;
-        i < sorted.length;
+        i < group.length;
         i++
     ) {
 
         const previous =
-            new Date(
-                sorted[i - 1].date
-            ).getTime();
-
+            getTimestamp(
+                group[i - 1]
+            );
 
         const current =
-            new Date(
-                sorted[i].date
-            ).getTime();
+            getTimestamp(
+                group[i]
+            );
 
 
         if (
-            current - previous !==
+            current -
+            previous !==
             FIVE_MINUTES_MS
         ) {
 
@@ -238,10 +328,75 @@ function isCompleteFiveMinuteGroup(
 
 
 // ======================================================
+// GROUP NSE CANDLES BY TRADING DAY
+// ======================================================
+
+function groupCandlesByTradingDay(
+    candles
+) {
+
+    const days =
+        new Map();
+
+
+    for (
+        const candle
+        of candles
+    ) {
+
+        const timestamp =
+            getTimestamp(
+                candle
+            );
+
+
+        if (
+            !Number.isFinite(
+                timestamp
+            )
+        ) {
+
+            continue;
+        }
+
+
+        const dayKey =
+            getISTDateKey(
+                new Date(
+                    timestamp
+                )
+            );
+
+
+        if (
+            !days.has(
+                dayKey
+            )
+        ) {
+
+            days.set(
+                dayKey,
+                []
+            );
+        }
+
+
+        days
+            .get(
+                dayKey
+            )
+            .push(
+                candle
+            );
+    }
+
+
+    return days;
+}
+
+
+// ======================================================
 // BASIC GROUP AGGREGATION
-//
-// Used by NSE where grouping starts from the beginning
-// of each trading session.
 // ======================================================
 
 function aggregateCompleteGroups(
@@ -271,7 +426,9 @@ function aggregateCompleteGroups(
             );
 
 
-        if (aggregated) {
+        if (
+            aggregated
+        ) {
 
             result.push(
                 aggregated
@@ -286,8 +443,6 @@ function aggregateCompleteGroups(
 
 // ======================================================
 // NSE AGGREGATION
-//
-// Each trading day remains independent.
 // ======================================================
 
 function aggregateNseCandles(
@@ -295,9 +450,15 @@ function aggregateNseCandles(
     groupSize
 ) {
 
+    const prepared =
+        prepareCandles(
+            candles
+        );
+
+
     const tradingDays =
         groupCandlesByTradingDay(
-            candles
+            prepared
         );
 
 
@@ -305,9 +466,11 @@ function aggregateNseCandles(
 
 
     const sortedDays =
-        Object.keys(
-            tradingDays
-        ).sort();
+        Array
+            .from(
+                tradingDays.keys()
+            )
+            .sort();
 
 
     for (
@@ -316,16 +479,9 @@ function aggregateNseCandles(
     ) {
 
         const dayCandles =
-            tradingDays[
+            tradingDays.get(
                 dayKey
-            ];
-
-
-        dayCandles.sort(
-            (a, b) =>
-                new Date(a.date) -
-                new Date(b.date)
-        );
+            );
 
 
         const aggregated =
@@ -348,38 +504,34 @@ function aggregateNseCandles(
 // ======================================================
 // CRYPTO AGGREGATION
 //
-// CRITICAL:
+// Binance timeframe boundaries are UTC / epoch based.
 //
-// Crypto candles are bucketed using Binance exchange
-// timeframe boundaries.
-//
-// Binance timestamps are UTC-based.
-//
-// TradingView can DISPLAY them in Asia/Kolkata, but the
-// underlying Binance candle boundary must stay unchanged.
+// IMPORTANT:
+// Never shift these buckets to IST.
 //
 // Example:
 //
-// Binance 1h candle:
+// Binance 1h:
+//
 // 19:00 UTC
 //
 // TradingView Asia/Kolkata:
+//
 // 00:30 IST
 //
-// This is the SAME candle.
-//
-// We therefore use epoch-based bucket boundaries and
-// DO NOT shift the buckets by +05:30.
+// Same candle.
 // ======================================================
 
-function aggregateCryptoCandles(
-    candles,
+function aggregatePreparedCryptoCandles(
+    preparedCandles,
     groupSize
 ) {
 
     if (
-        !Array.isArray(candles) ||
-        candles.length === 0
+        !Array.isArray(
+            preparedCandles
+        ) ||
+        preparedCandles.length === 0
     ) {
 
         return [];
@@ -391,45 +543,116 @@ function aggregateCryptoCandles(
         FIVE_MINUTES_MS;
 
 
-    const buckets =
-        new Map();
+    const result = [];
 
 
-    // ==================================================
-    // SORT INPUT
-    // ==================================================
+    let currentBucketStart =
+        null;
 
-    const sortedCandles =
-        [...candles].sort(
-            (a, b) =>
-                new Date(a.date) -
-                new Date(b.date)
-        );
+    let currentGroup =
+        [];
 
 
-    // ==================================================
-    // ASSIGN EACH 5M CANDLE TO BINANCE TIMEFRAME BUCKET
-    // ==================================================
+    function processCurrentGroup() {
 
-    for (
-        const candle
-        of sortedCandles
-    ) {
+        if (
+            currentBucketStart ===
+            null
+        ) {
 
-        const timestamp =
-            new Date(
-                candle.date
-            ).getTime();
+            return;
+        }
 
 
         if (
-            !Number.isFinite(
-                timestamp
+            currentGroup.length !==
+            groupSize
+        ) {
+
+            return;
+        }
+
+
+        if (
+            !isCompleteFiveMinuteGroup(
+                currentGroup,
+                groupSize
             )
         ) {
 
-            continue;
+            return;
         }
+
+
+        const firstTime =
+            getTimestamp(
+                currentGroup[0]
+            );
+
+
+        if (
+            firstTime !==
+            currentBucketStart
+        ) {
+
+            return;
+        }
+
+
+        const expectedLastTime =
+            currentBucketStart +
+            (
+                groupSize - 1
+            ) *
+            FIVE_MINUTES_MS;
+
+
+        const actualLastTime =
+            getTimestamp(
+                currentGroup[
+                    currentGroup.length - 1
+                ]
+            );
+
+
+        if (
+            actualLastTime !==
+            expectedLastTime
+        ) {
+
+            return;
+        }
+
+
+        const aggregated =
+            createAggregatedCandle(
+                currentGroup,
+                new Date(
+                    currentBucketStart
+                )
+            );
+
+
+        if (
+            aggregated
+        ) {
+
+            result.push(
+                aggregated
+            );
+        }
+    }
+
+
+    for (
+        const candle
+        of preparedCandles
+    ) {
+
+        const timestamp =
+            getTimestamp(
+                candle
+            );
 
 
         const bucketStart =
@@ -441,146 +664,38 @@ function aggregateCryptoCandles(
 
 
         if (
-            !buckets.has(
-                bucketStart
-            )
+            currentBucketStart ===
+            null
         ) {
 
-            buckets.set(
-                bucketStart,
-                []
-            );
+            currentBucketStart =
+                bucketStart;
         }
 
 
-        buckets
-            .get(
-                bucketStart
-            )
-            .push(
-                candle
-            );
-    }
+        if (
+            bucketStart !==
+            currentBucketStart
+        ) {
+
+            processCurrentGroup();
 
 
-    // ==================================================
-    // BUILD ONLY COMPLETE TIMEFRAME CANDLES
-    // ==================================================
+            currentBucketStart =
+                bucketStart;
 
-    const result = [];
-
-
-    const sortedBucketStarts =
-        [...buckets.keys()]
-            .sort(
-                (a, b) =>
-                    a - b
-            );
+            currentGroup =
+                [];
+        }
 
 
-    for (
-        const bucketStart
-        of sortedBucketStarts
-    ) {
-
-        const group =
-            buckets.get(
-                bucketStart
-            );
-
-
-        group.sort(
-            (a, b) =>
-                new Date(a.date) -
-                new Date(b.date)
+        currentGroup.push(
+            candle
         );
-
-
-        // ==============================================
-        // MUST CONTAIN EXACT NUMBER OF 5M CANDLES
-        // ==============================================
-
-        if (
-            !isCompleteFiveMinuteGroup(
-                group,
-                groupSize
-            )
-        ) {
-
-            continue;
-        }
-
-
-        // ==============================================
-        // FIRST CANDLE MUST START EXACTLY AT BUCKET START
-        // ==============================================
-
-        const firstTime =
-            new Date(
-                group[0].date
-            ).getTime();
-
-
-        if (
-            firstTime !==
-            bucketStart
-        ) {
-
-            continue;
-        }
-
-
-        // ==============================================
-        // LAST 5M CANDLE MUST ALSO BE WHERE EXPECTED
-        // ==============================================
-
-        const expectedLastTime =
-            bucketStart +
-            (
-                groupSize - 1
-            ) *
-            FIVE_MINUTES_MS;
-
-
-        const actualLastTime =
-            new Date(
-                group[
-                    group.length - 1
-                ].date
-            ).getTime();
-
-
-        if (
-            actualLastTime !==
-            expectedLastTime
-        ) {
-
-            continue;
-        }
-
-
-        // ==============================================
-        // CREATE HIGHER TIMEFRAME CANDLE
-        //
-        // date remains candle OPEN time.
-        // ==============================================
-
-        const aggregated =
-            createAggregatedCandle(
-                group,
-                new Date(
-                    bucketStart
-                )
-            );
-
-
-        if (aggregated) {
-
-            result.push(
-                aggregated
-            );
-        }
     }
+
+
+    processCurrentGroup();
 
 
     return result;
@@ -588,41 +703,53 @@ function aggregateCryptoCandles(
 
 
 // ======================================================
+// PUBLIC CRYPTO AGGREGATOR
+// ======================================================
+
+function aggregateCryptoCandles(
+    candles,
+    groupSize
+) {
+
+    const prepared =
+        prepareCandles(
+            candles
+        );
+
+
+    return aggregatePreparedCryptoCandles(
+        prepared,
+        groupSize
+    );
+}
+
+
+// ======================================================
 // NORMALIZE ORIGINAL 5M CANDLES
-//
-// No aggregation is required.
-//
-// cryptoMarketDataCache already removes the unfinished
-// Binance 5m candle before this function receives data.
 // ======================================================
 
 function buildFiveMinuteCandles(
     candles
 ) {
 
-    if (
-        !Array.isArray(candles)
-    ) {
-
-        return [];
-    }
-
-
-    return [...candles]
-        .filter(
-            candle =>
-                candle &&
-                !Number.isNaN(
-                    new Date(
-                        candle.date
-                    ).getTime()
-                )
-        )
-        .sort(
-            (a, b) =>
-                new Date(a.date) -
-                new Date(b.date)
+    const prepared =
+        prepareCandles(
+            candles
         );
+
+
+    return prepared.map(
+        candle => {
+
+            const {
+                __timestamp,
+                ...cleanCandle
+            } = candle;
+
+
+            return cleanCandle;
+        }
+    );
 }
 
 
@@ -662,6 +789,29 @@ function aggregateCandles(
 
 
 // ======================================================
+// REMOVE INTERNAL TIMESTAMP
+// ======================================================
+
+function cleanPreparedCandles(
+    preparedCandles
+) {
+
+    return preparedCandles.map(
+        candle => {
+
+            const {
+                __timestamp,
+                ...cleanCandle
+            } = candle;
+
+
+            return cleanCandle;
+        }
+    );
+}
+
+
+// ======================================================
 // BUILD PRODUCTION TIMEFRAMES
 // ======================================================
 
@@ -669,6 +819,87 @@ function buildTimeframes(
     candles5m,
     market = "NSE"
 ) {
+
+    const normalizedMarket =
+        String(
+            market
+        ).toUpperCase();
+
+
+    // ==================================================
+    // CRYPTO FAST PATH
+    //
+    // Prepare and sort the source candles ONCE.
+    //
+    // Previously each timeframe independently:
+    //
+    // - copied candles
+    // - parsed dates
+    // - sorted candles
+    // - created Maps
+    // - sorted bucket keys
+    // - sorted every bucket
+    //
+    // Now all six timeframes share one prepared source.
+    // ==================================================
+
+    if (
+        normalizedMarket ===
+        "CRYPTO"
+    ) {
+
+        const prepared =
+            prepareCandles(
+                candles5m
+            );
+
+
+        return {
+
+            "5m":
+                cleanPreparedCandles(
+                    prepared
+                ),
+
+            "15m":
+                aggregatePreparedCryptoCandles(
+                    prepared,
+                    3
+                ),
+
+            "30m":
+                aggregatePreparedCryptoCandles(
+                    prepared,
+                    6
+                ),
+
+            "45m":
+                aggregatePreparedCryptoCandles(
+                    prepared,
+                    9
+                ),
+
+            "1h":
+                aggregatePreparedCryptoCandles(
+                    prepared,
+                    12
+                ),
+
+            "2h":
+                aggregatePreparedCryptoCandles(
+                    prepared,
+                    24
+                )
+
+        };
+    }
+
+
+    // ==================================================
+    // NSE
+    //
+    // Keep existing session semantics.
+    // ==================================================
 
     return {
 
@@ -678,38 +909,33 @@ function buildTimeframes(
             ),
 
         "15m":
-            aggregateCandles(
+            aggregateNseCandles(
                 candles5m,
-                3,
-                market
+                3
             ),
 
         "30m":
-            aggregateCandles(
+            aggregateNseCandles(
                 candles5m,
-                6,
-                market
+                6
             ),
 
         "45m":
-            aggregateCandles(
+            aggregateNseCandles(
                 candles5m,
-                9,
-                market
+                9
             ),
 
         "1h":
-            aggregateCandles(
+            aggregateNseCandles(
                 candles5m,
-                12,
-                market
+                12
             ),
 
         "2h":
-            aggregateCandles(
+            aggregateNseCandles(
                 candles5m,
-                24,
-                market
+                24
             )
 
     };
