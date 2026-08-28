@@ -81,7 +81,29 @@ async function scanSingleSymbol(symbol) {
     );
 
 
+    const totalTimer =
+        `${symbol} TOTAL`;
+
+
+    console.time(
+        totalTimer
+    );
+
+
     try {
+
+        // ==============================================
+        // LOAD / REFRESH 5M DATA
+        // ==============================================
+
+        const candleTimer =
+            `${symbol} candleLoad`;
+
+
+        console.time(
+            candleTimer
+        );
+
 
         const candles5m =
             await getSymbolCandles(
@@ -89,10 +111,20 @@ async function scanSingleSymbol(symbol) {
             );
 
 
+        console.timeEnd(
+            candleTimer
+        );
+
+
         if (
             !candles5m ||
             candles5m.length === 0
         ) {
+
+            console.timeEnd(
+                totalTimer
+            );
+
 
             return {
 
@@ -111,6 +143,11 @@ async function scanSingleSymbol(symbol) {
         }
 
 
+        console.log(
+            `${symbol}: ${candles5m.length} 5m candles available`
+        );
+
+
         // ==============================================
         // BUILD NSE TIMEFRAMES
         //
@@ -119,11 +156,25 @@ async function scanSingleSymbol(symbol) {
         // IST trading session.
         // ==============================================
 
+        const buildTimer =
+            `${symbol} buildTimeframes`;
+
+
+        console.time(
+            buildTimer
+        );
+
+
         const timeframes =
             buildTimeframes(
                 candles5m,
                 "NSE"
             );
+
+
+        console.timeEnd(
+            buildTimer
+        );
 
 
         const scanSummary = [];
@@ -134,6 +185,15 @@ async function scanSingleSymbol(symbol) {
         // ==============================================
         // SCAN EACH TIMEFRAME
         // ==============================================
+
+        const setupTimer =
+            `${symbol} detectSetups`;
+
+
+        console.time(
+            setupTimer
+        );
+
 
         for (
             const timeframe
@@ -155,11 +215,25 @@ async function scanSingleSymbol(symbol) {
             }
 
 
+            const timeframeTimer =
+                `${symbol} ${timeframe}`;
+
+
+            console.time(
+                timeframeTimer
+            );
+
+
             const result =
                 detectPrePhaseSetup(
                     candles,
                     timeframe
                 );
+
+
+            console.timeEnd(
+                timeframeTimer
+            );
 
 
             // ==========================================
@@ -328,8 +402,18 @@ async function scanSingleSymbol(symbol) {
         }
 
 
+        console.timeEnd(
+            setupTimer
+        );
+
+
         console.log(
             `${symbol} completed.`
+        );
+
+
+        console.timeEnd(
+            totalTimer
         );
 
 
@@ -351,6 +435,17 @@ async function scanSingleSymbol(symbol) {
         console.error(
             `${symbol} failed: ${error.message}`
         );
+
+
+        try {
+
+            console.timeEnd(
+                totalTimer
+            );
+
+        } catch (_) {
+            // Timer may already have ended.
+        }
 
 
         return {
@@ -411,6 +506,15 @@ async function scanFnoStocks() {
     startScan();
 
 
+    const fullScanTimer =
+        "NSE FULL SCAN";
+
+
+    console.time(
+        fullScanTimer
+    );
+
+
     try {
 
         const activeSetups = [];
@@ -454,8 +558,26 @@ async function scanFnoStocks() {
                 ];
 
 
+            const batchNumber =
+                batchIndex + 1;
+
+
             console.log(
-                `\nBatch ${batchIndex + 1}/${batches.length}`
+                `\nBatch ${batchNumber}/${batches.length}`
+            );
+
+
+            console.log(
+                `Batch symbols: ${batch.join(", ")}`
+            );
+
+
+            const batchTimer =
+                `NSE Batch ${batchNumber}`;
+
+
+            console.time(
+                batchTimer
             );
 
 
@@ -468,6 +590,11 @@ async function scanFnoStocks() {
                             )
                     )
                 );
+
+
+            console.timeEnd(
+                batchTimer
+            );
 
 
             for (
@@ -496,6 +623,15 @@ async function scanFnoStocks() {
                     ...result.activeSetups
                 );
             }
+
+
+            console.log(
+                `Batch ${batchNumber}/${batches.length} finished`
+            );
+
+            console.log(
+                `Progress: ${successfulStocks + failedStocks}/${fnoSymbols.length}`
+            );
         }
 
 
@@ -526,12 +662,52 @@ async function scanFnoStocks() {
         );
 
 
+        console.timeEnd(
+            fullScanTimer
+        );
+
+
+        console.log(
+            "\nNSE scan completed successfully"
+        );
+
+        console.log(
+            `Successful stocks: ${successfulStocks}`
+        );
+
+        console.log(
+            `Failed stocks: ${failedStocks}`
+        );
+
+        console.log(
+            `Active setups: ${activeSetups.length}`
+        );
+
+
         return finalResult;
 
 
     } catch (error) {
 
         failScan();
+
+
+        console.error(
+            "NSE full scan failed:",
+            error
+        );
+
+
+        try {
+
+            console.timeEnd(
+                fullScanTimer
+            );
+
+        } catch (_) {
+            // Timer may already have ended.
+        }
+
 
         throw error;
     }
