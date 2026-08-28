@@ -1,7 +1,6 @@
 require("dotenv").config();
 
-const Mailjet =
-    require("node-mailjet");
+const Mailjet = require("node-mailjet");
 
 
 // ======================================================
@@ -21,12 +20,14 @@ const ALERT_EMAIL_2 =
     process.env.ALERT_EMAIL_2;
 
 
-// Verified Mailjet sender
+// Current verified Mailjet sender.
+// Later we can replace this with:
+// alerts@ourdomain.com
 const FROM_EMAIL =
     "adeshkd8329@gmail.com";
 
 const FROM_NAME =
-    "Channel Break Scanner";
+    "Channel Scanner";
 
 
 // ======================================================
@@ -49,9 +50,7 @@ const mailjet =
 
 function validateEmailConfig() {
 
-    if (
-        !MAILJET_API_KEY
-    ) {
+    if (!MAILJET_API_KEY) {
 
         throw new Error(
             "MAILJET_API_KEY is missing."
@@ -59,9 +58,7 @@ function validateEmailConfig() {
     }
 
 
-    if (
-        !MAILJET_SECRET_KEY
-    ) {
+    if (!MAILJET_SECRET_KEY) {
 
         throw new Error(
             "MAILJET_SECRET_KEY is missing."
@@ -69,13 +66,10 @@ function validateEmailConfig() {
     }
 
 
-    if (
-        !ALERT_EMAIL_1 ||
-        !ALERT_EMAIL_2
-    ) {
+    if (!ALERT_EMAIL_1) {
 
         throw new Error(
-            "Both alert recipient emails are required."
+            "ALERT_EMAIL_1 is missing."
         );
     }
 }
@@ -85,9 +79,7 @@ function validateEmailConfig() {
 // FORMAT DATE IN IST
 // ======================================================
 
-function formatDateIST(
-    dateValue
-) {
+function formatDateIST(dateValue) {
 
     if (!dateValue) {
 
@@ -119,22 +111,19 @@ function formatDateIST(
             timeZone:
                 "Asia/Kolkata",
 
-            year:
-                "numeric",
+            day:
+                "2-digit",
 
             month:
                 "short",
 
-            day:
-                "2-digit",
+            year:
+                "numeric",
 
             hour:
                 "2-digit",
 
             minute:
-                "2-digit",
-
-            second:
                 "2-digit",
 
             hour12:
@@ -147,21 +136,89 @@ function formatDateIST(
 
 
 // ======================================================
-// SUBJECT
+// SAFE DISPLAY VALUE
 // ======================================================
 
-function buildSubject(
-    setup
+function displayValue(
+    value,
+    fallback = "N/A"
 ) {
 
-    const symbol =
-        setup.tradingPair ||
-        setup.symbol ||
-        "UNKNOWN";
+    if (
+        value === undefined ||
+        value === null ||
+        value === ""
+    ) {
+
+        return fallback;
+    }
+
+
+    return value;
+}
+
+
+// ======================================================
+// MARKET LABEL
+// ======================================================
+
+function getMarketLabel(setup) {
+
+    if (
+        setup.market ===
+        "BINANCE_USDT_PERPETUAL"
+    ) {
+
+        return "Binance Futures";
+    }
+
+
+    if (
+        setup.market ===
+        "NSE"
+    ) {
+
+        return "NSE";
+    }
 
 
     return (
-        `🚨 PRE_PHASE | ${symbol} | ${setup.timeframe || "N/A"}`
+        setup.market ||
+        "N/A"
+    );
+}
+
+
+// ======================================================
+// SYMBOL
+// ======================================================
+
+function getSymbol(setup) {
+
+    return (
+        setup.tradingPair ||
+        setup.symbol ||
+        "UNKNOWN"
+    );
+}
+
+
+// ======================================================
+// SUBJECT
+// ======================================================
+
+function buildSubject(setup) {
+
+    const symbol =
+        getSymbol(setup);
+
+    const timeframe =
+        setup.timeframe ||
+        "N/A";
+
+
+    return (
+        `Channel Scanner - ${symbol} ${timeframe} setup detected`
     );
 }
 
@@ -170,57 +227,103 @@ function buildSubject(
 // TEXT BODY
 // ======================================================
 
-function buildTextBody(
-    setup
-) {
+function buildTextBody(setup) {
 
     const symbol =
-        setup.tradingPair ||
-        setup.symbol ||
-        "UNKNOWN";
+        getSymbol(setup);
+
+    const market =
+        getMarketLabel(setup);
+
+    const flashSellTime =
+        formatDateIST(
+            setup.flashSellAt ||
+            setup.flashSellDate
+        );
+
+    const baseTime =
+        formatDateIST(
+            setup.baseStartedAt
+        );
+
+    const confirmedTime =
+        formatDateIST(
+            setup.prePhaseConfirmedAt ||
+            setup.baseConfirmedAt ||
+            setup.detectedAt
+        );
 
 
     return `
-CHANNEL BREAK SCANNER ALERT
+CHANNEL SCANNER
 
-Status:
-${setup.status || "PRE_PHASE"}
+New setup detected
 
-Market:
-${setup.market || "N/A"}
+Market: ${market}
+Symbol: ${symbol}
+Timeframe: ${displayValue(setup.timeframe)}
+Status: ${displayValue(setup.status, "PRE_PHASE")}
 
-Symbol:
-${symbol}
+SETUP DETAILS
 
-Timeframe:
-${setup.timeframe || "N/A"}
+Flash Sell: ${displayValue(setup.flashSellDropPercent)}%
+Flash Sell Time: ${flashSellTime}
+Lower Channel: ${displayValue(setup.lowerChannelValue)}
 
-Flash Sell:
-${setup.flashSellDropPercent ?? "N/A"}%
+Base Type: ${displayValue(setup.baseType)}
+Base Started: ${baseTime}
+Setup Confirmed: ${confirmedTime}
 
-Flash Sell Time (IST):
-${formatDateIST(setup.flashSellDate)}
+Candles Since Flash Sell: ${displayValue(setup.candlesSinceFlashSell)}
+Base Candles: ${displayValue(
+        setup.baseCandlesFound ??
+        setup.baseCandles
+    )}
 
-Lower Channel:
-${setup.lowerChannelValue ?? "N/A"}
+This is an automated market-scanner notification.
 
-Candles Since Flash Sell:
-${setup.candlesSinceFlashSell ?? "N/A"}
-
-Base Candles:
-${setup.baseCandles ?? "N/A"}
-
---------------------------------
-
-Pattern:
-
-Clean ascending channel
-→ strong bearish lower-channel break
-→ doji / hammer / long lower wick / base
-→ PRE_PHASE
-
-Generated automatically by Channel Break Scanner.
+Channel Scanner
 `.trim();
+}
+
+
+// ======================================================
+// HTML TABLE ROW
+// ======================================================
+
+function tableRow(
+    label,
+    value
+) {
+
+    return `
+        <tr>
+            <td
+                style="
+                    padding: 10px 0;
+                    color: #6b7280;
+                    font-size: 14px;
+                    width: 48%;
+                    border-bottom: 1px solid #f0f0f0;
+                "
+            >
+                ${label}
+            </td>
+
+            <td
+                style="
+                    padding: 10px 0;
+                    color: #111827;
+                    font-size: 14px;
+                    font-weight: 600;
+                    text-align: right;
+                    border-bottom: 1px solid #f0f0f0;
+                "
+            >
+                ${displayValue(value)}
+            </td>
+        </tr>
+    `;
 }
 
 
@@ -228,14 +331,47 @@ Generated automatically by Channel Break Scanner.
 // HTML BODY
 // ======================================================
 
-function buildHtmlBody(
-    setup
-) {
+function buildHtmlBody(setup) {
 
     const symbol =
-        setup.tradingPair ||
-        setup.symbol ||
-        "UNKNOWN";
+        getSymbol(setup);
+
+    const market =
+        getMarketLabel(setup);
+
+    const timeframe =
+        displayValue(
+            setup.timeframe
+        );
+
+    const status =
+        displayValue(
+            setup.status,
+            "PRE_PHASE"
+        );
+
+    const flashSellTime =
+        formatDateIST(
+            setup.flashSellAt ||
+            setup.flashSellDate
+        );
+
+    const baseTime =
+        formatDateIST(
+            setup.baseStartedAt
+        );
+
+    const confirmedTime =
+        formatDateIST(
+            setup.prePhaseConfirmedAt ||
+            setup.baseConfirmedAt ||
+            setup.detectedAt
+        );
+
+    const baseCandles =
+        setup.baseCandlesFound ??
+        setup.baseCandles ??
+        "N/A";
 
 
     return `
@@ -243,117 +379,287 @@ function buildHtmlBody(
 
 <html>
 
+<head>
+
+    <meta
+        charset="UTF-8"
+    >
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Channel Scanner
+    </title>
+
+</head>
+
+
 <body
     style="
-        font-family: Arial, sans-serif;
-        background: #f4f4f4;
-        padding: 24px;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f7fa;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #111827;
     "
 >
-
-<div
-    style="
-        max-width: 620px;
-        margin: auto;
-        background: white;
-        padding: 26px;
-        border-radius: 10px;
-    "
->
-
-<h2>
-    🚨 Channel Break PRE_PHASE
-</h2>
 
 
 <table
+    role="presentation"
+    width="100%"
+    cellspacing="0"
+    cellpadding="0"
+    border="0"
     style="
-        width: 100%;
-        border-collapse: collapse;
-        line-height: 1.8;
+        background-color: #f5f7fa;
+        padding: 30px 12px;
     "
 >
 
 <tr>
-<td><strong>Market</strong></td>
-<td>${setup.market || "N/A"}</td>
-</tr>
+
+<td align="center">
+
+
+<table
+    role="presentation"
+    width="100%"
+    cellspacing="0"
+    cellpadding="0"
+    border="0"
+    style="
+        max-width: 600px;
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    "
+>
+
 
 <tr>
-<td><strong>Symbol</strong></td>
-<td>${symbol}</td>
+
+<td
+    style="
+        padding: 26px 30px;
+        border-bottom: 1px solid #e5e7eb;
+    "
+>
+
+    <div
+        style="
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+        "
+    >
+        Channel Scanner
+    </div>
+
+    <div
+        style="
+            margin-top: 5px;
+            font-size: 13px;
+            color: #6b7280;
+        "
+    >
+        Automated market setup notification
+    </div>
+
+</td>
+
 </tr>
 
-<tr>
-<td><strong>Timeframe</strong></td>
-<td>${setup.timeframe || "N/A"}</td>
-</tr>
 
 <tr>
-<td><strong>Status</strong></td>
-<td>${setup.status || "PRE_PHASE"}</td>
+
+<td
+    style="
+        padding: 30px;
+    "
+>
+
+    <div
+        style="
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 7px;
+        "
+    >
+        NEW SETUP DETECTED
+    </div>
+
+
+    <div
+        style="
+            font-size: 28px;
+            line-height: 1.2;
+            font-weight: 700;
+            color: #111827;
+        "
+    >
+        ${symbol}
+    </div>
+
+
+    <div
+        style="
+            margin-top: 8px;
+            font-size: 15px;
+            color: #4b5563;
+        "
+    >
+        ${market} &nbsp;&bull;&nbsp;
+        ${timeframe}
+    </div>
+
+
+    <div
+        style="
+            display: inline-block;
+            margin-top: 18px;
+            padding: 7px 12px;
+            border-radius: 6px;
+            background-color: #f3f4f6;
+            color: #111827;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        "
+    >
+        ${status}
+    </div>
+
+
+    <div
+        style="
+            margin-top: 30px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+        "
+    >
+        Setup details
+    </div>
+
+
+    <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="
+            margin-top: 10px;
+            border-collapse: collapse;
+        "
+    >
+
+        ${tableRow(
+            "Flash Sell",
+            `${
+                displayValue(
+                    setup.flashSellDropPercent
+                )
+            }%`
+        )}
+
+        ${tableRow(
+            "Flash Sell Time",
+            flashSellTime
+        )}
+
+        ${tableRow(
+            "Lower Channel",
+            setup.lowerChannelValue
+        )}
+
+        ${tableRow(
+            "Base Type",
+            setup.baseType
+        )}
+
+        ${tableRow(
+            "Base Started",
+            baseTime
+        )}
+
+        ${tableRow(
+            "Setup Confirmed",
+            confirmedTime
+        )}
+
+        ${tableRow(
+            "Candles Since Flash Sell",
+            setup.candlesSinceFlashSell
+        )}
+
+        ${tableRow(
+            "Base Candles",
+            baseCandles
+        )}
+
+    </table>
+
+
+    <div
+        style="
+            margin-top: 28px;
+            padding: 16px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #6b7280;
+        "
+    >
+        This notification was generated automatically
+        when Channel Scanner detected a setup matching
+        the configured strategy conditions.
+    </div>
+
+</td>
+
 </tr>
 
-<tr>
-<td><strong>Flash Sell</strong></td>
-<td>${setup.flashSellDropPercent ?? "N/A"}%</td>
-</tr>
 
 <tr>
-<td><strong>Flash Sell Time</strong></td>
-<td>${formatDateIST(setup.flashSellDate)}</td>
+
+<td
+    style="
+        padding: 20px 30px;
+        background-color: #fafafa;
+        border-top: 1px solid #e5e7eb;
+        font-size: 11px;
+        line-height: 1.6;
+        color: #9ca3af;
+    "
+>
+
+    Channel Scanner<br>
+
+    Automated market monitoring notification.<br>
+
+    Times displayed in India Standard Time (IST).
+
+</td>
+
 </tr>
 
-<tr>
-<td><strong>Lower Channel</strong></td>
-<td>${setup.lowerChannelValue ?? "N/A"}</td>
-</tr>
-
-<tr>
-<td><strong>Candles Since Sell</strong></td>
-<td>${setup.candlesSinceFlashSell ?? "N/A"}</td>
-</tr>
-
-<tr>
-<td><strong>Base Candles</strong></td>
-<td>${setup.baseCandles ?? "N/A"}</td>
-</tr>
 
 </table>
 
 
-<hr
-    style="
-        margin: 24px 0;
-        border: none;
-        border-top: 1px solid #ddd;
-    "
->
+</td>
 
+</tr>
 
-<p>
-<strong>Pattern</strong>
-</p>
+</table>
 
-<p>
-Clean ascending channel
-→ strong bearish lower-channel break
-→ doji / hammer / long lower wick / base
-→ PRE_PHASE
-</p>
-
-
-<p
-    style="
-        color: #777;
-        font-size: 12px;
-    "
->
-Generated automatically by Channel Break Scanner.
-</p>
-
-
-</div>
 
 </body>
 
@@ -363,25 +669,35 @@ Generated automatically by Channel Break Scanner.
 
 
 // ======================================================
-// SEND PRE_PHASE ALERT
+// GET RECIPIENTS
 // ======================================================
 
-async function sendSetupAlert(
+function getRecipients() {
+
+    return [
+        ALERT_EMAIL_1,
+        ALERT_EMAIL_2
+    ].filter(
+        email =>
+            typeof email === "string" &&
+            email.trim().length > 0
+    );
+}
+
+
+// ======================================================
+// SEND EMAIL TO ONE RECIPIENT
+// ======================================================
+
+async function sendToRecipient(
+    email,
     setup
 ) {
-
-    validateEmailConfig();
-
 
     const subject =
         buildSubject(
             setup
         );
-
-
-    console.log(
-        "Sending Mailjet alert to 2 recipients..."
-    );
 
 
     const response =
@@ -415,14 +731,7 @@ async function sendSetupAlert(
                             {
 
                                 Email:
-                                    ALERT_EMAIL_1
-
-                            },
-
-                            {
-
-                                Email:
-                                    ALERT_EMAIL_2
+                                    email
 
                             }
 
@@ -451,12 +760,132 @@ async function sendSetupAlert(
             });
 
 
+    return response.body;
+}
+
+
+// ======================================================
+// SEND SETUP ALERT
+// ======================================================
+
+async function sendSetupAlert(
+    setup
+) {
+
+    validateEmailConfig();
+
+
+    const recipients =
+        getRecipients();
+
+
+    if (
+        recipients.length === 0
+    ) {
+
+        throw new Error(
+            "No alert recipients configured."
+        );
+    }
+
+
     console.log(
-        "Mailjet alert sent successfully."
+        `Sending Channel Scanner alert to ${recipients.length} recipient(s)...`
     );
 
 
-    return response.body;
+    const results = [];
+
+
+    // Send separately so recipients are not exposed
+    // to each other in the To field.
+    for (
+        const recipient
+        of recipients
+    ) {
+
+        try {
+
+            const response =
+                await sendToRecipient(
+                    recipient,
+                    setup
+                );
+
+
+            results.push({
+
+                email:
+                    recipient,
+
+                success:
+                    true,
+
+                response
+
+            });
+
+
+            console.log(
+                `Email sent successfully to ${recipient}.`
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                `Email failed for ${recipient}: ${error.message}`
+            );
+
+
+            results.push({
+
+                email:
+                    recipient,
+
+                success:
+                    false,
+
+                error:
+                    error.message
+
+            });
+        }
+    }
+
+
+    const successful =
+        results.filter(
+            result =>
+                result.success
+        );
+
+
+    if (
+        successful.length === 0
+    ) {
+
+        throw new Error(
+            "Email delivery failed for all recipients."
+        );
+    }
+
+
+    return {
+
+        success:
+            true,
+
+        sent:
+            successful.length,
+
+        failed:
+            results.length -
+            successful.length,
+
+        results
+
+    };
 }
 
 
@@ -466,10 +895,26 @@ async function sendSetupAlert(
 
 async function sendTestEmail() {
 
+    const now =
+        new Date();
+
+    const thirtyMinutesAgo =
+        new Date(
+            now.getTime() -
+            30 * 60 * 1000
+        );
+
+    const sixtyMinutesAgo =
+        new Date(
+            now.getTime() -
+            60 * 60 * 1000
+        );
+
+
     const testSetup = {
 
         market:
-            "TEST",
+            "BINANCE_USDT_PERPETUAL",
 
         tradingPair:
             "TESTUSDT",
@@ -480,8 +925,11 @@ async function sendTestEmail() {
         status:
             "PRE_PHASE",
 
+        flashSellAt:
+            sixtyMinutesAgo,
+
         flashSellDate:
-            new Date(),
+            sixtyMinutesAgo,
 
         flashSellDropPercent:
             1.25,
@@ -492,7 +940,22 @@ async function sendTestEmail() {
         candlesSinceFlashSell:
             1,
 
-        baseCandles:
+        baseType:
+            "HAMMER",
+
+        baseStartedAt:
+            thirtyMinutesAgo,
+
+        baseConfirmedAt:
+            now,
+
+        prePhaseConfirmedAt:
+            now,
+
+        detectedAt:
+            now,
+
+        baseCandlesFound:
             1
 
     };
