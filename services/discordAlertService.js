@@ -39,7 +39,7 @@ function validateDiscordConfig() {
 
 
 // ======================================================
-// FORMAT DATE IN IST
+// FORMAT DATE / TIME IN IST
 // ======================================================
 
 function formatDateIST(
@@ -101,128 +101,156 @@ function formatDateIST(
 
 
 // ======================================================
-// DISPLAY VALUE
-// ======================================================
-
-function displayValue(
-    value,
-    fallback = "N/A"
-) {
-
-    if (
-        value === undefined ||
-        value === null ||
-        value === ""
-    ) {
-
-        return fallback;
-    }
-
-
-    return String(
-        value
-    );
-}
-
-
-// ======================================================
-// SYMBOL
+// HELPERS
 // ======================================================
 
 function getSymbol(
     setup
 ) {
 
-    return (
+    return String(
         setup.tradingPair ||
         setup.symbol ||
         "UNKNOWN"
-    );
+    ).toUpperCase();
 }
 
 
-// ======================================================
-// MARKET
-// ======================================================
-
-function getMarketName(
+function getTimeframe(
     setup
 ) {
 
-    const market =
+    return String(
+        setup.timeframe ||
+        "N/A"
+    ).toUpperCase();
+}
+
+
+function getBaseType(
+    setup
+) {
+
+    return String(
+        setup.baseType ||
+        "N/A"
+    ).toUpperCase();
+}
+
+
+function getTimeframeMinutes(
+    timeframe
+) {
+
+    const value =
         String(
-            setup.market ||
+            timeframe ||
             ""
-        ).toUpperCase();
+        ).toLowerCase();
+
+
+    const minuteMatch =
+        value.match(
+            /^(\d+)m$/
+        );
 
 
     if (
-        market ===
-        "BINANCE_USDT_PERPETUAL"
+        minuteMatch
     ) {
 
-        return "Binance Futures";
+        return Number(
+            minuteMatch[1]
+        );
+    }
+
+
+    const hourMatch =
+        value.match(
+            /^(\d+)h$/
+        );
+
+
+    if (
+        hourMatch
+    ) {
+
+        return Number(
+            hourMatch[1]
+        ) * 60;
+    }
+
+
+    return null;
+}
+
+
+function getBaseCloseTime(
+    setup
+) {
+
+    if (
+        setup.baseConfirmedAt
+    ) {
+
+        return setup.baseConfirmedAt;
     }
 
 
     if (
-        market ===
-        "NSE"
+        !setup.baseStartedAt
     ) {
 
-        return "NSE F&O";
+        return null;
     }
 
 
-    return (
-        setup.market ||
-        "Unknown Market"
+    const timeframeMinutes =
+        getTimeframeMinutes(
+            setup.timeframe
+        );
+
+
+    if (
+        !Number.isFinite(
+            timeframeMinutes
+        )
+    ) {
+
+        return null;
+    }
+
+
+    const baseOpen =
+        new Date(
+            setup.baseStartedAt
+        );
+
+
+    if (
+        Number.isNaN(
+            baseOpen.getTime()
+        )
+    ) {
+
+        return null;
+    }
+
+
+    return new Date(
+        baseOpen.getTime() +
+        timeframeMinutes *
+        60 *
+        1000
     );
 }
 
 
 // ======================================================
-// LIFECYCLE COLOR
+// BUILD DISCORD ALERT
 // ======================================================
 
-function getEmbedColor(
-    setup
-) {
-
-    const lifecycle =
-        String(
-            setup.lifecycle ||
-            "LIVE"
-        ).toUpperCase();
-
-
-    if (
-        lifecycle ===
-        "AGING"
-    ) {
-
-        return 0xF0B429;
-    }
-
-
-    if (
-        lifecycle ===
-        "EXPIRED"
-    ) {
-
-        return 0xD64545;
-    }
-
-
-    return 0x2ECC71;
-}
-
-
-// ======================================================
-// BUILD DISCORD EMBED
-// ======================================================
-
-function buildDiscordEmbed(
+function buildDiscordPayload(
     setup
 ) {
 
@@ -232,232 +260,58 @@ function buildDiscordEmbed(
         );
 
 
-    const flashTime =
+    const timeframe =
+        getTimeframe(
+            setup
+        );
+
+
+    const baseType =
+        getBaseType(
+            setup
+        );
+
+
+    const flashSellTime =
         formatDateIST(
             setup.flashSellAt ||
             setup.flashSellDate
         );
 
 
-    const flashConfirmed =
-        formatDateIST(
-            setup.flashSellConfirmedAt
-        );
-
-
-    const baseStarted =
+    const baseOpenTime =
         formatDateIST(
             setup.baseStartedAt
         );
 
 
-    const baseConfirmed =
+    const baseCloseTime =
         formatDateIST(
-            setup.baseConfirmedAt
+            getBaseCloseTime(
+                setup
+            )
         );
-
-
-    const prePhaseConfirmed =
-        formatDateIST(
-            setup.prePhaseConfirmedAt ||
-            setup.detectedAt
-        );
-
-
-    const drop =
-        setup.flashSellDropPercent != null
-            ? `${Number(
-                setup.flashSellDropPercent
-            ).toFixed(2)}%`
-            : "N/A";
-
-
-    const respect =
-        setup.channelRespectRatio != null
-            ? `${Math.round(
-                Number(
-                    setup.channelRespectRatio
-                ) *
-                100
-            )}%`
-            : "N/A";
 
 
     return {
 
-        title:
-            `${symbol} • ${displayValue(
-                setup.timeframe
-            ).toUpperCase()}`,
+        username:
+            "Channel Scanner",
 
-        description:
-            "Channel Break setup detected",
-
-        color:
-            getEmbedColor(
-                setup
+        content:
+            [
+                `${symbol} ${timeframe}`,
+                `Flash Sell: ${flashSellTime} IST`,
+                `Base: ${baseType}`,
+                `Base Open: ${baseOpenTime} IST`,
+                `Base Close: ${baseCloseTime} IST`
+            ].join(
+                "\n"
             ),
 
-        fields: [
-
-            {
-                name:
-                    "Market",
-
-                value:
-                    getMarketName(
-                        setup
-                    ),
-
-                inline:
-                    true
-            },
-
-            {
-                name:
-                    "Status",
-
-                value:
-                    displayValue(
-                        setup.status,
-                        "PRE_PHASE"
-                    ),
-
-                inline:
-                    true
-            },
-
-            {
-                name:
-                    "Lifecycle",
-
-                value:
-                    displayValue(
-                        setup.lifecycleLabel ||
-                        setup.lifecycle,
-                        "Live"
-                    ),
-
-                inline:
-                    true
-            },
-
-            {
-                name:
-                    "Flash Sell",
-
-                value:
-                    drop,
-
-                inline:
-                    true
-            },
-
-            {
-                name:
-                    "Base Type",
-
-                value:
-                    displayValue(
-                        setup.baseType
-                    ),
-
-                inline:
-                    true
-            },
-
-            {
-                name:
-                    "Channel Respect",
-
-                value:
-                    respect,
-
-                inline:
-                    true
-            },
-
-            {
-                name:
-                    "Flash Candle",
-
-                value:
-                    flashTime,
-
-                inline:
-                    false
-            },
-
-            {
-                name:
-                    "Flash Confirmed",
-
-                value:
-                    flashConfirmed,
-
-                inline:
-                    false
-            },
-
-            {
-                name:
-                    "Base Started",
-
-                value:
-                    baseStarted,
-
-                inline:
-                    false
-            },
-
-            {
-                name:
-                    "Base Confirmed",
-
-                value:
-                    baseConfirmed,
-
-                inline:
-                    false
-            },
-
-            {
-                name:
-                    "Pre-Phase Confirmed",
-
-                value:
-                    prePhaseConfirmed,
-
-                inline:
-                    false
-            },
-
-            {
-                name:
-                    "Setup Age",
-
-                value:
-                    setup.candlesSinceFlashSell != null &&
-                    setup.maxCandlesSinceFlashSell != null
-                        ? `${setup.candlesSinceFlashSell} / ${setup.maxCandlesSinceFlashSell} candles`
-                        : "N/A",
-
-                inline:
-                    false
-            }
-
-        ],
-
-        footer: {
-
-            text:
-                "Channel Scanner • Times shown in IST"
-
-        },
-
-        timestamp:
-            new Date()
-                .toISOString()
+        allowed_mentions: {
+            parse: []
+        }
 
     };
 }
@@ -500,23 +354,11 @@ async function sendDiscordSetupAlert(
                 },
 
                 body:
-                    JSON.stringify({
-
-                        username:
-                            "Channel Scanner",
-
-                        content:
-                            null,
-
-                        embeds: [
-
-                            buildDiscordEmbed(
-                                setup
-                            )
-
-                        ]
-
-                    })
+                    JSON.stringify(
+                        buildDiscordPayload(
+                            setup
+                        )
+                    )
             }
         );
 
@@ -526,8 +368,7 @@ async function sendDiscordSetupAlert(
     ) {
 
         const errorText =
-            await response
-                .text();
+            await response.text();
 
 
         throw new Error(
@@ -559,21 +400,27 @@ async function sendDiscordSetupAlert(
 
 async function sendDiscordTestAlert() {
 
-    const now =
+    const baseOpen =
         new Date();
 
-    const thirtyMinutesAgo =
+
+    const timeframeMinutes =
+        15;
+
+
+    const baseClose =
         new Date(
-            now.getTime() -
-            30 *
+            baseOpen.getTime() +
+            timeframeMinutes *
             60 *
             1000
         );
 
-    const oneHourAgo =
+
+    const flashSell =
         new Date(
-            now.getTime() -
-            60 *
+            baseOpen.getTime() -
+            timeframeMinutes *
             60 *
             1000
         );
@@ -588,46 +435,25 @@ async function sendDiscordTestAlert() {
             "TESTUSDT",
 
         timeframe:
-            "30m",
+            "15m",
 
         status:
             "PRE_PHASE",
 
-        lifecycle:
-            "LIVE",
-
-        lifecycleLabel:
-            "Live",
-
         flashSellAt:
-            oneHourAgo,
+            flashSell,
 
-        flashSellConfirmedAt:
-            thirtyMinutesAgo,
-
-        flashSellDropPercent:
-            1.42,
+        flashSellDate:
+            flashSell,
 
         baseType:
             "HAMMER",
 
         baseStartedAt:
-            thirtyMinutesAgo,
+            baseOpen,
 
         baseConfirmedAt:
-            now,
-
-        prePhaseConfirmedAt:
-            now,
-
-        channelRespectRatio:
-            0.94,
-
-        candlesSinceFlashSell:
-            2,
-
-        maxCandlesSinceFlashSell:
-            8
+            baseClose
 
     };
 
