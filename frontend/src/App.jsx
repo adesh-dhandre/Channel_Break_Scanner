@@ -18,10 +18,6 @@ const TIMEFRAMES = [
 ];
 
 
-// ======================================================
-// POPULAR CRYPTO DISPLAY DATA
-// ======================================================
-
 const COIN_INFO = {
 
   BTC: {
@@ -113,19 +109,26 @@ function cleanCryptoSymbol(setup) {
     return String(
       setup.symbol
     )
-      .replace(/\.NS$/i, "")
+      .replace(
+        /\.NS$/i,
+        ""
+      )
       .toUpperCase();
   }
 
 
   const pair =
     String(
-      setup?.tradingPair || ""
-    ).toUpperCase();
+      setup?.tradingPair ||
+      ""
+    )
+      .toUpperCase();
 
 
   if (
-    pair.endsWith("USDT")
+    pair.endsWith(
+      "USDT"
+    )
   ) {
 
     return pair.slice(
@@ -135,30 +138,9 @@ function cleanCryptoSymbol(setup) {
   }
 
 
-  return pair || "UNKNOWN";
-}
-
-
-function displaySymbol(setup) {
-
-  if (!setup) {
-    return "-";
-  }
-
-
-  if (
-    setup.tradingPair
-  ) {
-
-    return setup.tradingPair;
-  }
-
-
-  return String(
-    setup.symbol || "-"
-  ).replace(
-    /\.NS$/i,
-    ""
+  return (
+    pair ||
+    "UNKNOWN"
   );
 }
 
@@ -177,14 +159,20 @@ function getCoinInfo(setup) {
     ];
 
 
-  if (known) {
+  if (
+    known
+  ) {
 
     return {
+
       symbol,
+
       name:
         known.name,
+
       badge:
         known.badge
+
     };
   }
 
@@ -195,7 +183,8 @@ function getCoinInfo(setup) {
 
     name:
       setup?.name &&
-      setup.name !== symbol
+      setup.name !==
+        symbol
         ? setup.name
         : `${symbol} Futures`,
 
@@ -211,72 +200,19 @@ function getCoinInfo(setup) {
 
 function displayStructure(setup) {
 
-  if (
-    setup?.uptrendScenario
-  ) {
-
-    return setup
-      .uptrendScenario;
-  }
-
-
-  return "Ascending Channel";
+  return (
+    setup?.uptrendScenario ||
+    "Ascending Channel"
+  );
 }
 
 
 function formatDate(value) {
 
-  if (!value) {
-    return "-";
-  }
-
-
-  const date =
-    new Date(
-      value
-    );
-
-
   if (
-    Number.isNaN(
-      date.getTime()
-    )
+    !value
   ) {
 
-    return "-";
-  }
-
-
-  return new Intl.DateTimeFormat(
-    "en-IN",
-    {
-      timeZone:
-        "Asia/Kolkata",
-
-      day:
-        "2-digit",
-
-      month:
-        "short",
-
-      hour:
-        "2-digit",
-
-      minute:
-        "2-digit",
-
-      hour12:
-        true
-    }
-  ).format(
-    date
-  );
-}
-
-
-function formatTimelineDate(value) {
-
-  if (!value) {
     return "-";
   }
 
@@ -330,7 +266,8 @@ function getLifecycle(setup) {
     String(
       setup?.lifecycle ||
       "LIVE"
-    ).toUpperCase();
+    )
+      .toUpperCase();
 
 
   if (
@@ -339,10 +276,14 @@ function getLifecycle(setup) {
   ) {
 
     return {
-      key: "aging",
+
+      key:
+        "aging",
+
       label:
         setup?.lifecycleLabel ||
         "Aging"
+
     };
   }
 
@@ -353,10 +294,14 @@ function getLifecycle(setup) {
   ) {
 
     return {
-      key: "expired",
+
+      key:
+        "expired",
+
       label:
         setup?.lifecycleLabel ||
         "Expired"
+
     };
   }
 
@@ -367,42 +312,54 @@ function getLifecycle(setup) {
   ) {
 
     return {
-      key: "waiting",
+
+      key:
+        "waiting",
+
       label:
         setup?.lifecycleLabel ||
         "Waiting"
+
     };
   }
 
 
   return {
-    key: "live",
+
+    key:
+      "live",
+
     label:
       setup?.lifecycleLabel ||
       "Live"
+
   };
 }
 
 
-function getAgePercent(
-  setup
-) {
+function getAgePercent(setup) {
 
   const current =
     Number(
-      setup?.candlesSinceFlashSell
+      setup
+        ?.candlesSinceFlashSell
     );
 
 
   const max =
     Number(
-      setup?.maxCandlesSinceFlashSell
+      setup
+        ?.maxCandlesSinceFlashSell
     );
 
 
   if (
-    !Number.isFinite(current) ||
-    !Number.isFinite(max) ||
+    !Number.isFinite(
+      current
+    ) ||
+    !Number.isFinite(
+      max
+    ) ||
     max <= 0
   ) {
 
@@ -424,9 +381,7 @@ function getAgePercent(
 }
 
 
-function getAgeText(
-  setup
-) {
+function getAgeText(setup) {
 
   if (
     setup?.ageText
@@ -437,11 +392,12 @@ function getAgeText(
 
 
   const current =
-    setup?.candlesSinceFlashSell;
-
+    setup
+      ?.candlesSinceFlashSell;
 
   const max =
-    setup?.maxCandlesSinceFlashSell;
+    setup
+      ?.maxCandlesSinceFlashSell;
 
 
   if (
@@ -449,19 +405,17 @@ function getAgeText(
     max != null
   ) {
 
-    return `${current} / ${max}`;
+    return (
+      `${current} / ${max}`
+    );
   }
 
 
-  if (
+  return (
     current != null
-  ) {
-
-    return `${current}`;
-  }
-
-
-  return "-";
+      ? String(current)
+      : "-"
+  );
 }
 
 
@@ -470,42 +424,6 @@ function getAgeText(
 // ======================================================
 
 function App() {
-
-  const [
-    market,
-    setMarket
-  ] =
-    useState(
-      "NSE"
-    );
-
-
-  const [
-    nseState,
-    setNseState
-  ] =
-    useState(
-      null
-    );
-
-
-  const [
-    cryptoStatus,
-    setCryptoStatus
-  ] =
-    useState(
-      null
-    );
-
-
-  const [
-    cryptoResults,
-    setCryptoResults
-  ] =
-    useState(
-      []
-    );
-
 
   const [
     liveStatus,
@@ -520,19 +438,9 @@ function App() {
     liveResults,
     setLiveResults
   ] =
-    useState({
-
-      nse: {
-        count: 0,
-        results: []
-      },
-
-      crypto: {
-        count: 0,
-        results: []
-      }
-
-    });
+    useState(
+      []
+    );
 
 
   const [
@@ -563,24 +471,6 @@ function App() {
 
 
   const [
-    runningNse,
-    setRunningNse
-  ] =
-    useState(
-      false
-    );
-
-
-  const [
-    runningCrypto,
-    setRunningCrypto
-  ] =
-    useState(
-      false
-    );
-
-
-  const [
     error,
     setError
   ] =
@@ -590,185 +480,97 @@ function App() {
 
 
   // ====================================================
-  // API LOADERS
+  // LIVE STATUS
   // ====================================================
-
-  async function fetchNseStatus() {
-
-    try {
-
-      const response =
-        await fetch(
-          "/api/scanner/status"
-        );
-
-
-      if (!response.ok) {
-        return;
-      }
-
-
-      const result =
-        await response.json();
-
-
-      setNseState(
-        result.data ||
-        result
-      );
-
-
-    } catch (err) {
-
-      console.error(
-        err
-      );
-    }
-  }
-
-
-  async function fetchCryptoStatus() {
-
-    try {
-
-      const response =
-        await fetch(
-          "/api/crypto/status"
-        );
-
-
-      if (!response.ok) {
-        return;
-      }
-
-
-      const result =
-        await response.json();
-
-
-      setCryptoStatus(
-        result
-      );
-
-
-    } catch (err) {
-
-      console.error(
-        err
-      );
-    }
-  }
-
-
-  async function fetchCryptoResults() {
-
-    try {
-
-      const response =
-        await fetch(
-          "/api/crypto/results"
-        );
-
-
-      if (!response.ok) {
-        return;
-      }
-
-
-      const result =
-        await response.json();
-
-
-      setCryptoResults(
-        result.results ||
-        []
-      );
-
-
-    } catch (err) {
-
-      console.error(
-        err
-      );
-    }
-  }
-
 
   async function fetchLiveStatus() {
 
-    try {
-
-      const response =
-        await fetch(
-          "/api/live/status"
-        );
-
-
-      if (!response.ok) {
-        return;
-      }
-
-
-      const result =
-        await response.json();
-
-
-      setLiveStatus(
-        result
+    const response =
+      await fetch(
+        "/api/live/status",
+        {
+          cache:
+            "no-store"
+        }
       );
 
 
-    } catch (err) {
+    if (
+      !response.ok
+    ) {
 
-      console.error(
-        err
+      throw new Error(
+        "Unable to load scanner status."
       );
     }
+
+
+    const result =
+      await response.json();
+
+
+    setLiveStatus(
+      result
+    );
   }
 
 
+  // ====================================================
+  // LIVE RESULTS
+  //
+  // IMPORTANT:
+  //
+  // We ONLY display /api/live/results.
+  //
+  // If backend returns zero setups, frontend immediately
+  // displays zero setups.
+  //
+  // We DO NOT fall back to /api/crypto/results because
+  // that could contain results from an older scan.
+  // ====================================================
+
   async function fetchLiveResults() {
 
-    try {
-
-      const response =
-        await fetch(
-          "/api/live/results"
-        );
-
-
-      if (!response.ok) {
-        return;
-      }
+    const response =
+      await fetch(
+        `/api/live/results?_=${Date.now()}`,
+        {
+          cache:
+            "no-store"
+        }
+      );
 
 
-      const result =
-        await response.json();
+    if (
+      !response.ok
+    ) {
 
-
-      setLiveResults({
-
-        nse:
-          result.nse || {
-            count: 0,
-            results: []
-          },
-
-        crypto:
-          result.crypto || {
-            count: 0,
-            results: []
-          }
-
-      });
-
-
-    } catch (err) {
-
-      console.error(
-        err
+      throw new Error(
+        "Unable to load live scanner results."
       );
     }
+
+
+    const result =
+      await response.json();
+
+
+    const currentResults =
+      Array.isArray(
+        result
+          ?.crypto
+          ?.results
+      )
+        ? result.crypto.results
+        : [];
+
+
+    // Always replace state.
+    //
+    // [] means CLEAR the dashboard.
+    setLiveResults(
+      currentResults
+    );
   }
 
 
@@ -782,12 +584,6 @@ function App() {
 
       await Promise.all([
 
-        fetchNseStatus(),
-
-        fetchCryptoStatus(),
-
-        fetchCryptoResults(),
-
         fetchLiveStatus(),
 
         fetchLiveResults()
@@ -795,7 +591,9 @@ function App() {
       ]);
 
 
-      setError("");
+      setError(
+        ""
+      );
 
 
     } catch (err) {
@@ -806,157 +604,14 @@ function App() {
 
 
       setError(
-        "Unable to connect to scanner backend."
+        err.message ||
+        "Unable to connect to scanner."
       );
 
 
     } finally {
 
       setLoading(
-        false
-      );
-    }
-  }
-
-
-  // ====================================================
-  // MANUAL NSE SCAN
-  // ====================================================
-
-  async function runNseScanner() {
-
-    if (
-      runningNse ||
-      nseState?.scanning ||
-      liveStatus?.nseRunning
-    ) {
-
-      return;
-    }
-
-
-    try {
-
-      setRunningNse(
-        true
-      );
-
-      setError("");
-
-
-      const response =
-        await fetch(
-          "/api/scanner/run",
-          {
-            method:
-              "POST"
-          }
-        );
-
-
-      const result =
-        await response.json();
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          result.message ||
-          "Unable to start NSE scanner."
-        );
-      }
-
-
-      await refreshAll();
-
-
-    } catch (err) {
-
-      console.error(
-        err
-      );
-
-
-      setError(
-        err.message
-      );
-
-
-    } finally {
-
-      setRunningNse(
-        false
-      );
-    }
-  }
-
-
-  // ====================================================
-  // MANUAL CRYPTO SCAN
-  // ====================================================
-
-  async function runCryptoScanner() {
-
-    if (
-      runningCrypto ||
-      cryptoStatus?.running ||
-      liveStatus?.cryptoRunning
-    ) {
-
-      return;
-    }
-
-
-    try {
-
-      setRunningCrypto(
-        true
-      );
-
-      setError("");
-
-
-      const response =
-        await fetch(
-          "/api/crypto/scan",
-          {
-            method:
-              "POST"
-          }
-        );
-
-
-      const result =
-        await response.json();
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          result.message ||
-          "Unable to start crypto scanner."
-        );
-      }
-
-
-      await refreshAll();
-
-
-    } catch (err) {
-
-      console.error(
-        err
-      );
-
-
-      setError(
-        err.message
-      );
-
-
-    } finally {
-
-      setRunningCrypto(
         false
       );
     }
@@ -991,97 +646,7 @@ function App() {
 
 
   // ====================================================
-  // CURRENT MARKET
-  // ====================================================
-
-  const isNse =
-    market ===
-    "NSE";
-
-
-  const isScanning =
-    isNse
-      ? (
-          runningNse ||
-          nseState?.scanning ||
-          liveStatus?.nseRunning
-        )
-      : (
-          runningCrypto ||
-          cryptoStatus?.running ||
-          liveStatus?.cryptoRunning
-        );
-
-
-  // ====================================================
-  // ACTIVE SETUPS
-  // ====================================================
-
-  const activeSetups =
-    useMemo(
-      () => {
-
-        if (isNse) {
-
-          const live =
-            liveResults
-              ?.nse
-              ?.results;
-
-
-          if (
-            Array.isArray(
-              live
-            ) &&
-            live.length > 0
-          ) {
-
-            return live;
-          }
-
-
-          return (
-            nseState?.activeSetups ||
-            nseState?.results ||
-            []
-          );
-        }
-
-
-        const live =
-          liveResults
-            ?.crypto
-            ?.results;
-
-
-        if (
-          Array.isArray(
-            live
-          ) &&
-          live.length > 0
-        ) {
-
-          return live;
-        }
-
-
-        return (
-          cryptoResults ||
-          []
-        );
-
-      },
-      [
-        isNse,
-        nseState,
-        cryptoResults,
-        liveResults
-      ]
-    );
-
-
-  // ====================================================
-  // FILTERED SETUPS
+  // FILTER RESULTS
   // ====================================================
 
   const filteredSetups =
@@ -1094,7 +659,7 @@ function App() {
             .toLowerCase();
 
 
-        return activeSetups.filter(
+        return liveResults.filter(
           setup => {
 
             const timeframeMatch =
@@ -1118,8 +683,12 @@ function App() {
                 coin.symbol,
                 coin.name
               ]
-                .filter(Boolean)
-                .join(" ")
+                .filter(
+                  Boolean
+                )
+                .join(
+                  " "
+                )
                 .toLowerCase();
 
 
@@ -1139,7 +708,7 @@ function App() {
 
       },
       [
-        activeSetups,
+        liveResults,
         search,
         selectedTimeframe
       ]
@@ -1147,106 +716,58 @@ function App() {
 
 
   // ====================================================
-  // KPI DATA
+  // STATUS DATA
   // ====================================================
 
-  const nseLiveStats =
-    liveStatus
-      ?.lastNseResult ||
-    {};
-
-
-  const cryptoLiveStats =
+  const cryptoStats =
     liveStatus
       ?.lastCryptoResult ||
     {};
 
 
+  const cryptoRunning =
+    liveStatus
+      ?.cryptoRunning ===
+    true;
+
+
   const totalScanned =
-    isNse
-      ? (
-          nseLiveStats.scannedStocks ??
-          nseState?.scannedStocks ??
-          nseState?.stats?.scannedStocks ??
-          0
-        )
-      : (
-          cryptoLiveStats.scannedCoins ??
-          cryptoStatus?.stats?.scannedCoins ??
-          0
-        );
+    cryptoStats
+      ?.scannedCoins ||
+    0;
 
 
   const successful =
-    isNse
-      ? (
-          nseLiveStats.successfulStocks ??
-          nseState?.successfulStocks ??
-          nseState?.stats?.successfulStocks ??
-          0
-        )
-      : (
-          cryptoLiveStats.successfulCoins ??
-          cryptoStatus?.stats?.successfulCoins ??
-          0
-        );
+    cryptoStats
+      ?.successfulCoins ||
+    0;
 
 
   const failed =
-    isNse
-      ? (
-          nseLiveStats.failedStocks ??
-          nseState?.failedStocks ??
-          nseState?.stats?.failedStocks ??
-          0
-        )
-      : (
-          cryptoLiveStats.failedCoins ??
-          cryptoStatus?.stats?.failedCoins ??
-          0
-        );
+    cryptoStats
+      ?.failedCoins ||
+    0;
 
 
   const scanDuration =
-    isNse
-      ? (
-          nseLiveStats.scanDurationSeconds ??
-          nseState?.scanDurationSeconds ??
-          0
-        )
-      : (
-          cryptoLiveStats.scanDurationSeconds ??
-          cryptoStatus?.stats?.scanDurationSeconds ??
-          0
-        );
-
-
-  const activeCount =
-    activeSetups.length;
-
-
-  const successRate =
-    totalScanned > 0
-      ? (
-          (
-            successful /
-            totalScanned
-          ) *
-          100
-        ).toFixed(1)
-      : "0.0";
+    cryptoStats
+      ?.scanDurationSeconds ||
+    0;
 
 
   const lastCompleted =
-    isNse
-      ? (
-          liveStatus?.lastNseCompletedAt ||
-          nseState?.completedAt
-        )
-      : (
-          liveStatus?.lastCryptoCompletedAt ||
-          cryptoStatus?.completedAt
-        );
+    liveStatus
+      ?.lastCryptoCompletedAt ||
+    null;
+
+
+  const activeCount =
+    liveResults.length;
+
+
+  const scannerHealthy =
+    !liveStatus
+      ?.lastCryptoError;
 
 
   // ====================================================
@@ -1255,119 +776,223 @@ function App() {
 
   return (
 
-    <div className="dashboardShell">
+    <div className="grandLineApp">
 
-      <aside className="sidebar">
+      <div className="oceanGlow oceanGlowOne" />
+
+      <div className="oceanGlow oceanGlowTwo" />
+
+
+      <aside className="grandSidebar">
 
         <div>
 
-          <div className="brand">
+          <div className="grandBrand">
 
-            <div className="brandIcon">
-              ↗
-            </div>
+            <div className="compassLogo">
 
-            <div>
-
-              <strong>
-                CHANNEL BREAK
-              </strong>
-
-              <span>
-                SCANNER
+              <span className="compassArrow">
+                ↗
               </span>
 
             </div>
 
+
+            <div>
+
+              <span className="brandOverline">
+                GRAND LINE
+              </span>
+
+              <strong>
+                CHANNEL SCANNER
+              </strong>
+
+            </div>
+
           </div>
 
 
-          <nav className="sideNav">
+          <div className="voyageStatus">
 
-            <button className="sideNavItem active">
-              ◫ Dashboard
-            </button>
+            <span className="voyageLabel">
+              ACTIVE VOYAGE
+            </span>
 
-            <button className="sideNavItem selected">
-              ◉ Live Scanner
-            </button>
+            <strong>
+              Binance Futures
+            </strong>
 
-            <button className="sideNavItem">
-              ◷ Signal Monitor
-            </button>
+            <small>
+              USDT Perpetual Market
+            </small>
 
-          </nav>
+          </div>
+
+
+          <div className="sidebarDivider" />
+
+
+          <div className="sidebarSection">
+
+            <span className="sidebarTitle">
+              MARKET
+            </span>
+
+
+            <div className="marketRoute active">
+
+              <span className="routeIcon">
+                ₿
+              </span>
+
+              <div>
+
+                <strong>
+                  Crypto Futures
+                </strong>
+
+                <small>
+                  Live scanning
+                </small>
+
+              </div>
+
+
+              <span className="routeLiveDot" />
+
+            </div>
+
+
+            <div className="marketRoute disabled">
+
+              <span className="routeIcon">
+                NSE
+              </span>
+
+              <div>
+
+                <strong>
+                  NSE F&O
+                </strong>
+
+                <small>
+                  Temporarily offline
+                </small>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
 
-        <div className="sidebarBottom">
+        <div className="sidebarFooter">
 
-          <div className="systemCard">
+          <div className="systemHealth">
 
-            <span className="systemLabel">
-              System Status
-            </span>
+            <span className="healthPulse" />
 
-            <strong>
+            <div>
 
-              <span className="greenDot" />
+              <span>
+                SYSTEM
+              </span>
 
-              All Systems Operational
+              <strong>
 
-            </strong>
+                {
+                  scannerHealthy
+                    ? "Operational"
+                    : "Attention Required"
+                }
+
+              </strong>
+
+            </div>
 
           </div>
 
 
-          <p className="copyright">
-            © 2026 Channel Break Scanner
-          </p>
+          <small>
+            Channel Scanner © 2026
+          </small>
 
         </div>
 
       </aside>
 
 
-      <main className="mainContent">
+      <main className="grandMain">
 
-        <header className="mainHeader">
+        <header className="voyageHeader">
 
           <div>
 
-            <p className="headerEyebrow">
-              MARKET SCANNER
-            </p>
+            <div className="eyebrowRow">
+
+              <span className="eyebrowLine" />
+
+              <span>
+                MARKET INTELLIGENCE
+              </span>
+
+            </div>
+
 
             <h1>
-              Channel Break Scanner
+
+              Navigate the{" "}
+
+              <span>
+                Grand Line
+              </span>
+
             </h1>
 
-            <p className="headerSubtitle">
-              Fresh pre-phase setups with lifecycle,
-              timeline and channel context.
+
+            <p>
+
+              Real-time Channel Break detection across
+              Binance USDT perpetual futures.
+
             </p>
 
           </div>
 
 
-          <div className="headerStatus">
+          <div
+            className={
+              cryptoRunning
+                ? "radarStatus scanning"
+                : "radarStatus online"
+            }
+          >
 
-            <div
-              className={
-                isScanning
-                  ? "statusPill scanning"
-                  : "statusPill live"
-              }
-            >
+            <div className="radarPulse">
 
-              <span className="statusDot" />
+              <span />
 
-              {
-                isScanning
-                  ? "SCANNING"
-                  : "LIVE"
-              }
+            </div>
+
+
+            <div>
+
+              <small>
+                SCANNER
+              </small>
+
+              <strong>
+
+                {
+                  cryptoRunning
+                    ? "Scanning Market"
+                    : "Live & Ready"
+                }
+
+              </strong>
 
             </div>
 
@@ -1379,19 +1004,15 @@ function App() {
         {
           error && (
 
-            <div className="errorBanner">
+            <div className="grandError">
+
+              <strong>
+                Scanner connection issue
+              </strong>
 
               <span>
                 {error}
               </span>
-
-              <button
-                onClick={() =>
-                  setError("")
-                }
-              >
-                ×
-              </button>
 
             </div>
 
@@ -1399,356 +1020,155 @@ function App() {
         }
 
 
-        <section className="marketControlRow">
+        <section className="commandDeck">
 
-          <div className="marketSwitch">
+          <article className="commandMetric">
 
-            <button
-              className={
-                isNse
-                  ? "marketChoice active"
-                  : "marketChoice"
-              }
-              onClick={() =>
-                setMarket(
-                  "NSE"
-                )
-              }
-            >
+            <span className="metricLabel">
+              MARKET UNIVERSE
+            </span>
 
-              <span className="marketChoiceIcon">
-                ▥
-              </span>
+            <strong>
+              {totalScanned}
+            </strong>
 
-              <div>
+            <small>
+              Futures contracts
+            </small>
 
-                <strong>
-                  NSE F&O
-                </strong>
-
-                <span>
-                  {
-                    isNse &&
-                    totalScanned > 0
-                      ? `${totalScanned} Stocks`
-                      : "F&O Stocks"
-                  }
-                </span>
-
-              </div>
-
-            </button>
+          </article>
 
 
-            <button
-              className={
-                !isNse
-                  ? "marketChoice active"
-                  : "marketChoice"
-              }
-              onClick={() =>
-                setMarket(
-                  "CRYPTO"
-                )
-              }
-            >
+          <article className="commandMetric featured">
 
-              <span className="marketChoiceIcon">
-                ₿
-              </span>
+            <span className="metricLabel">
+              LIVE TREASURES
+            </span>
 
-              <div>
+            <strong>
+              {activeCount}
+            </strong>
 
-                <strong>
-                  Crypto Futures
-                </strong>
+            <small>
+              Active setups
+            </small>
 
-                <span>
-                  {
-                    !isNse &&
-                    totalScanned > 0
-                      ? `${totalScanned} Contracts`
-                      : "USDT Perpetuals"
-                  }
-                </span>
-
-              </div>
-
-            </button>
-
-          </div>
+          </article>
 
 
-          <div className="scanControlCard">
+          <article className="commandMetric">
 
-            <div>
+            <span className="metricLabel">
+              SUCCESSFUL
+            </span>
 
-              <span className="scanControlLabel">
-                Scanner Status
-              </span>
+            <strong>
+              {successful}
+            </strong>
 
-              <strong className="scanControlStatus">
+            <small>
+              Last voyage
+            </small>
 
-                <span
-                  className={
-                    isScanning
-                      ? "orangeDot"
-                      : "greenDot"
-                  }
-                />
-
-                {
-                  isScanning
-                    ? "SCANNING"
-                    : "READY"
-                }
-
-              </strong>
+          </article>
 
 
-              <small>
+          <article className="commandMetric">
 
-                Last completed:{" "}
+            <span className="metricLabel">
+              FAILED
+            </span>
 
-                {
-                  formatDate(
-                    lastCompleted
-                  )
-                }
+            <strong>
+              {failed}
+            </strong>
 
-              </small>
+            <small>
+              Contracts
+            </small>
 
-            </div>
+          </article>
 
 
-            <button
-              className="primaryScanButton"
+          <article className="commandMetric">
 
-              onClick={
-                isNse
-                  ? runNseScanner
-                  : runCryptoScanner
-              }
+            <span className="metricLabel">
+              VOYAGE TIME
+            </span>
 
-              disabled={
-                isScanning ||
-                loading
-              }
-            >
-
-              <span>
-                ▶
-              </span>
+            <strong>
 
               {
-                isScanning
-                  ? "Scanning..."
-                  : isNse
-                    ? "Run NSE Scanner"
-                    : "Run Crypto Scanner"
+                scanDuration
+                  ? `${scanDuration}s`
+                  : "-"
               }
 
-            </button>
+            </strong>
 
-          </div>
-
-        </section>
-
-
-        <section className="kpiGrid">
-
-          <article className="kpiCard">
-
-            <div className="kpiIcon blue">
-              ▱
-            </div>
-
-            <div>
-
-              <span>
-                {
-                  isNse
-                    ? "F&O Stocks Scanned"
-                    : "Futures Contracts"
-                }
-              </span>
-
-              <strong>
-                {totalScanned}
-              </strong>
-
-              <small>
-                Current universe
-              </small>
-
-            </div>
-
-          </article>
-
-
-          <article className="kpiCard">
-
-            <div className="kpiIcon green">
-              ↗
-            </div>
-
-            <div>
-
-              <span>
-                Active Setups
-              </span>
-
-              <strong>
-                {activeCount}
-              </strong>
-
-              <small>
-                Across all timeframes
-              </small>
-
-            </div>
-
-          </article>
-
-
-          <article className="kpiCard">
-
-            <div className="kpiIcon purple">
-              ✓
-            </div>
-
-            <div>
-
-              <span>
-                Successful Scans
-              </span>
-
-              <strong>
-                {successful}
-              </strong>
-
-              <small className="positiveText">
-                {successRate}% success rate
-              </small>
-
-            </div>
-
-          </article>
-
-
-          <article className="kpiCard">
-
-            <div className="kpiIcon red">
-              !
-            </div>
-
-            <div>
-
-              <span>
-                Failed Scans
-              </span>
-
-              <strong>
-                {failed}
-              </strong>
-
-              <small className="negativeText">
-
-                {
-                  totalScanned > 0
-                    ? (
-                        (
-                          failed /
-                          totalScanned
-                        ) *
-                        100
-                      ).toFixed(1)
-                    : "0.0"
-                }% failure rate
-
-              </small>
-
-            </div>
-
-          </article>
-
-
-          <article className="kpiCard">
-
-            <div className="kpiIcon yellow">
-              ◷
-            </div>
-
-            <div>
-
-              <span>
-                Scan Duration
-              </span>
-
-              <strong>
-
-                {
-                  scanDuration > 0
-                    ? `${scanDuration}s`
-                    : "-"
-                }
-
-              </strong>
-
-              <small>
-                Last completed scan
-              </small>
-
-            </div>
+            <small>
+              Full market scan
+            </small>
 
           </article>
 
         </section>
 
 
-        <section className="filterBar">
+        <section className="navigationDeck">
 
-          <div className="timeframeFilters">
+          <div>
 
-            {
-              TIMEFRAMES.map(
-                timeframe => (
+            <span className="deckLabel">
+              LOG POSE
+            </span>
 
-                  <button
-                    key={timeframe}
 
-                    className={
-                      selectedTimeframe ===
-                      timeframe
-                        ? "timeFilter active"
-                        : "timeFilter"
-                    }
+            <div className="timeframeNav">
 
-                    onClick={() =>
-                      setSelectedTimeframe(
+              {
+                TIMEFRAMES.map(
+                  timeframe => (
+
+                    <button
+                      key={
                         timeframe
-                      )
-                    }
-                  >
+                      }
 
-                    {
-                      timeframe ===
-                      "ALL"
-                        ? "All"
-                        : timeframe
-                            .toUpperCase()
-                    }
+                      className={
+                        selectedTimeframe ===
+                        timeframe
+                          ? "timeframeButton active"
+                          : "timeframeButton"
+                      }
 
-                  </button>
+                      onClick={() =>
+                        setSelectedTimeframe(
+                          timeframe
+                        )
+                      }
+                    >
 
+                      {
+                        timeframe ===
+                        "ALL"
+                          ? "ALL"
+                          : timeframe
+                              .toUpperCase()
+                      }
+
+                    </button>
+
+                  )
                 )
-              )
-            }
+              }
+
+            </div>
 
           </div>
 
 
-          <div className="searchBox">
+          <div className="grandSearch">
 
             <span>
               ⌕
@@ -1757,11 +1177,7 @@ function App() {
             <input
               type="text"
 
-              placeholder={
-                isNse
-                  ? "Search stock..."
-                  : "Search symbol or pair..."
-              }
+              placeholder="Search contract..."
 
               value={
                 search
@@ -1782,61 +1198,94 @@ function App() {
         </section>
 
 
-        <section className="resultsPanel">
+        <section className="signalOcean">
 
-          <div className="resultsHeader">
+          <div className="signalOceanHeader">
 
             <div>
+
+              <span className="sectionOverline">
+                SIGNAL RADAR
+              </span>
 
               <h2>
                 Active Pre-Phase Setups
               </h2>
 
               <p>
-
-                {
-                  isNse
-                    ? "NSE F&O"
-                    : "Binance USDT Perpetual Futures"
-                }
-
+                Binance USDT Perpetual Futures
               </p>
 
             </div>
 
 
-            <span className="resultsCount">
+            <div className="scanTimestamp">
 
-              Showing{" "}
-              {filteredSetups.length}{" "}
-              of{" "}
-              {activeSetups.length}{" "}
-              setups
+              <small>
+                LAST COMPLETED
+              </small>
 
-            </span>
+              <strong>
+
+                {
+                  formatDate(
+                    lastCompleted
+                  )
+                }
+
+              </strong>
+
+            </div>
 
           </div>
 
 
           {
-            filteredSetups.length === 0 && (
+            loading && (
 
-              <div className="professionalEmptyState">
+              <div className="grandEmptyState">
 
-                <div className="emptyCircle">
-                  ↗
+                <div className="radarLoader">
+
+                  <span />
+
                 </div>
 
                 <h3>
-                  No active setups found
+                  Reading the seas...
+                </h3>
+
+                <p>
+                  Loading scanner state.
+                </p>
+
+              </div>
+
+            )
+          }
+
+
+          {
+            !loading &&
+            filteredSetups.length ===
+              0 && (
+
+              <div className="grandEmptyState">
+
+                <div className="emptyCompass">
+                  ✦
+                </div>
+
+                <h3>
+                  No active signal on the horizon
                 </h3>
 
                 <p>
 
                   {
-                    isScanning
-                      ? "Scanner is currently processing market data."
-                      : "Waiting for a fresh channel-break setup."
+                    cryptoRunning
+                      ? "The scanner is currently sweeping the market."
+                      : "Waiting for the next valid Channel Break setup."
                   }
 
                 </p>
@@ -1848,9 +1297,11 @@ function App() {
 
 
           {
-            filteredSetups.length > 0 && (
+            !loading &&
+            filteredSetups.length >
+              0 && (
 
-              <div className="setupCardsGrid">
+              <div className="treasureGrid">
 
                 {
                   filteredSetups.map(
@@ -1877,104 +1328,111 @@ function App() {
                         );
 
 
-                      const mainName =
-                        isNse
-                          ? String(
-                              setup.symbol ||
-                              "-"
-                            ).replace(
-                              /\.NS$/i,
-                              ""
-                            )
-                          : coin.name;
-
-
-                      const subName =
-                        isNse
-                          ? `${mainName} · NSE F&O`
-                          : `${coin.symbol} · ${setup.tradingPair || `${coin.symbol}USDT`}`;
-
-
                       const detectedTime =
-                        setup.prePhaseConfirmedAt ||
-                        setup.detectedAt ||
-                        setup.baseConfirmedAt ||
+                        setup
+                          .prePhaseConfirmedAt ||
+                        setup
+                          .detectedAt ||
+                        setup
+                          .baseConfirmedAt ||
                         null;
 
 
                       return (
 
                         <article
-                          className="setupLifecycleCard"
+                          className="treasureCard"
 
                           key={
-                            `${displaySymbol(setup)}-${setup.timeframe}-${setup.flashSellAt || setup.flashSellDate || index}`
+                            `${
+                              setup.tradingPair ||
+                              coin.symbol
+                            }-${
+                              setup.timeframe
+                            }-${
+                              setup.flashSellAt ||
+                              setup.flashSellDate ||
+                              index
+                            }`
                           }
                         >
 
-                          <div className="setupCardHeader">
+                          <div className="treasureCardTop">
 
-                            <div className="setupIdentityRow">
+                            <div className="assetIdentity">
 
-                              {
-                                !isNse && (
+                              <div className="coinEmblem">
 
-                                  <div className="coinBadge">
-                                    {
-                                      coin.badge
-                                    }
-                                  </div>
+                                {
+                                  coin.badge
+                                }
 
-                                )
-                              }
+                              </div>
 
 
                               <div>
 
-                                <h3>
-                                  {mainName}
-                                </h3>
+                                <span className="pairLabel">
 
-                                <span className="setupSubName">
-                                  {subName}
+                                  {
+                                    setup
+                                      .tradingPair ||
+                                    `${coin.symbol}USDT`
+                                  }
+
                                 </span>
+
+                                <h3>
+
+                                  {
+                                    coin.name
+                                  }
+
+                                </h3>
 
                               </div>
 
                             </div>
 
 
-                            <div className="setupBadgeStack">
+                            <div className="signalBadges">
 
                               <span
                                 className={
-                                  `lifecycleBadge ${lifecycle.key}`
+                                  `lifecyclePill ${lifecycle.key}`
                                 }
                               >
-                                <span className="lifecycleDot" />
+
+                                <span />
+
                                 {
                                   lifecycle.label
                                 }
+
                               </span>
 
-                              <div className="setupMiniBadges">
+
+                              <div>
 
                                 <span
-                                  className={
-                                    `tfBadge tf-${setup.timeframe}`
-                                  }
+                                  className="timeframePill"
                                 >
+
                                   {
                                     setup
                                       .timeframe
                                       ?.toUpperCase()
                                   }
+
                                 </span>
 
-                                <span className="prePhaseBadge">
+                                <span className="prePhasePill">
+
                                   {
-                                    setup.status
+                                    setup.status ||
+                                    "PRE_PHASE"
                                   }
+
                                 </span>
 
                               </div>
@@ -1984,132 +1442,184 @@ function App() {
                           </div>
 
 
-                          <div className="timeline">
+                          <div className="signalTimeline">
 
-                            <div className="timelineStep">
+                            <div className="signalStage">
 
-                              <span className="timelineTime">
+                              <span className="stageTime">
+
                                 {
-                                  formatTimelineDate(
+                                  formatDate(
                                     setup.flashSellAt ||
                                     setup.flashSellDate
                                   )
                                 }
+
                               </span>
 
-                              <div className="timelineNode flash">
+
+                              <div className="stageIcon danger">
                                 ↓
                               </div>
+
 
                               <strong>
                                 FLASH SELL
                               </strong>
 
-                              <small className="timelineValue negative">
+
+                              <span className="dropValue">
+
                                 {
-                                  setup.flashSellDropPercent != null
-                                    ? `-${Number(setup.flashSellDropPercent).toFixed(2)}%`
+                                  setup
+                                    .flashSellDropPercent !=
+                                  null
+                                    ? `-${Math.abs(
+                                        Number(
+                                          setup
+                                            .flashSellDropPercent
+                                        )
+                                      ).toFixed(
+                                        2
+                                      )}%`
                                     : "-"
                                 }
-                              </small>
+
+                              </span>
 
                             </div>
 
 
-                            <div className="timelineConnector">
-                              →
+                            <div className="routeConnector">
+
+                              <span />
+
                             </div>
 
 
-                            <div className="timelineStep">
+                            <div className="signalStage">
 
-                              <span className="timelineTime">
+                              <span className="stageTime">
+
                                 {
-                                  formatTimelineDate(
+                                  formatDate(
                                     setup.baseStartedAt
                                   )
                                 }
+
                               </span>
 
-                              <div className="timelineNode base">
+
+                              <div className="stageIcon base">
                                 ◇
                               </div>
 
+
                               <strong>
+
                                 {
                                   setup.baseType ||
                                   "BASE"
                                 }
+
                               </strong>
 
-                              <small>
-                                Base candle
-                              </small>
+
+                              <span>
+                                Reversal candle
+                              </span>
 
                             </div>
 
 
-                            <div className="timelineConnector">
-                              →
+                            <div className="routeConnector">
+
+                              <span />
+
                             </div>
 
 
-                            <div className="timelineStep">
+                            <div className="signalStage">
 
-                              <span className="timelineTime">
+                              <span className="stageTime">
+
                                 {
-                                  formatTimelineDate(
+                                  formatDate(
                                     detectedTime
                                   )
                                 }
+
                               </span>
 
-                              <div className="timelineNode detected">
+
+                              <div className="stageIcon success">
                                 ✓
                               </div>
 
+
                               <strong>
-                                DETECTED
+                                CONFIRMED
                               </strong>
 
-                              <small>
-                                Pre-phase confirmed
-                              </small>
+
+                              <span>
+                                Pre-phase
+                              </span>
 
                             </div>
 
                           </div>
 
 
-                          <div className="ageSection">
+                          <div className="signalVitals">
 
-                            <div className="ageHeader">
+                            <div className="vitalHeader">
 
-                              <span>
-                                Setup age
-                              </span>
+                              <div>
 
-                              <strong>
+                                <span>
+                                  SETUP AGE
+                                </span>
+
+                                <strong>
+
+                                  {
+                                    getAgeText(
+                                      setup
+                                    )
+                                  }{" "}
+                                  candles
+
+                                </strong>
+
+                              </div>
+
+
+                              <span className="agePercent">
+
                                 {
-                                  getAgeText(
-                                    setup
+                                  Math.round(
+                                    agePercent
                                   )
-                                } candles
-                              </strong>
+                                }%
+
+                              </span>
 
                             </div>
 
 
-                            <div className="ageTrack">
+                            <div className="grandProgress">
 
-                              <div
+                              <span
                                 className={
-                                  `ageFill ${lifecycle.key}`
+                                  lifecycle.key
                                 }
 
                                 style={{
+
                                   width:
                                     `${agePercent}%`
+
                                 }}
                               />
 
@@ -2118,65 +1628,88 @@ function App() {
                           </div>
 
 
-                          <div className="setupContextRow">
+                          <div className="strategyPanel">
 
-                            <div>
+                            <div className="strategyIdentity">
 
-                              <span className="contextIcon">
+                              <div className="strategyCompass">
                                 ↗
-                              </span>
+                              </div>
+
 
                               <div>
 
+                                <span>
+                                  STRUCTURE
+                                </span>
+
                                 <strong>
+
                                   {
                                     displayStructure(
                                       setup
                                     )
                                   }
-                                </strong>
 
-                                <small>
-                                  Base confirmed after lower-channel break
-                                </small>
+                                </strong>
 
                               </div>
 
                             </div>
 
 
-                            <div className="contextStats">
+                            <div className="strategyStats">
 
                               {
-                                setup.channelRespectRatio != null && (
+                                setup
+                                  .channelRespectRatio !=
+                                  null && (
 
-                                  <span>
-                                    Respect{" "}
+                                  <div>
+
+                                    <span>
+                                      CHANNEL RESPECT
+                                    </span>
+
                                     <strong>
+
                                       {
                                         Math.round(
-                                          setup.channelRespectRatio *
+                                          setup
+                                            .channelRespectRatio *
                                           100
                                         )
                                       }%
+
                                     </strong>
-                                  </span>
+
+                                  </div>
 
                                 )
                               }
 
 
                               {
-                                setup.baseCandlesFound != null && (
+                                setup
+                                  .baseCandlesFound !=
+                                  null && (
 
-                                  <span>
-                                    Base candles{" "}
+                                  <div>
+
+                                    <span>
+                                      BASE CANDLES
+                                    </span>
+
                                     <strong>
+
                                       {
-                                        setup.baseCandlesFound
+                                        setup
+                                          .baseCandlesFound
                                       }
+
                                     </strong>
-                                  </span>
+
+                                  </div>
 
                                 )
                               }
@@ -2186,31 +1719,42 @@ function App() {
                           </div>
 
 
-                          <div className="setupCardFooter">
+                          <div className="treasureFooter">
 
                             <span>
-                              Last seen{" "}
-                              {
-                                formatTimelineDate(
-                                  setup.lastSeenAt
-                                )
-                              }
+
+                              Flash confirmed{" "}
+
+                              <strong>
+
+                                {
+                                  formatDate(
+                                    setup
+                                      .flashSellConfirmedAt
+                                  )
+                                }
+
+                              </strong>
+
                             </span>
 
-                            {
-                              setup.baseConfirmedAt && (
 
-                                <span>
-                                  Base confirmed{" "}
-                                  {
-                                    formatTimelineDate(
-                                      setup.baseConfirmedAt
-                                    )
-                                  }
-                                </span>
+                            <span>
 
-                              )
-                            }
+                              Base confirmed{" "}
+
+                              <strong>
+
+                                {
+                                  formatDate(
+                                    setup
+                                      .baseConfirmedAt
+                                  )
+                                }
+
+                              </strong>
+
+                            </span>
 
                           </div>
 
@@ -2227,13 +1771,13 @@ function App() {
           }
 
 
-          <footer className="resultsFooter">
+          <div className="oceanFooter">
 
-            <span>
-              ↻ Dashboard refreshes every 5 seconds
-            </span>
+            <span className="autoRefreshDot" />
 
-          </footer>
+            Live data refreshes every 5 seconds
+
+          </div>
 
         </section>
 

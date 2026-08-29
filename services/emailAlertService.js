@@ -954,6 +954,7 @@ async function sendTestEmail() {
 
         detectedAt:
             now,
+            baseCandles == not true mo
 
         baseCandlesFound:
             1
