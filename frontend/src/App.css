@@ -264,12 +264,12 @@ button {
 
   background-image:
     linear-gradient(
-      rgba(85, 215, 232, 0.18) 1px,
+      rgba(85, 215, 232, 0.22) 1px,
       transparent 1px
     ),
     linear-gradient(
       90deg,
-      rgba(85, 215, 232, 0.18) 1px,
+      rgba(85, 215, 232, 0.22) 1px,
       transparent 1px
     );
 
@@ -475,7 +475,7 @@ button {
 .brandText span {
   display: block;
 
-  color: var(--gold-bright);
+  color: var(--blue-bright);
 
   font-size: 17px;
 
@@ -618,10 +618,10 @@ button {
 
 .marketRoute.active {
   background:
-    rgba(79, 174, 232, 0.08);
+    rgba(79, 174, 232, 0.05);
 
   border-color:
-    rgba(79, 174, 232, 0.12);
+    rgba(79, 174, 232, 0.10);
 }
 
 
@@ -630,7 +630,7 @@ button {
     translateX(3px);
 
   background:
-    rgba(79, 174, 232, 0.10);
+    rgba(79, 174, 232, 0.08);
 }
 
 
@@ -650,10 +650,10 @@ button {
 
   border-radius: 50%;
 
-  color: var(--gold-bright);
+  color: var(--blue-bright);
 
   background:
-    rgba(79, 174, 232, 0.12);
+    rgba(79, 174, 232, 0.10);
 }
 
 
@@ -703,7 +703,7 @@ button {
 
   box-shadow:
     0 0 10px
-    rgba(82, 204, 131, 0.45);
+    rgba(85, 215, 232, 0.50);
 
   animation:
     livePulse 1.8s
@@ -743,16 +743,16 @@ button {
 
   gap: 9px;
 
-  color: var(--gold-bright);
+  color: var(--blue-bright);
 
   border-radius: 9px;
 
   background:
-    rgba(79, 174, 232, 0.10);
+    rgba(79, 174, 232, 0.07);
 
   border:
     1px solid
-    rgba(79, 174, 232, 0.12);
+    rgba(79, 174, 232, 0.10);
 }
 
 
@@ -874,7 +874,7 @@ button {
   background:
     radial-gradient(
       circle at center,
-      rgba(79, 174, 232, 0.12),
+      rgba(79, 174, 232, 0.10),
       transparent 60%
     );
 }
@@ -895,7 +895,7 @@ button {
 
   margin-top: 4px;
 
-  color: var(--gold);
+  color: var(--cyan);
 
   font-size: 9px;
 
@@ -997,7 +997,7 @@ button {
   background:
     radial-gradient(
       circle,
-      rgba(216, 141, 52, 0.12),
+      rgba(85, 215, 232, 0.12),
       transparent 67%
     );
 
@@ -1031,7 +1031,7 @@ button {
 
 
 .heroEyebrow {
-  color: var(--gold);
+  color: var(--cyan);
 
   font-size: 9px;
 
@@ -1047,7 +1047,7 @@ button {
 
   max-width: 680px;
 
-  color: #f0e5cc;
+  color: #e8f7fb;
 
   font-size:
     clamp(
@@ -1067,7 +1067,7 @@ button {
 
 
 .heroCopy h1 span {
-  color: var(--gold-bright);
+  color: var(--blue-bright);
 }
 
 
@@ -1106,12 +1106,12 @@ button {
 
   border:
     1px solid
-    rgba(85, 215, 232, 0.14);
+    rgba(79, 174, 232, 0.12);
 
   border-radius: 999px;
 
   background:
-    rgba(79, 174, 232, 0.07);
+    rgba(79, 174, 232, 0.05);
 
   color: var(--text-soft);
 
@@ -1234,7 +1234,7 @@ button {
 .liveWantedCard.scanning {
   box-shadow:
     inset 0 0 25px
-    rgba(82, 204, 131, 0.05);
+    rgba(85, 215, 232, 0.07);
 }
 
 
@@ -1606,11 +1606,11 @@ button {
   color: var(--blue-bright);
 
   background:
-    var(--blue-soft);
+    rgba(79, 174, 232, 0.08);
 
   border:
     1px solid
-    rgba(85, 215, 232, 0.16);
+    rgba(79, 174, 232, 0.14);
 
   font-size: 17px;
 }
@@ -1726,7 +1726,7 @@ button {
 
   border:
     1px solid
-    rgba(79, 174, 232, 0.12);
+    rgba(79, 174, 232, 0.10);
 
   border-radius: 6px;
 
@@ -1756,7 +1756,7 @@ button {
   transform:
     translateY(-1px);
 
-  color: var(--gold-bright);
+  color: var(--blue-bright);
 }
 
 
@@ -1764,11 +1764,11 @@ button {
   background:
     linear-gradient(
       135deg,
-      #287fb5,
+      #2f87b8,
       #55d7e8
     );
 
-  color: #03131d;
+  color: #241706;
 
   font-weight: 700;
 }
@@ -1961,7 +1961,7 @@ button {
   background:
     radial-gradient(
       circle,
-      rgba(79, 174, 232, 0.08),
+      rgba(85, 215, 232, 0.07),
       transparent 67%
     );
 }
@@ -2046,8 +2046,8 @@ button {
   background:
     conic-gradient(
       from 0deg,
-      rgba(85, 215, 232, 0.26),
-      rgba(79, 174, 232, 0.05) 38deg,
+      rgba(85, 215, 232, 0.28),
+      rgba(79, 174, 232, 0.06) 38deg,
       transparent 78deg
     );
 
@@ -2079,11 +2079,11 @@ button {
 
   border-radius: 50%;
 
-  background: var(--green);
+  background: var(--cyan);
 
   box-shadow:
     0 0 14px
-    rgba(82, 204, 131, 0.45);
+    rgba(85, 215, 232, 0.50);
 
   animation:
     radarPulse 1.7s ease-in-out infinite;
@@ -2116,11 +2116,11 @@ button {
 
   border-radius: 50%;
 
-  background: var(--green);
+  background: var(--cyan);
 
   box-shadow:
     0 0 8px
-    rgba(82, 204, 131, 0.5);
+    rgba(85, 215, 232, 0.55);
 
   animation:
     targetBlink 2.6s
@@ -2246,7 +2246,7 @@ button {
 
   border:
     1px solid
-    rgba(85, 215, 232, 0.18);
+    rgba(79, 174, 232, 0.18);
 
   border-radius: 10px;
 
@@ -2352,7 +2352,7 @@ button {
   color: white;
 
   background:
-    #376b9b;
+    #2d7fac;
 }
 
 
@@ -2391,11 +2391,11 @@ button {
   color: var(--blue-bright);
 
   background:
-    var(--blue-soft);
+    rgba(79, 174, 232, 0.08);
 
   border:
     1px solid
-    rgba(85, 215, 232, 0.20);
+    rgba(79, 174, 232, 0.20);
 
   font-family:
     -apple-system,
@@ -2412,7 +2412,7 @@ button {
 .wantedAsset span {
   display: block;
 
-  color: var(--gold-bright);
+  color: var(--blue-bright);
 
   font-family:
     -apple-system,
@@ -2527,7 +2527,7 @@ button {
 
   border:
     1px solid
-    rgba(79, 174, 232, 0.12);
+    rgba(79, 174, 232, 0.10);
 
   border-radius: 9px;
 
@@ -2593,14 +2593,14 @@ button {
 
 
 .timelineIcon.base {
-  color: var(--cyan);
+  color: var(--blue-bright);
 
   background:
-    var(--blue-soft);
+    var(--gold-soft);
 
   border:
     1px solid
-    rgba(85, 215, 232, 0.18);
+    rgba(79, 174, 232, 0.18);
 }
 
 
@@ -2612,7 +2612,7 @@ button {
 
   border:
     1px solid
-    rgba(82, 204, 131, 0.15);
+    rgba(85, 215, 232, 0.18);
 }
 
 
@@ -2660,7 +2660,7 @@ button {
   overflow: hidden;
 
   background:
-    rgba(85, 215, 232, 0.16);
+    rgba(79, 174, 232, 0.14);
 }
 
 
@@ -2676,7 +2676,7 @@ button {
     translate(-50%, -50%);
 
   color:
-    rgba(85, 215, 232, 0.50);
+    rgba(85, 215, 232, 0.55);
 
   font-size: 6px;
 }
@@ -2761,7 +2761,7 @@ button {
 
 
 .agePercentage {
-  color: var(--gold-bright);
+  color: var(--blue-bright);
 
   font-size: 10px !important;
 }
@@ -2799,7 +2799,7 @@ button {
 
 
 .pirateProgress span.aging {
-  background: var(--gold);
+  background: var(--blue);
 }
 
 
@@ -2832,12 +2832,12 @@ button {
 
   border:
     1px solid
-    rgba(79, 174, 232, 0.12);
+    rgba(79, 174, 232, 0.10);
 
   border-radius: 8px;
 
   background:
-    rgba(79, 174, 232, 0.05);
+    rgba(79, 174, 232, 0.035);
 }
 
 
@@ -2858,10 +2858,10 @@ button {
 
   border-radius: 50%;
 
-  color: var(--cyan);
+  color: var(--blue-bright);
 
   background:
-    var(--blue-soft);
+    var(--gold-soft);
 }
 
 
@@ -3593,4 +3593,319 @@ button {
       auto !important;
   }
 
+}
+/* =====================================================
+   PREMIUM PROFESSIONAL TYPOGRAPHY
+   Matched to the current App.jsx selectors
+===================================================== */
+
+:root {
+  --font-ui:
+    Inter,
+    "SF Pro Text",
+    "Avenir Next",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --font-display:
+    "Avenir Next",
+    "SF Pro Display",
+    "Trebuchet MS",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --font-data:
+    "SF Mono",
+    "Roboto Mono",
+    "IBM Plex Mono",
+    Menlo,
+    Monaco,
+    monospace;
+}
+
+body,
+button,
+input {
+  font-family: var(--font-ui);
+}
+
+.brandText span,
+.brandText strong,
+.parchmentBlock strong,
+.scannerRoute strong,
+.heroEyebrow,
+.wantedLabel,
+.mapLabel,
+.panelEyebrow,
+.wantedRibbon,
+.tfTag,
+.phaseTag,
+.timelineStage strong,
+.structureIdentity > div > span,
+.structureStats span,
+.setupAge .ageHeading span,
+.lastVoyage span,
+.treasureMetric span {
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+}
+
+.brandText span {
+  font-family: var(--font-display);
+  font-weight: 850;
+  letter-spacing: 0.045em;
+}
+
+.brandText strong {
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.heroCopy h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 0.96;
+}
+
+.heroCopy h1 span {
+  font-weight: 900;
+}
+
+.heroEyebrow {
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.2em;
+}
+
+.heroCopy p {
+  font-family: var(--font-ui);
+  font-weight: 430;
+  letter-spacing: 0.005em;
+  line-height: 1.7;
+}
+
+.heroCoordinates span {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.marketRoute strong,
+.systemHealth strong,
+.liveWantedCard strong {
+  font-family: var(--font-ui);
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.marketRoute small,
+.systemHealth span,
+.liveWantedCard small,
+.grandError span,
+.panelHeading p,
+.grandEmptyState p,
+.voyageIndicator,
+.copyright {
+  font-family: var(--font-ui);
+}
+
+.treasureMetric span {
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+}
+
+.treasureMetric strong {
+  font-family: var(--font-display);
+  font-weight: 850;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.treasureMetric small {
+  font-family: var(--font-ui);
+  font-weight: 520;
+  letter-spacing: 0.01em;
+}
+
+.mapLabel,
+.panelEyebrow,
+.wantedLabel {
+  font-weight: 850;
+  letter-spacing: 0.16em;
+}
+
+.timeframeButton {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.timeframeButton.active {
+  font-weight: 850;
+}
+
+.pirateSearch input {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 520;
+}
+
+.panelHeading h2,
+.grandEmptyState h3,
+.wantedAsset strong,
+.structureIdentity strong {
+  font-family: var(--font-display);
+  font-weight: 850;
+  letter-spacing: -0.025em;
+}
+
+.panelHeading h2 {
+  font-size: 21px;
+}
+
+.wantedAsset > div:last-child > span {
+  font-family: var(--font-ui);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.105em;
+}
+
+.wantedAsset strong {
+  letter-spacing: -0.015em;
+}
+
+.wantedAsset small {
+  font-family: var(--font-ui);
+  font-weight: 500;
+}
+
+.coinMedallion {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.wantedRibbon,
+.tfTag,
+.phaseTag {
+  font-family: var(--font-ui);
+  font-weight: 850;
+  letter-spacing: 0.055em;
+}
+
+.timelineTime,
+.lastVoyage strong,
+.agePercentage,
+.structureStats strong,
+.wantedFooter strong {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.timelineTime {
+  font-weight: 550;
+  letter-spacing: -0.02em;
+}
+
+.timelineStage strong {
+  font-family: var(--font-ui);
+  font-weight: 850;
+  letter-spacing: 0.06em;
+}
+
+.timelineStage small {
+  font-family: var(--font-ui);
+  font-weight: 520;
+}
+
+.setupAge .ageHeading span,
+.structureIdentity > div > span,
+.structureStats span,
+.lastVoyage span {
+  font-weight: 800;
+  letter-spacing: 0.11em;
+}
+
+.setupAge .ageHeading strong,
+.structureIdentity strong {
+  font-family: var(--font-ui);
+  font-weight: 750;
+}
+
+.agePercentage {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.structureStats strong {
+  font-weight: 750;
+}
+
+.wantedFooter,
+.wantedFooter strong {
+  font-family: var(--font-ui);
+}
+
+.wantedFooter strong {
+  font-family: var(--font-data);
+  font-weight: 650;
+}
+
+.pirateScanButton strong {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.pirateScanButton small {
+  font-family: var(--font-ui);
+  font-weight: 520;
+  letter-spacing: 0.015em;
+}
+
+.lastVoyage strong {
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.grandOceanFooter {
+  font-family: var(--font-ui);
+  font-weight: 520;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 700px) {
+  .heroCopy h1 {
+    letter-spacing: -0.04em;
+  }
+
+  .panelHeading h2 {
+    font-size: 19px;
+  }
+
+  .treasureMetric strong {
+    font-size: 21px;
+  }
+}
+
+@media (max-width: 430px) {
+  .heroCopy h1 {
+    font-size: 27px;
+  }
+
+  .brandText span {
+    font-size: 15px;
+  }
+
+  .treasureMetric strong {
+    font-size: 19px;
+  }
 }
