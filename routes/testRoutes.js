@@ -18,6 +18,73 @@ const {
     initializeSymbol: initializeCryptoSymbol
 } = require("../services/cryptoMarketDataCache");
 
+const {
+    sendDiscordTestAlert
+} = require("../services/discordAlertService");
+
+
+// ======================================================
+// DISCORD NOTIFICATION TEST
+//
+// GET:
+// /api/test/discord
+//
+// Sends a fake PRE_PHASE notification directly to
+// Discord.
+//
+// IMPORTANT:
+// This does NOT run the scanner.
+// This does NOT create a real signal.
+// This does NOT touch sent-signals.json.
+// This does NOT send email.
+// ======================================================
+
+router.get(
+    "/discord",
+    async (req, res) => {
+
+        try {
+
+            const result =
+                await sendDiscordTestAlert();
+
+
+            return res.json({
+
+                success:
+                    true,
+
+                message:
+                    "Discord test notification sent.",
+
+                result
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Discord test notification failed:",
+                error
+            );
+
+
+            return res
+                .status(500)
+                .json({
+
+                    success:
+                        false,
+
+                    error:
+                        error.message
+
+                });
+        }
+    }
+);
+
 
 // ======================================================
 // SINGLE SYMBOL SETUP TEST
@@ -54,6 +121,7 @@ router.get(
 
 
             const allowedTimeframes = [
+                "5m",
                 "15m",
                 "30m",
                 "45m",
@@ -75,7 +143,8 @@ router.get(
                     .status(400)
                     .json({
 
-                        success: false,
+                        success:
+                            false,
 
                         error:
                             "market must be NSE or CRYPTO"
@@ -94,7 +163,8 @@ router.get(
                     .status(400)
                     .json({
 
-                        success: false,
+                        success:
+                            false,
 
                         error:
                             "symbol is required"
@@ -129,7 +199,8 @@ router.get(
                     .status(400)
                     .json({
 
-                        success: false,
+                        success:
+                            false,
 
                         error:
                             "Invalid timeframe",
@@ -166,7 +237,9 @@ router.get(
 
 
             if (
-                !Array.isArray(candles5m) ||
+                !Array.isArray(
+                    candles5m
+                ) ||
                 candles5m.length === 0
             ) {
 
@@ -174,7 +247,8 @@ router.get(
                     .status(404)
                     .json({
 
-                        success: false,
+                        success:
+                            false,
 
                         error:
                             "No candle data found",
@@ -221,7 +295,8 @@ router.get(
                     .status(404)
                     .json({
 
-                        success: false,
+                        success:
+                            false,
 
                         error:
                             "No candles generated for timeframe",
@@ -253,7 +328,8 @@ router.get(
 
             return res.json({
 
-                success: true,
+                success:
+                    true,
 
                 market,
 
@@ -284,7 +360,8 @@ router.get(
                 .status(500)
                 .json({
 
-                    success: false,
+                    success:
+                        false,
 
                     error:
                         error.message

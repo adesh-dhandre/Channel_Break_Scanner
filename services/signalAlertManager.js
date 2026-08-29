@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 
 const {
-    sendSetupAlert
-} = require("./emailAlertService");
+    sendDiscordSetupAlert
+} = require("./discordAlertService");
 
 
 // ======================================================
@@ -16,11 +16,13 @@ const DATA_DIR =
         "../data"
     );
 
+
 const SENT_SIGNALS_FILE =
     path.join(
         DATA_DIR,
         "sent-signals.json"
     );
+
 
 const DETECTED_SIGNALS_FILE =
     path.join(
@@ -29,9 +31,6 @@ const DETECTED_SIGNALS_FILE =
     );
 
 
-// Keep histories bounded.
-// This is far more than we need for normal operation.
-
 const MAX_STORED_SIGNALS =
     5000;
 
@@ -39,20 +38,23 @@ const MAX_STORED_SIGNALS =
 // ======================================================
 // MEMORY
 // ======================================================
-
-// IMPORTANT:
 //
 // sentSignals:
-// Tracks signals whose email was successfully delivered.
+//
+// A signal is stored here only after Discord
+// successfully receives the notification.
 //
 // detectedSignals:
-// Tracks when our scanner first discovered a PRE_PHASE
-// and when it most recently saw that same setup.
 //
-// These concepts must remain separate.
+// Tracks when the scanner first discovered a setup and
+// when that setup was most recently seen.
+//
+// Detection and notification state remain separate.
+// ======================================================
 
 const sentSignals =
     new Map();
+
 
 const detectedSignals =
     new Map();
@@ -112,30 +114,13 @@ function normalizeDate(
     }
 
 
-    return date.toISOString();
+    return date
+        .toISOString();
 }
 
 
 // ======================================================
 // CREATE UNIQUE SIGNAL KEY
-//
-// Same:
-// market + symbol + timeframe + flash sell
-//
-// = SAME signal.
-//
-// IMPORTANT:
-//
-// Keep this identity consistent for BOTH:
-//
-// 1. detection tracking
-// 2. email duplicate protection
-//
-// We prefer flashSellDate because that is the existing
-// signal identity field.
-//
-// flashSellAt is only a safe fallback for newer setup
-// metadata.
 // ======================================================
 
 function createSignalKey(
@@ -192,16 +177,23 @@ function createSignalKey(
 
 
     return [
+
         market,
+
         symbol,
+
         timeframe,
+
         flashSellDate
-    ].join("|");
+
+    ].join(
+        "|"
+    );
 }
 
 
 // ======================================================
-// LOAD SENT SIGNALS FROM DISK
+// LOAD SENT SIGNALS
 // ======================================================
 
 function loadSentSignals() {
@@ -289,7 +281,7 @@ function loadSentSignals() {
 
 
 // ======================================================
-// LOAD DETECTED SIGNALS FROM DISK
+// LOAD DETECTED SIGNALS
 // ======================================================
 
 function loadDetectedSignals() {
@@ -393,8 +385,6 @@ function saveSentSignals() {
             );
 
 
-        // Newest records first.
-
         records.sort(
             (a, b) =>
                 new Date(
@@ -412,8 +402,6 @@ function saveSentSignals() {
                 MAX_STORED_SIGNALS
             );
 
-
-        // Rebuild memory if old entries were trimmed.
 
         if (
             records.length <
@@ -474,8 +462,6 @@ function saveDetectedSignals() {
             );
 
 
-        // Most recently seen records first.
-
         records.sort(
             (a, b) =>
                 new Date(
@@ -497,8 +483,6 @@ function saveDetectedSignals() {
                 MAX_STORED_SIGNALS
             );
 
-
-        // Rebuild memory if old entries were trimmed.
 
         if (
             records.length <
@@ -544,22 +528,6 @@ function saveDetectedSignals() {
 
 // ======================================================
 // TRACK SETUP DETECTION
-//
-// detectedAt:
-// First exact system time our scanner discovered this
-// unique PRE_PHASE.
-//
-// NEVER changes for the same signal key.
-//
-// lastSeenAt:
-// Updated every scanner cycle where the same PRE_PHASE
-// remains visible.
-//
-// IMPORTANT:
-//
-// This does NOT mean an email was successfully sent.
-// Detection history is completely separate from
-// sentSignals.
 // ======================================================
 
 function trackSetupDetection(
@@ -734,15 +702,9 @@ function trackSetupDetection(
     saveDetectedSignals();
 
 
-    // Attach persistence metadata directly to the current
-    // setup object.
-    //
-    // scanRunner receives this SAME object reference, so
-    // its activeSetups will automatically contain these
-    // fields without changing scanRunner yet.
-
     setup.detectedAt =
         record.detectedAt;
+
 
     setup.lastSeenAt =
         record.lastSeenAt;
@@ -784,7 +746,7 @@ function getTrackedSetup(
 
 
 // ======================================================
-// CHECK WHETHER SIGNAL WAS ALREADY SENT
+// CHECK WHETHER SIGNAL ALREADY NOTIFIED
 // ======================================================
 
 function wasSignalSent(
@@ -806,8 +768,8 @@ function wasSignalSent(
 // ======================================================
 // MARK SIGNAL AS SENT
 //
-// IMPORTANT:
-// We mark only AFTER Mailjet successfully sends.
+// A signal is stored ONLY after Discord successfully
+// accepts the webhook.
 // ======================================================
 
 function markSignalSent(
@@ -844,6 +806,9 @@ function markSignalSent(
                 setup.flashSellAt ||
                 null,
 
+            notificationChannel:
+                "DISCORD",
+
             sentAt:
                 new Date()
                     .toISOString()
@@ -872,7 +837,8 @@ async function processSetupAlert(
 
         return {
 
-            sent: false,
+            sent:
+                false,
 
             reason:
                 "NOT_PRE_PHASE"
@@ -881,14 +847,7 @@ async function processSetupAlert(
     }
 
 
-    // ==============================================
-    // TRACK DETECTION FIRST
-    //
-    // This happens independently of email delivery.
-    //
-    // If Mailjet later fails, detectedAt is still valid
-    // because the scanner genuinely discovered the setup.
-    // ==============================================
+    // Always record scanner discovery first.
 
     const detection =
         trackSetupDetection(
@@ -902,6 +861,8 @@ async function processSetupAlert(
         );
 
 
+    // Duplicate protection.
+
     if (
         sentSignals.has(
             key
@@ -909,24 +870,28 @@ async function processSetupAlert(
     ) {
 
         console.log(
-            `Alert already sent: ${key}`
+            `Discord alert already sent: ${key}`
         );
 
 
         return {
 
-            sent: false,
+            sent:
+                false,
 
-            duplicate: true,
+            duplicate:
+                true,
 
             key,
 
             detectedAt:
-                detection?.detectedAt ||
+                detection
+                    ?.detectedAt ||
                 null,
 
             lastSeenAt:
-                detection?.lastSeenAt ||
+                detection
+                    ?.lastSeenAt ||
                 null,
 
             reason:
@@ -937,18 +902,18 @@ async function processSetupAlert(
 
 
     console.log(
-        `New PRE_PHASE alert: ${key}`
+        `New PRE_PHASE Discord alert: ${key}`
     );
 
 
     try {
 
-        await sendSetupAlert(
+        await sendDiscordSetupAlert(
             setup
         );
 
 
-        // Only store email state after successful delivery.
+        // Mark only after successful Discord response.
 
         markSignalSent(
             setup
@@ -956,24 +921,31 @@ async function processSetupAlert(
 
 
         console.log(
-            `Signal marked as sent: ${key}`
+            `Discord signal marked as sent: ${key}`
         );
 
 
         return {
 
-            sent: true,
+            sent:
+                true,
 
-            duplicate: false,
+            duplicate:
+                false,
+
+            channel:
+                "DISCORD",
 
             key,
 
             detectedAt:
-                detection?.detectedAt ||
+                detection
+                    ?.detectedAt ||
                 null,
 
             lastSeenAt:
-                detection?.lastSeenAt ||
+                detection
+                    ?.lastSeenAt ||
                 null
 
         };
@@ -981,37 +953,41 @@ async function processSetupAlert(
 
     } catch (error) {
 
-        // DO NOT mark failed email as sent.
+        // Failed webhook is NOT marked as sent.
         //
-        // Detection history remains saved.
-        //
-        // Next scanner cycle can retry the email while
-        // preserving the original detectedAt.
+        // Next scanner cycle can retry.
 
         console.error(
-            `Email alert failed for ${key}:`,
+            `Discord alert failed for ${key}:`,
             error.message
         );
 
 
         return {
 
-            sent: false,
+            sent:
+                false,
 
-            duplicate: false,
+            duplicate:
+                false,
+
+            channel:
+                "DISCORD",
 
             key,
 
             detectedAt:
-                detection?.detectedAt ||
+                detection
+                    ?.detectedAt ||
                 null,
 
             lastSeenAt:
-                detection?.lastSeenAt ||
+                detection
+                    ?.lastSeenAt ||
                 null,
 
             reason:
-                "EMAIL_FAILED",
+                "DISCORD_FAILED",
 
             error:
                 error.message
@@ -1050,6 +1026,9 @@ async function processSetupAlerts(
             failed:
                 0,
 
+            channel:
+                "DISCORD",
+
             results:
                 []
 
@@ -1072,8 +1051,8 @@ async function processSetupAlerts(
 
     // Sequential intentionally.
     //
-    // We only expect a small number of PRE_PHASE signals
-    // and this avoids unnecessary email API bursts.
+    // Signal volume is low and this prevents unnecessary
+    // Discord webhook bursts.
 
     for (
         const setup
@@ -1105,7 +1084,7 @@ async function processSetupAlerts(
 
         } else if (
             result.reason ===
-            "EMAIL_FAILED"
+            "DISCORD_FAILED"
         ) {
 
             failed++;
@@ -1124,6 +1103,9 @@ async function processSetupAlerts(
 
         failed,
 
+        channel:
+            "DISCORD",
+
         results
 
     };
@@ -1137,6 +1119,9 @@ async function processSetupAlerts(
 function getAlertStats() {
 
     return {
+
+        notificationChannel:
+            "DISCORD",
 
         sentSignalCount:
             sentSignals.size,
