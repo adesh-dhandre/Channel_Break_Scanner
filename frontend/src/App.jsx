@@ -19,189 +19,71 @@ const TIMEFRAMES = [
 
 
 const COIN_INFO = {
-
-  BTC: {
-    name: "Bitcoin",
-    badge: "₿"
-  },
-
-  ETH: {
-    name: "Ethereum",
-    badge: "Ξ"
-  },
-
-  SOL: {
-    name: "Solana",
-    badge: "S"
-  },
-
-  BNB: {
-    name: "BNB",
-    badge: "B"
-  },
-
-  XRP: {
-    name: "XRP",
-    badge: "X"
-  },
-
-  DOGE: {
-    name: "Dogecoin",
-    badge: "Ð"
-  },
-
-  ADA: {
-    name: "Cardano",
-    badge: "A"
-  },
-
-  AVAX: {
-    name: "Avalanche",
-    badge: "A"
-  },
-
-  LINK: {
-    name: "Chainlink",
-    badge: "L"
-  },
-
-  DOT: {
-    name: "Polkadot",
-    badge: "D"
-  },
-
-  LTC: {
-    name: "Litecoin",
-    badge: "Ł"
-  },
-
-  BCH: {
-    name: "Bitcoin Cash",
-    badge: "B"
-  },
-
-  TRX: {
-    name: "TRON",
-    badge: "T"
-  },
-
-  TON: {
-    name: "Toncoin",
-    badge: "T"
-  },
-
-  STX: {
-    name: "Stacks",
-    badge: "S"
-  },
-
-  GMX: {
-    name: "GMX",
-    badge: "G"
-  }
-
+  BTC: { name: "Bitcoin", badge: "₿" },
+  ETH: { name: "Ethereum", badge: "Ξ" },
+  SOL: { name: "Solana", badge: "S" },
+  BNB: { name: "BNB", badge: "B" },
+  XRP: { name: "XRP", badge: "X" },
+  DOGE: { name: "Dogecoin", badge: "Ð" },
+  ADA: { name: "Cardano", badge: "A" },
+  AVAX: { name: "Avalanche", badge: "A" },
+  LINK: { name: "Chainlink", badge: "L" },
+  DOT: { name: "Polkadot", badge: "D" },
+  LTC: { name: "Litecoin", badge: "Ł" },
+  BCH: { name: "Bitcoin Cash", badge: "B" },
+  TRX: { name: "TRON", badge: "T" },
+  TON: { name: "Toncoin", badge: "T" },
+  STX: { name: "Stacks", badge: "S" },
+  GMX: { name: "GMX", badge: "G" }
 };
 
 
-// ======================================================
-// HELPERS
-// ======================================================
-
 function cleanCryptoSymbol(setup) {
-
   if (setup?.symbol) {
-
-    return String(
-      setup.symbol
-    )
-      .replace(
-        /\.NS$/i,
-        ""
-      )
+    return String(setup.symbol)
+      .replace(/\.NS$/i, "")
       .toUpperCase();
   }
 
+  const pair = String(
+    setup?.tradingPair || ""
+  ).toUpperCase();
 
-  const pair =
-    String(
-      setup?.tradingPair ||
-      ""
-    )
-      .toUpperCase();
-
-
-  if (
-    pair.endsWith(
-      "USDT"
-    )
-  ) {
-
-    return pair.slice(
-      0,
-      -4
-    );
+  if (pair.endsWith("USDT")) {
+    return pair.slice(0, -4);
   }
 
-
-  return (
-    pair ||
-    "UNKNOWN"
-  );
+  return pair || "UNKNOWN";
 }
 
 
 function getCoinInfo(setup) {
-
-  const symbol =
-    cleanCryptoSymbol(
-      setup
-    );
-
-
-  const known =
-    COIN_INFO[
-      symbol
-    ];
-
+  const symbol = cleanCryptoSymbol(setup);
+  const known = COIN_INFO[symbol];
 
   if (known) {
-
     return {
-
       symbol,
-
-      name:
-        known.name,
-
-      badge:
-        known.badge
-
+      name: known.name,
+      badge: known.badge
     };
   }
 
-
   return {
-
     symbol,
-
     name:
       setup?.name &&
       setup.name !== symbol
         ? setup.name
         : `${symbol} Futures`,
-
     badge:
-      symbol
-        .charAt(0)
-        .toUpperCase() ||
+      symbol.charAt(0).toUpperCase() ||
       "◆"
-
   };
 }
 
 
 function displayStructure(setup) {
-
   return (
     setup?.uptrendScenario ||
     "Ascending Channel"
@@ -210,363 +92,209 @@ function displayStructure(setup) {
 
 
 function formatDate(value) {
-
   if (!value) {
     return "-";
   }
 
+  const date = new Date(value);
 
-  const date =
-    new Date(
-      value
-    );
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return "-";
   }
-
 
   return new Intl.DateTimeFormat(
     "en-IN",
     {
-
-      timeZone:
-        "Asia/Kolkata",
-
-      day:
-        "2-digit",
-
-      month:
-        "short",
-
-      hour:
-        "2-digit",
-
-      minute:
-        "2-digit",
-
-      hour12:
-        true
-
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
     }
-  ).format(
-    date
-  );
+  ).format(date);
 }
 
 
 function getLifecycle(setup) {
+  const lifecycle = String(
+    setup?.lifecycle ||
+    "LIVE"
+  ).toUpperCase();
 
-  const lifecycle =
-    String(
-      setup?.lifecycle ||
-      "LIVE"
-    )
-      .toUpperCase();
-
-
-  if (
-    lifecycle ===
-    "AGING"
-  ) {
-
+  if (lifecycle === "AGING") {
     return {
-
-      key:
-        "aging",
-
+      key: "aging",
       label:
         setup?.lifecycleLabel ||
         "AGING"
-
     };
   }
 
-
-  if (
-    lifecycle ===
-    "EXPIRED"
-  ) {
-
+  if (lifecycle === "EXPIRED") {
     return {
-
-      key:
-        "expired",
-
+      key: "expired",
       label:
         setup?.lifecycleLabel ||
         "EXPIRED"
-
     };
   }
 
-
-  if (
-    lifecycle ===
-    "WAITING"
-  ) {
-
+  if (lifecycle === "WAITING") {
     return {
-
-      key:
-        "waiting",
-
+      key: "waiting",
       label:
         setup?.lifecycleLabel ||
         "WAITING"
-
     };
   }
 
-
   return {
-
-    key:
-      "live",
-
+    key: "live",
     label:
       setup?.lifecycleLabel ||
       "LIVE"
-
   };
 }
 
 
 function getAgePercent(setup) {
+  const current = Number(
+    setup?.candlesSinceFlashSell
+  );
 
-  const current =
-    Number(
-      setup
-        ?.candlesSinceFlashSell
-    );
-
-
-  const max =
-    Number(
-      setup
-        ?.maxCandlesSinceFlashSell
-    );
-
+  const max = Number(
+    setup?.maxCandlesSinceFlashSell
+  );
 
   if (
-    !Number.isFinite(
-      current
-    ) ||
-    !Number.isFinite(
-      max
-    ) ||
+    !Number.isFinite(current) ||
+    !Number.isFinite(max) ||
     max <= 0
   ) {
-
     return 0;
   }
-
 
   return Math.min(
     100,
     Math.max(
       0,
-      (
-        current /
-        max
-      ) *
-      100
+      (current / max) * 100
     )
   );
 }
 
 
 function getAgeText(setup) {
-
   if (setup?.ageText) {
-
     return setup.ageText;
   }
 
-
   const current =
-    setup
-      ?.candlesSinceFlashSell;
-
+    setup?.candlesSinceFlashSell;
 
   const max =
-    setup
-      ?.maxCandlesSinceFlashSell;
-
+    setup?.maxCandlesSinceFlashSell;
 
   if (
     current != null &&
     max != null
   ) {
-
     return `${current} / ${max}`;
   }
 
-
-  return (
-    current != null
-      ? String(
-          current
-        )
-      : "-"
-  );
+  return current != null
+    ? String(current)
+    : "-";
 }
 
 
-// ======================================================
-// APP
-// ======================================================
-
 function App() {
-
   const [
     liveStatus,
     setLiveStatus
-  ] =
-    useState(
-      null
-    );
-
+  ] = useState(null);
 
   const [
     liveResults,
     setLiveResults
-  ] =
-    useState(
-      []
-    );
-
+  ] = useState([]);
 
   const [
     selectedTimeframe,
     setSelectedTimeframe
-  ] =
-    useState(
-      "ALL"
-    );
-
+  ] = useState("ALL");
 
   const [
     search,
     setSearch
-  ] =
-    useState(
-      ""
-    );
-
+  ] = useState("");
 
   const [
     loading,
     setLoading
-  ] =
-    useState(
-      true
-    );
-
+  ] = useState(true);
 
   const [
     error,
     setError
-  ] =
-    useState(
-      ""
-    );
-
+  ] = useState("");
 
   const [
     scanStarting,
     setScanStarting
-  ] =
-    useState(
-      false
-    );
-
+  ] = useState(false);
 
   const [
     scanMessage,
     setScanMessage
-  ] =
-    useState(
-      ""
-    );
+  ] = useState("");
 
-
-  // ====================================================
-  // STATUS
-  // ====================================================
 
   async function fetchLiveStatus() {
-
-    const response =
-      await fetch(
-        "/api/live/status",
-        {
-          cache:
-            "no-store"
-        }
-      );
-
+    const response = await fetch(
+      "/api/live/status",
+      {
+        cache: "no-store"
+      }
+    );
 
     if (!response.ok) {
-
       throw new Error(
         "Unable to load scanner status."
       );
     }
 
-
     const result =
       await response.json();
 
-
-    setLiveStatus(
-      result
-    );
+    setLiveStatus(result);
   }
 
 
-  // ====================================================
-  // RESULTS
-  // ====================================================
-
   async function fetchLiveResults() {
-
-    const response =
-      await fetch(
-        `/api/live/results?_=${Date.now()}`,
-        {
-          cache:
-            "no-store"
-        }
-      );
-
+    const response = await fetch(
+      `/api/live/results?_=${Date.now()}`,
+      {
+        cache: "no-store"
+      }
+    );
 
     if (!response.ok) {
-
       throw new Error(
         "Unable to load live scanner results."
       );
     }
 
-
     const result =
       await response.json();
 
-
     const currentResults =
       Array.isArray(
-        result
-          ?.crypto
-          ?.results
+        result?.crypto?.results
       )
         ? result.crypto.results
         : [];
-
 
     setLiveResults(
       currentResults
@@ -574,103 +302,56 @@ function App() {
   }
 
 
-  // ====================================================
-  // REFRESH
-  // ====================================================
-
   async function refreshAll() {
-
     try {
-
       await Promise.all([
-
         fetchLiveStatus(),
-
         fetchLiveResults()
-
       ]);
 
-
-      setError(
-        ""
-      );
-
-
+      setError("");
     } catch (err) {
-
-      console.error(
-        err
-      );
-
+      console.error(err);
 
       setError(
         err.message ||
         "Unable to connect to scanner."
       );
-
-
     } finally {
-
-      setLoading(
-        false
-      );
+      setLoading(false);
     }
   }
 
 
-  // ====================================================
-  // MANUAL CRYPTO SCAN
-  // ====================================================
-
   async function triggerManualScan() {
-
     if (
       scanStarting ||
-      liveStatus
-        ?.cryptoRunning
+      liveStatus?.cryptoRunning
     ) {
-
       return;
     }
 
-
     try {
-
-      setScanStarting(
-        true
-      );
-
-
+      setScanStarting(true);
       setScanMessage(
-        "Preparing the voyage..."
+        "Preparing scanner..."
       );
 
-
-      const response =
-        await fetch(
-          "/api/live/manual-trigger",
-          {
-
-            method:
-              "POST",
-
-            headers: {
-
-              "Content-Type":
-                "application/json"
-
-            }
-
+      const response = await fetch(
+        "/api/live/manual-trigger",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
           }
-        );
-
+        }
+      );
 
       const result =
         await response.json();
 
-
       if (!response.ok) {
-
         throw new Error(
           result?.error ||
           result?.message ||
@@ -678,71 +359,40 @@ function App() {
         );
       }
 
-
-      if (
-        result?.alreadyRunning
-      ) {
-
+      if (result?.alreadyRunning) {
         setScanMessage(
-          "The crew is already scanning."
+          "Scanner is already running."
         );
-
       } else {
-
         setScanMessage(
-          "Voyage started. Scanning crypto seas."
+          "Crypto scan started."
         );
-
       }
 
-
       await refreshAll();
-
-
     } catch (err) {
-
-      console.error(
-        err
-      );
-
+      console.error(err);
 
       setScanMessage(
         err.message ||
         "Unable to start scanner."
       );
-
-
     } finally {
-
-      setScanStarting(
-        false
-      );
-
+      setScanStarting(false);
 
       setTimeout(
         () => {
-
-          setScanMessage(
-            ""
-          );
-
+          setScanMessage("");
         },
         4000
       );
-
     }
   }
 
 
-  // ====================================================
-  // POLLING
-  // ====================================================
-
   useEffect(
     () => {
-
       refreshAll();
-
 
       const timer =
         setInterval(
@@ -750,69 +400,42 @@ function App() {
           5000
         );
 
-
       return () =>
-        clearInterval(
-          timer
-        );
-
+        clearInterval(timer);
     },
     []
   );
 
 
-  // ====================================================
-  // FILTER
-  // ====================================================
-
   const filteredSetups =
     useMemo(
       () => {
-
         const query =
           search
             .trim()
             .toLowerCase();
 
-
         return liveResults.filter(
           setup => {
-
             const timeframeMatch =
               selectedTimeframe ===
                 "ALL" ||
               setup.timeframe ===
                 selectedTimeframe;
 
-
             const coin =
-              getCoinInfo(
-                setup
-              );
+              getCoinInfo(setup);
 
-
-            const searchable =
-              [
-
-                setup.symbol,
-
-                setup.tradingPair,
-
-                setup.name,
-
-                coin.symbol,
-
-                coin.name
-
-              ]
-                .filter(
-                  Boolean
-                )
-                .join(
-                  " "
-                )
-                .toLowerCase();
-
+            const searchable = [
+              setup.symbol,
+              setup.tradingPair,
+              setup.name,
+              coin.symbol,
+              coin.name
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
 
             const searchMatch =
               !query ||
@@ -820,14 +443,12 @@ function App() {
                 query
               );
 
-
             return (
               timeframeMatch &&
               searchMatch
             );
           }
         );
-
       },
       [
         liveResults,
@@ -837,399 +458,156 @@ function App() {
     );
 
 
-  // ====================================================
-  // STATUS DATA
-  // ====================================================
-
   const cryptoStats =
-    liveStatus
-      ?.lastCryptoResult ||
+    liveStatus?.lastCryptoResult ||
     {};
 
-
   const cryptoRunning =
-    liveStatus
-      ?.cryptoRunning ===
+    liveStatus?.cryptoRunning ===
     true;
 
-
   const totalScanned =
-    cryptoStats
-      ?.scannedCoins ||
-    0;
-
+    cryptoStats?.scannedCoins || 0;
 
   const successful =
-    cryptoStats
-      ?.successfulCoins ||
+    cryptoStats?.successfulCoins ||
     0;
-
 
   const failed =
-    cryptoStats
-      ?.failedCoins ||
-    0;
-
+    cryptoStats?.failedCoins || 0;
 
   const scanDuration =
-    cryptoStats
-      ?.scanDurationSeconds ||
+    cryptoStats?.scanDurationSeconds ||
     0;
-
 
   const lastCompleted =
     liveStatus
       ?.lastCryptoCompletedAt ||
     null;
 
-
   const activeCount =
     liveResults.length;
 
-
   const scannerHealthy =
-    !liveStatus
-      ?.lastCryptoError;
+    !liveStatus?.lastCryptoError;
 
-
-  // ====================================================
-  // UI
-  // ====================================================
 
   return (
+    <div className="scannerApp">
 
-    <div className="grandLineApp">
+      <header className="topbar">
 
-      <div className="oceanBackground">
+        <div className="brand">
 
-        <span className="wave waveOne" />
-
-        <span className="wave waveTwo" />
-
-        <span className="wave waveThree" />
-
-      </div>
-
-
-      <div className="mapGrid" />
-
-
-      <div className="floatingCompass compassOne">
-        ✦
-      </div>
-
-
-      <div className="floatingCompass compassTwo">
-        ✧
-      </div>
-
-
-      {/* =================================================
-          SIDEBAR
-      ================================================= */}
-
-      <aside className="grandSidebar">
-
-        <div>
-
-          <div className="pirateBrand">
-
-            <div className="strawHatLogo">
-
-              <div className="hatTop" />
-
-              <div className="hatBand" />
-
-              <div className="hatBrim" />
-
-            </div>
-
-
-            <div className="brandText">
-
-              <span>
-                GRAND LINE
-              </span>
-
-              <strong>
-                CHANNEL SCANNER
-              </strong>
-
-            </div>
-
+          <div className="brandMark">
+            CB
           </div>
 
-
-          <div className="sidebarRope" />
-
-
-          <section className="parchmentBlock">
-
-            <span className="parchmentPin">
-              ☸
-            </span>
-
+          <div>
             <strong>
-              MARKET
+              Channel Break Scanner
             </strong>
-
-          </section>
-
-
-          <div className="marketRoute active">
-
-            <span className="routeIcon">
-              ₿
-            </span>
-
-
-            <div>
-
-              <strong>
-                Crypto Futures
-              </strong>
-
-              <small>
-                Live scanning
-              </small>
-
-            </div>
-
-
-            <span className="routeLiveDot" />
-
-          </div>
-
-
-          <div className="marketRoute disabled">
-
-            <span className="routeIcon">
-              NSE
-            </span>
-
-
-            <div>
-
-              <strong>
-                NSE F&O
-              </strong>
-
-              <small>
-                Temporarily offline
-              </small>
-
-            </div>
-
-
-            <span className="routeOfflineDot" />
-
-          </div>
-
-
-          <section className="parchmentBlock secondary">
-
-            <span className="parchmentPin">
-              ☠
-            </span>
-
-            <strong>
-              CHANNEL BREAK
-            </strong>
-
-          </section>
-
-
-          <div className="scannerRoute">
 
             <span>
-              ⚔
+              Crypto Futures Monitoring
             </span>
-
-            <strong>
-              Scanner
-            </strong>
-
           </div>
 
         </div>
 
 
-        <div className="sidebarBottom">
+        <div className="topbarStatus">
 
-          <section className="parchmentBlock systemTitle">
+          <span
+            className={
+              scannerHealthy
+                ? "statusDot online"
+                : "statusDot offline"
+            }
+          />
 
-            <span className="parchmentPin">
-              ⚙
-            </span>
+          <div>
+            <small>
+              SYSTEM STATUS
+            </small>
 
             <strong>
-              SYSTEM
-            </strong>
-
-          </section>
-
-
-          <div className="systemHealth">
-
-            <span
-              className={
+              {
                 scannerHealthy
-                  ? "healthPulse"
-                  : "healthPulse danger"
+                  ? "Operational"
+                  : "Attention Required"
               }
-            />
-
-
-            <div>
-
-              <span>
-                STATUS
-              </span>
-
-              <strong>
-
-                {
-                  scannerHealthy
-                    ? "Operational"
-                    : "Attention Required"
-                }
-
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <div className="pirateSilhouette">
-
-            <span>
-              ☠
-            </span>
-
-            <strong>
-              TO THE GRAND LINE
             </strong>
-
           </div>
-
-
-          <small className="copyright">
-            © 2026 Grand Line Scanner
-          </small>
 
         </div>
 
-      </aside>
+      </header>
 
 
-      {/* =================================================
-          MAIN
-      ================================================= */}
+      <main className="dashboard">
 
-      <main className="grandMain">
+        <section className="dashboardHeader">
 
-        {/* ===============================================
-            HERO
-        =============================================== */}
+          <div>
 
-        <header className="grandHero">
-
-          <div className="heroCopy">
-
-            <span className="heroEyebrow">
-              CHANNEL BREAK SCANNER
+            <span className="sectionLabel">
+              BINANCE USDT PERPETUAL FUTURES
             </span>
-
 
             <h1>
-              SET SAIL FOR{" "}
-              <span>
-                OPPORTUNITIES
-              </span>
+              Market Scanner
             </h1>
 
-
             <p>
-
-              The crypto seas never sleep.
-              Our scanner watches every wave,
-              searching for fresh PRE_PHASE setups.
-
+              Monitoring fresh channel-break
+              PRE_PHASE opportunities across
+              crypto futures.
             </p>
-
-
-            <div className="heroCoordinates">
-
-              <span>
-                ☸ Binance Futures
-              </span>
-
-              <span>
-                ⚓ 24 / 7 Market
-              </span>
-
-              <span>
-                ✦ IST Time
-              </span>
-
-            </div>
 
           </div>
 
 
-          <div className="heroControls">
+          <div className="scanActions">
 
             <div
               className={
                 cryptoRunning
-                  ? "liveWantedCard scanning"
-                  : "liveWantedCard"
+                  ? "scanStatus running"
+                  : "scanStatus"
               }
             >
 
-              <span className="wantedLabel">
-                LIVE STATUS
-              </span>
+              <span
+                className={
+                  cryptoRunning
+                    ? "statusDot scanning"
+                    : "statusDot online"
+                }
+              />
 
+              <div>
 
-              <div className="wantedSkull">
-                ☠
+                <small>
+                  SCANNER
+                </small>
+
+                <strong>
+                  {
+                    cryptoRunning
+                      ? "Scanning"
+                      : "Ready"
+                  }
+                </strong>
+
               </div>
-
-
-              <strong>
-
-                {
-                  cryptoRunning
-                    ? "SCANNING"
-                    : "READY"
-                }
-
-              </strong>
-
-
-              <small>
-
-                {
-                  cryptoRunning
-                    ? "Searching the seas..."
-                    : "The seas are clear"
-                }
-
-              </small>
 
             </div>
 
 
             <button
               type="button"
-              className={
-                cryptoRunning ||
-                scanStarting
-                  ? "pirateScanButton scanning"
-                  : "pirateScanButton"
-              }
+              className="scanButton"
               disabled={
                 cryptoRunning ||
                 scanStarting
@@ -1239,81 +617,42 @@ function App() {
               }
             >
 
-              <span className="scanButtonShine" />
-
-
-              <span className="scanHatIcon">
-
+              <strong>
                 {
                   cryptoRunning
-                    ? "☸"
-                    : "⚓"
+                    ? "SCANNING"
+                    : scanStarting
+                      ? "PREPARING"
+                      : "SCAN NOW"
                 }
+              </strong>
 
-              </span>
-
-
-              <span>
-
-                <strong>
-
-                  {
-                    cryptoRunning
-                      ? "SCANNING"
-                      : scanStarting
-                        ? "PREPARING"
-                        : "SCAN NOW"
-                  }
-
-                </strong>
-
-                <small>
-
-                  {
-                    cryptoRunning
-                      ? "Voyage in progress"
-                      : "Begin the voyage"
-                  }
-
-                </small>
-
-              </span>
+              <small>
+                Manual crypto scan
+              </small>
 
             </button>
 
           </div>
 
-        </header>
+        </section>
 
-
-        {/* ===============================================
-            TOAST
-        =============================================== */}
 
         {
           scanMessage && (
-
-            <div className="pirateToast">
-
-              <span>
-                ⚓
-              </span>
-
+            <div className="notice">
               {scanMessage}
-
             </div>
-
           )
         }
 
 
         {
           error && (
-
-            <div className="grandError">
+            <div className="errorBox">
 
               <strong>
-                Storm detected
+                Scanner connection issue
               </strong>
 
               <span>
@@ -1321,178 +660,114 @@ function App() {
               </span>
 
             </div>
-
           )
         }
 
 
-        {/* ===============================================
-            METRICS
-        =============================================== */}
+        <section className="metricsGrid">
 
-        <section className="treasureMetrics">
+          <article className="metricCard">
+            <span>
+              ACTIVE SETUPS
+            </span>
 
-          <article className="treasureMetric">
+            <strong>
+              {activeCount}
+            </strong>
 
-            <div className="metricIcon">
-              ☠
-            </div>
-
-
-            <div>
-
-              <span>
-                ACTIVE SETUPS
-              </span>
-
-              <strong>
-                {activeCount}
-              </strong>
-
-              <small>
-                Live opportunities
-              </small>
-
-            </div>
-
+            <small>
+              Current opportunities
+            </small>
           </article>
 
 
-          <article className="treasureMetric">
+          <article className="metricCard">
+            <span>
+              TOTAL SCANNED
+            </span>
 
-            <div className="metricIcon">
-              ⚓
-            </div>
+            <strong>
+              {totalScanned}
+            </strong>
 
-
-            <div>
-
-              <span>
-                TOTAL SCANNED
-              </span>
-
-              <strong>
-                {totalScanned}
-              </strong>
-
-              <small>
-                Futures contracts
-              </small>
-
-            </div>
-
+            <small>
+              Futures contracts
+            </small>
           </article>
 
 
-          <article className="treasureMetric">
+          <article className="metricCard">
+            <span>
+              SUCCESSFUL
+            </span>
 
-            <div className="metricIcon">
-              ✓
-            </div>
+            <strong>
+              {successful}
+            </strong>
 
-
-            <div>
-
-              <span>
-                SUCCESSFUL
-              </span>
-
-              <strong>
-                {successful}
-              </strong>
-
-              <small>
-                Last voyage
-              </small>
-
-            </div>
-
+            <small>
+              Last scan
+            </small>
           </article>
 
 
-          <article className="treasureMetric">
+          <article className="metricCard">
+            <span>
+              FAILED
+            </span>
 
-            <div className="metricIcon danger">
-              ×
-            </div>
+            <strong
+              className={
+                failed > 0
+                  ? "dangerText"
+                  : ""
+              }
+            >
+              {failed}
+            </strong>
 
-
-            <div>
-
-              <span>
-                FAILED
-              </span>
-
-              <strong>
-                {failed}
-              </strong>
-
-              <small>
-                Contracts
-              </small>
-
-            </div>
-
+            <small>
+              Last scan
+            </small>
           </article>
 
 
-          <article className="treasureMetric">
+          <article className="metricCard">
+            <span>
+              SCAN TIME
+            </span>
 
-            <div className="metricIcon">
-              ⏱
-            </div>
+            <strong>
+              {
+                scanDuration
+                  ? `${scanDuration}s`
+                  : "-"
+              }
+            </strong>
 
-
-            <div>
-
-              <span>
-                SCAN TIME
-              </span>
-
-              <strong>
-
-                {
-                  scanDuration
-                    ? `${scanDuration}s`
-                    : "-"
-                }
-
-              </strong>
-
-              <small>
-                Last voyage
-              </small>
-
-            </div>
-
+            <small>
+              Last completed scan
+            </small>
           </article>
 
         </section>
 
 
-        {/* ===============================================
-            FILTERS
-        =============================================== */}
+        <section className="toolbar">
 
-        <section className="navigationMap">
+          <div className="timeframeGroup">
 
-          <div>
-
-            <span className="mapLabel">
-              LOG POSE • TIMEFRAME
+            <span className="toolbarLabel">
+              TIMEFRAME
             </span>
 
-
-            <div className="timeframeNav">
+            <div className="timeframeButtons">
 
               {
                 TIMEFRAMES.map(
                   timeframe => (
-
                     <button
-                      key={
-                        timeframe
-                      }
+                      key={timeframe}
                       type="button"
                       className={
                         selectedTimeframe ===
@@ -1506,11 +781,8 @@ function App() {
                         )
                       }
                     >
-
                       {timeframe}
-
                     </button>
-
                   )
                 )
               }
@@ -1520,25 +792,20 @@ function App() {
           </div>
 
 
-          <div className="pirateSearch">
+          <div className="searchBox">
 
             <span>
-              🔎
+              Search
             </span>
-
 
             <input
               type="text"
-              placeholder="Search pair..."
-              value={
-                search
-              }
+              placeholder="BTC, ETH, SOL..."
+              value={search}
               onChange={
                 event =>
                   setSearch(
-                    event
-                      .target
-                      .value
+                    event.target.value
                   )
               }
             />
@@ -1548,25 +815,19 @@ function App() {
         </section>
 
 
-        {/* ===============================================
-            LIVE SETUPS
-        =============================================== */}
+        <section className="signalsPanel">
 
-        <section className="grandOceanPanel">
-
-          <div className="panelHeading">
+          <div className="panelHeader">
 
             <div>
 
-              <span className="panelEyebrow">
-                ⚔ LIVE SIGNALS
+              <span className="sectionLabel">
+                LIVE SIGNALS
               </span>
 
-
               <h2>
-                Active Pre-Phase Setups
+                Active PRE_PHASE Setups
               </h2>
-
 
               <p>
                 Binance USDT Perpetual Futures
@@ -1575,16 +836,18 @@ function App() {
             </div>
 
 
-            <div className="lastVoyage">
+            <div className="lastCompleted">
 
               <span>
                 LAST COMPLETED
               </span>
 
               <strong>
-                {formatDate(
-                  lastCompleted
-                )}
+                {
+                  formatDate(
+                    lastCompleted
+                  )
+                }
               </strong>
 
             </div>
@@ -1594,39 +857,19 @@ function App() {
 
           {
             loading && (
+              <div className="emptyState">
 
-              <div className="grandEmptyState">
-
-                <div className="grandRadar">
-
-                  <span className="radarCircle circleOne" />
-
-                  <span className="radarCircle circleTwo" />
-
-                  <span className="radarCircle circleThree" />
-
-                  <span className="radarCross horizontal" />
-
-                  <span className="radarCross vertical" />
-
-                  <span className="radarSweep" />
-
-                  <span className="radarCenter" />
-
-                </div>
-
+                <div className="loadingIndicator" />
 
                 <h3>
-                  Reading the Grand Line...
+                  Loading scanner data
                 </h3>
 
-
                 <p>
-                  Preparing market data.
+                  Connecting to live results.
                 </p>
 
               </div>
-
             )
           }
 
@@ -1635,58 +878,29 @@ function App() {
             !loading &&
             filteredSetups.length ===
               0 && (
+              <div className="emptyState">
 
-              <div className="grandEmptyState">
-
-                <div className="grandRadar">
-
-                  <span className="radarCircle circleOne" />
-
-                  <span className="radarCircle circleTwo" />
-
-                  <span className="radarCircle circleThree" />
-
-                  <span className="radarCross horizontal" />
-
-                  <span className="radarCross vertical" />
-
-                  <span className="radarSweep" />
-
-                  <span className="radarTarget targetOne" />
-
-                  <span className="radarTarget targetTwo" />
-
-                  <span className="radarCenter" />
-
+                <div className="emptyIcon">
+                  ↗
                 </div>
-
 
                 <h3>
-                  No Treasure Found Yet
+                  No active setups
                 </h3>
 
-
                 <p>
-
                   {
                     cryptoRunning
-                      ? "The crew is scanning the crypto seas."
-                      : `Watching ${totalScanned || 521} Binance Futures contracts.`
+                      ? "Scanner is currently checking the market."
+                      : `Monitoring ${totalScanned || 521} Binance Futures contracts.`
                   }
-
                 </p>
 
-
-                <div className="voyageIndicator">
-
-                  <span />
-
-                  Always sailing the markets
-
-                </div>
+                <span className="monitoringText">
+                  ● Market monitoring active
+                </span>
 
               </div>
-
             )
           }
 
@@ -1695,8 +909,7 @@ function App() {
             !loading &&
             filteredSetups.length >
               0 && (
-
-              <div className="wantedGrid">
+              <div className="signalsGrid">
 
                 {
                   filteredSetups.map(
@@ -1704,24 +917,20 @@ function App() {
                       setup,
                       index
                     ) => {
-
                       const coin =
                         getCoinInfo(
                           setup
                         );
-
 
                       const lifecycle =
                         getLifecycle(
                           setup
                         );
 
-
                       const agePercent =
                         getAgePercent(
                           setup
                         );
-
 
                       const detectedTime =
                         setup
@@ -1732,18 +941,9 @@ function App() {
                           .detectedAt ||
                         null;
 
-
                       return (
-
                         <article
-                          className="wantedSetupCard"
-                          style={{
-                            "--delay":
-                              `${Math.min(
-                                index,
-                                8
-                              ) * 80}ms`
-                          }}
+                          className="signalCard"
                           key={
                             `${
                               setup.tradingPair ||
@@ -1758,73 +958,50 @@ function App() {
                           }
                         >
 
-                          <div
-                            className={
-                              `wantedRibbon ${lifecycle.key}`
-                            }
-                          >
+                          <div className="signalCardHeader">
 
-                            {
-                              lifecycle.label
-                            }
+                            <div className="assetInfo">
 
-                          </div>
-
-
-                          <div className="wantedCardHeader">
-
-                            <div className="wantedAsset">
-
-                              <div className="coinMedallion">
-
-                                {
-                                  coin.badge
-                                }
-
+                              <div className="coinBadge">
+                                {coin.badge}
                               </div>
-
 
                               <div>
 
-                                <span>
+                                <strong>
                                   {
                                     setup
                                       .tradingPair ||
                                     `${coin.symbol}USDT`
                                   }
-                                </span>
-
-
-                                <strong>
-                                  {
-                                    coin.name
-                                  }
                                 </strong>
 
-
-                                <small>
-                                  Binance USDT Perpetual
-                                </small>
+                                <span>
+                                  {coin.name}
+                                </span>
 
                               </div>
 
                             </div>
 
 
-                            <div className="wantedTags">
+                            <div className="signalTags">
 
-                              <span className="tfTag">
-
+                              <span className="timeframeTag">
                                 {
                                   setup
                                     .timeframe
                                 }
-
                               </span>
 
-
-                              <span className="phaseTag">
-                                PRE_PHASE
+                              <span
+                                className={
+                                  `lifecycleTag ${lifecycle.key}`
+                                }
+                              >
+                                {
+                                  lifecycle.label
+                                }
                               </span>
 
                             </div>
@@ -1832,34 +1009,20 @@ function App() {
                           </div>
 
 
-                          <div className="pirateTimeline">
+                          <div className="phaseBadge">
+                            PRE_PHASE
+                          </div>
 
-                            <div className="timelineStage">
 
-                              <span className="timelineTime">
+                          <div className="timeline">
 
-                                {
-                                  formatDate(
-                                    setup.flashSellAt ||
-                                    setup.flashSellDate
-                                  )
-                                }
+                            <div className="timelineItem">
 
+                              <span>
+                                FLASH SELL
                               </span>
 
-
-                              <div className="timelineIcon sell">
-                                ↓
-                              </div>
-
-
-                              <strong>
-                                FLASH SELL
-                              </strong>
-
-
-                              <small className="sellText">
-
+                              <strong className="sellValue">
                                 {
                                   setup
                                     .flashSellDropPercent !=
@@ -1874,86 +1037,70 @@ function App() {
                                       )}%`
                                     : "-"
                                 }
+                              </strong>
 
+                              <small>
+                                {
+                                  formatDate(
+                                    setup.flashSellAt ||
+                                    setup.flashSellDate
+                                  )
+                                }
                               </small>
 
                             </div>
 
 
-                            <div className="timelineRope">
-
-                              <span />
-
+                            <div className="timelineArrow">
+                              →
                             </div>
 
 
-                            <div className="timelineStage">
+                            <div className="timelineItem">
 
-                              <span className="timelineTime">
+                              <span>
+                                BASE
+                              </span>
 
+                              <strong>
+                                {
+                                  setup.baseType ||
+                                  "BASE"
+                                }
+                              </strong>
+
+                              <small>
                                 {
                                   formatDate(
                                     setup.baseStartedAt
                                   )
                                 }
-
-                              </span>
-
-
-                              <div className="timelineIcon base">
-                                ◇
-                              </div>
-
-
-                              <strong>
-
-                                {
-                                  setup.baseType ||
-                                  "BASE"
-                                }
-
-                              </strong>
-
-
-                              <small>
-                                Reversal signal
                               </small>
 
                             </div>
 
 
-                            <div className="timelineRope">
-
-                              <span />
-
+                            <div className="timelineArrow">
+                              →
                             </div>
 
 
-                            <div className="timelineStage">
+                            <div className="timelineItem">
 
-                              <span className="timelineTime">
+                              <span>
+                                CONFIRMED
+                              </span>
 
+                              <strong className="confirmedValue">
+                                PRE_PHASE
+                              </strong>
+
+                              <small>
                                 {
                                   formatDate(
                                     detectedTime
                                   )
                                 }
-
-                              </span>
-
-
-                              <div className="timelineIcon confirmed">
-                                ✓
-                              </div>
-
-
-                              <strong>
-                                PRE_PHASE
-                              </strong>
-
-
-                              <small className="confirmedText">
-                                CONFIRMED
                               </small>
 
                             </div>
@@ -1961,9 +1108,9 @@ function App() {
                           </div>
 
 
-                          <div className="setupAge">
+                          <div className="ageSection">
 
-                            <div className="ageHeading">
+                            <div className="ageHeader">
 
                               <div>
 
@@ -1971,35 +1118,29 @@ function App() {
                                   SETUP AGE
                                 </span>
 
-
                                 <strong>
-
                                   {
                                     getAgeText(
                                       setup
                                     )
                                   }{" "}
                                   candles
-
                                 </strong>
 
                               </div>
 
-
-                              <strong className="agePercentage">
-
+                              <strong>
                                 {
                                   Math.round(
                                     agePercent
                                   )
                                 }%
-
                               </strong>
 
                             </div>
 
 
-                            <div className="pirateProgress">
+                            <div className="progressTrack">
 
                               <span
                                 className={
@@ -2016,171 +1157,119 @@ function App() {
                           </div>
 
 
-                          <div className="structureMap">
+                          <div className="structureSection">
 
-                            <div className="structureIdentity">
+                            <div>
 
-                              <span className="structureIcon">
-                                ↗
+                              <span>
+                                STRUCTURE
                               </span>
 
-
-                              <div>
-
-                                <span>
-                                  STRUCTURE
-                                </span>
-
-
-                                <strong>
-
-                                  {
-                                    displayStructure(
-                                      setup
-                                    )
-                                  }
-
-                                </strong>
-
-                              </div>
+                              <strong>
+                                {
+                                  displayStructure(
+                                    setup
+                                  )
+                                }
+                              </strong>
 
                             </div>
 
 
-                            <div className="structureStats">
+                            {
+                              setup
+                                .channelRespectRatio !=
+                                null && (
+                                <div>
 
-                              {
-                                setup
-                                  .channelRespectRatio !=
-                                  null && (
+                                  <span>
+                                    CHANNEL RESPECT
+                                  </span>
 
-                                  <div>
-
-                                    <span>
-                                      CHANNEL RESPECT
-                                    </span>
-
-
-                                    <strong>
-
-                                      {
-                                        Math.round(
-                                          setup
-                                            .channelRespectRatio *
-                                          100
-                                        )
-                                      }%
-
-                                    </strong>
-
-                                  </div>
-
-                                )
-                              }
-
-
-                              {
-                                setup
-                                  .baseCandlesFound !=
-                                  null && (
-
-                                  <div>
-
-                                    <span>
-                                      BASE CANDLES
-                                    </span>
-
-
-                                    <strong>
-
-                                      {
+                                  <strong>
+                                    {
+                                      Math.round(
                                         setup
-                                          .baseCandlesFound
-                                      }
+                                          .channelRespectRatio *
+                                        100
+                                      )
+                                    }%
+                                  </strong>
 
-                                    </strong>
+                                </div>
+                              )
+                            }
 
-                                  </div>
 
-                                )
-                              }
+                            {
+                              setup
+                                .baseCandlesFound !=
+                                null && (
+                                <div>
 
-                            </div>
+                                  <span>
+                                    BASE CANDLES
+                                  </span>
+
+                                  <strong>
+                                    {
+                                      setup
+                                        .baseCandlesFound
+                                    }
+                                  </strong>
+
+                                </div>
+                              )
+                            }
 
                           </div>
 
 
-                          <div className="wantedFooter">
+                          <div className="signalFooter">
 
                             <span>
-
-                              Flash{" "}
-
+                              Flash confirmed
                               <strong>
-
                                 {
                                   formatDate(
                                     setup
                                       .flashSellConfirmedAt
                                   )
                                 }
-
                               </strong>
-
                             </span>
 
-
                             <span>
-
-                              Base{" "}
-
+                              Base confirmed
                               <strong>
-
                                 {
                                   formatDate(
                                     setup
                                       .baseConfirmedAt
                                   )
                                 }
-
                               </strong>
-
                             </span>
 
                           </div>
 
                         </article>
-
                       );
                     }
                   )
                 }
 
               </div>
-
             )
           }
 
 
-          <footer className="grandOceanFooter">
+          <footer className="panelFooter">
 
-            <span>
-              ☠
-            </span>
+            <span className="statusDot online" />
 
-
-            <div>
-
-              <i />
-
-              Live data refreshes every 5 seconds
-
-            </div>
-
-
-            <span>
-              ⚓
-            </span>
+            Dashboard data refreshes every
+            5 seconds
 
           </footer>
 
@@ -2189,7 +1278,6 @@ function App() {
       </main>
 
     </div>
-
   );
 }
 

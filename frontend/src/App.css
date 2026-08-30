@@ -1,43 +1,34 @@
 :root {
-  --black: #041018;
-  --black-soft: #071824;
+  --bg: #071018;
+  --bg-secondary: #0b1620;
 
-  --navy: #0a2233;
-  --navy-soft: #0f2d43;
+  --panel: #0d1b27;
+  --panel-soft: #101f2c;
+  --panel-hover: #132533;
 
-  --panel: rgba(7, 24, 36, 0.94);
-  --panel-soft: rgba(11, 33, 48, 0.92);
+  --border: #1d3444;
+  --border-light: #284657;
 
-  --gold: #d6ad55;
-  --gold-bright: #f0cf7a;
-  --gold-soft: rgba(214, 173, 85, 0.12);
+  --text: #f2f7fa;
+  --text-secondary: #a9bdc9;
+  --muted: #6f8795;
 
-  --parchment: #c9ad72;
-  --parchment-dark: #7f642f;
+  --blue: #42a5d9;
+  --blue-soft: rgba(66, 165, 217, 0.12);
 
-  --red: #e15c57;
-  --red-soft: rgba(225, 92, 87, 0.13);
+  --cyan: #57c9df;
 
-  --green: #45d29b;
-  --green-soft: rgba(69, 210, 155, 0.12);
+  --green: #3fc58a;
+  --green-soft: rgba(63, 197, 138, 0.12);
 
-  --blue: #4faee8;
-  --blue-bright: #72c8f4;
-  --blue-soft: rgba(79, 174, 232, 0.12);
+  --red: #d6534c;
+  --red-dark: #843029;
+  --red-soft: rgba(214, 83, 76, 0.12);
 
-  --cyan: #55d7e8;
-  --cyan-soft: rgba(85, 215, 232, 0.08);
+  --yellow: #d3aa50;
+  --yellow-soft: rgba(211, 170, 80, 0.12);
 
-  --text: #eef7fb;
-  --text-soft: #b8ccd8;
-  --muted: #718995;
-
-  --border: rgba(85, 190, 220, 0.16);
-  --border-soft: rgba(145, 205, 226, 0.07);
-
-  --sidebar-width: 250px;
-
-  font-family:
+  --font:
     -apple-system,
     BlinkMacSystemFont,
     "SF Pro Text",
@@ -46,8 +37,16 @@
     Arial,
     sans-serif;
 
+  --mono:
+    "SF Mono",
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+
+  font-family: var(--font);
   color: var(--text);
-  background: var(--black);
+  background: var(--bg);
 }
 
 
@@ -57,7 +56,7 @@
 
 
 html {
-  scroll-behavior: smooth;
+  background: var(--bg);
 }
 
 
@@ -65,17 +64,13 @@ body {
   margin: 0;
   min-width: 320px;
 
+  background: var(--bg);
   color: var(--text);
 
-  background:
-    radial-gradient(
-      circle at 80% 0%,
-      rgba(40, 137, 183, 0.18),
-      transparent 32%
-    ),
-    var(--black);
+  font-family: var(--font);
 
-  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 
@@ -90,313 +85,40 @@ button {
 }
 
 
-/* =====================================================
-   ROOT
-===================================================== */
-
-.grandLineApp {
-  position: relative;
+.scannerApp {
   min-height: 100vh;
-  overflow-x: hidden;
-
-  background:
-    linear-gradient(
-      rgba(4, 16, 24, 0.94),
-      rgba(3, 13, 20, 0.98)
-    );
-}
-
-
-/* =====================================================
-   OCEAN BACKGROUND
-===================================================== */
-
-.oceanBackground {
-  position: fixed;
-  inset: 0;
-
-  z-index: 0;
-
-  pointer-events: none;
-
-  overflow: hidden;
-}
-
-
-.oceanBackground::before {
-  content: "";
-
-  position: absolute;
-
-  inset: 0;
-
-  background:
-    radial-gradient(
-      circle at 70% 10%,
-      rgba(42, 145, 190, 0.20),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 30% 90%,
-      rgba(215, 169, 66, 0.05),
-      transparent 26%
-    );
-
-  animation:
-    oceanGlowMove 18s ease-in-out infinite alternate;
-}
-
-
-@keyframes oceanGlowMove {
-
-  from {
-    transform:
-      translate3d(
-        0,
-        0,
-        0
-      );
-  }
-
-  to {
-    transform:
-      translate3d(
-        -30px,
-        20px,
-        0
-      );
-  }
-
-}
-
-
-.wave {
-  position: absolute;
-
-  width: 140%;
-  height: 170px;
-
-  left: -20%;
-
-  border-radius: 50%;
-
-  border-top:
-    1px solid rgba(85, 190, 220, 0.10);
-
-  opacity: 0.35;
-}
-
-
-.waveOne {
-  top: 35%;
-
-  animation:
-    waveMoveOne 13s
-    ease-in-out
-    infinite alternate;
-}
-
-
-.waveTwo {
-  top: 58%;
-
-  opacity: 0.22;
-
-  animation:
-    waveMoveTwo 16s
-    ease-in-out
-    infinite alternate;
-}
-
-
-.waveThree {
-  top: 78%;
-
-  opacity: 0.18;
-
-  animation:
-    waveMoveOne 20s
-    ease-in-out
-    infinite alternate-reverse;
-}
-
-
-@keyframes waveMoveOne {
-
-  from {
-    transform:
-      translateX(-30px)
-      rotate(-1deg);
-  }
-
-  to {
-    transform:
-      translateX(40px)
-      rotate(1deg);
-  }
-
-}
-
-
-@keyframes waveMoveTwo {
-
-  from {
-    transform:
-      translateX(50px)
-      rotate(1deg);
-  }
-
-  to {
-    transform:
-      translateX(-50px)
-      rotate(-1deg);
-  }
-
-}
-
-
-.mapGrid {
-  position: fixed;
-
-  inset: 0;
-
-  z-index: 0;
-
-  pointer-events: none;
-
-  opacity: 0.055;
-
-  background-image:
-    linear-gradient(
-      rgba(85, 215, 232, 0.22) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(85, 215, 232, 0.22) 1px,
-      transparent 1px
-    );
-
-  background-size:
-    64px 64px;
-
-  animation:
-    mapDrift 30s linear infinite;
-}
-
-
-@keyframes mapDrift {
-
-  to {
-    transform:
-      translate3d(
-        64px,
-        64px,
-        0
-      );
-  }
-
-}
-
-
-.floatingCompass {
-  position: fixed;
-
-  z-index: 0;
-
-  pointer-events: none;
-
-  color:
-    rgba(
-      215,
-      169,
-      66,
-      0.08
-    );
-
-  font-size: 120px;
-}
-
-
-.compassOne {
-  top: 16%;
-  right: 5%;
-
-  animation:
-    compassFloat 18s
-    ease-in-out infinite;
-}
-
-
-.compassTwo {
-  bottom: 4%;
-  left: 28%;
-
-  font-size: 90px;
-
-  animation:
-    compassFloat 22s
-    ease-in-out infinite reverse;
-}
-
-
-@keyframes compassFloat {
-
-  0%,
-  100% {
-    transform:
-      translateY(0)
-      rotate(0deg);
-  }
-
-  50% {
-    transform:
-      translateY(-20px)
-      rotate(8deg);
-  }
-
-}
-
-
-/* =====================================================
-   SIDEBAR
-===================================================== */
-
-.grandSidebar {
-  position: fixed;
-
-  left: 0;
-  top: 0;
-  bottom: 0;
-
-  z-index: 20;
-
-  width: var(--sidebar-width);
-
-  padding:
-    24px 18px 18px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
 
   background:
     linear-gradient(
       180deg,
-      rgba(4, 18, 27, 0.98),
-      rgba(2, 12, 18, 0.99)
+      #071018 0%,
+      #08121b 100%
     );
-
-  border-right:
-    1px solid var(--border);
-
-  box-shadow:
-    10px 0 30px
-    rgba(0, 0, 0, 0.2);
 }
 
 
-.pirateBrand {
+/* =====================================================
+   TOP BAR
+===================================================== */
+
+.topbar {
+  height: 72px;
+
+  padding: 0 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom:
+    1px solid var(--border);
+
+  background:
+    rgba(7, 16, 24, 0.98);
+}
+
+
+.brand {
   display: flex;
   align-items: center;
 
@@ -404,553 +126,127 @@ button {
 }
 
 
-.strawHatLogo {
-  position: relative;
-
-  width: 52px;
-  height: 44px;
-
-  flex:
-    0 0 52px;
-}
-
-
-.hatTop {
-  position: absolute;
-
-  left: 14px;
-  top: 3px;
-
-  width: 25px;
-  height: 25px;
-
-  border-radius:
-    50% 50% 35% 35%;
-
-  background:
-    #d7aa42;
-
-  border:
-    1px solid
-    #805d1e;
-}
-
-
-.hatBand {
-  position: absolute;
-
-  left: 11px;
-  top: 22px;
-
-  z-index: 2;
-
-  width: 31px;
-  height: 6px;
-
-  background:
-    #a4352e;
-
-  border-radius:
-    2px;
-}
-
-
-.hatBrim {
-  position: absolute;
-
-  left: 3px;
-  bottom: 4px;
-
-  width: 47px;
-  height: 8px;
-
-  border-radius:
-    50%;
-
-  background:
-    #e0b54b;
-
-  border:
-    1px solid
-    #805d1e;
-}
-
-
-.brandText span {
-  display: block;
-
-  color: var(--blue-bright);
-
-  font-size: 17px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.06em;
-}
-
-
-.brandText strong {
-  display: block;
-
-  margin-top: 4px;
-
-  color: #bc493a;
-
-  font-size: 9px;
-
-  letter-spacing: 0.12em;
-}
-
-
-.sidebarRope {
-  height: 1px;
-
-  margin:
-    22px 0;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      var(--gold),
-      transparent
-    );
-
-  opacity: 0.45;
-}
-
-
-.parchmentBlock {
-  position: relative;
-
-  margin-top: 15px;
-
-  padding:
-    10px 12px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  color: #31200c;
-
-  background:
-    linear-gradient(
-      135deg,
-      #c9a35c,
-      #e0c080
-    );
-
-  border-radius:
-    3px;
-
-  box-shadow:
-    inset 0 0 14px
-    rgba(76, 45, 12, 0.18);
-
-  transform:
-    rotate(-0.4deg);
-}
-
-
-.parchmentBlock::before,
-.parchmentBlock::after {
-  content: "";
-
-  position: absolute;
-
-  top: 0;
-  bottom: 0;
-
-  width: 5px;
-
-  background:
-    rgba(75, 45, 13, 0.12);
-}
-
-
-.parchmentBlock::before {
-  left: 0;
-}
-
-
-.parchmentBlock::after {
-  right: 0;
-}
-
-
-.parchmentPin {
-  font-size: 16px;
-}
-
-
-.parchmentBlock strong {
-  font-size: 13px;
-}
-
-
-.parchmentBlock.secondary {
-  margin-top: 23px;
-}
-
-
-.marketRoute {
-  position: relative;
-
-  margin-top: 8px;
-
-  padding:
-    11px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  border-radius: 10px;
-
-  border:
-    1px solid transparent;
-
-  transition:
-    transform 180ms ease,
-    background 180ms ease,
-    border-color 180ms ease;
-}
-
-
-.marketRoute.active {
-  background:
-    rgba(79, 174, 232, 0.05);
-
-  border-color:
-    rgba(79, 174, 232, 0.10);
-}
-
-
-.marketRoute.active:hover {
-  transform:
-    translateX(3px);
-
-  background:
-    rgba(79, 174, 232, 0.08);
-}
-
-
-.marketRoute.disabled {
-  opacity: 0.35;
-}
-
-
-.routeIcon {
-  min-width: 31px;
-  height: 31px;
+.brandMark {
+  width: 40px;
+  height: 40px;
 
   display: grid;
   place-items: center;
 
-  padding: 0 5px;
-
-  border-radius: 50%;
-
-  color: var(--blue-bright);
-
-  background:
-    rgba(79, 174, 232, 0.10);
-}
-
-
-.marketRoute strong {
-  display: block;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 12px;
-}
-
-
-.marketRoute small {
-  display: block;
-
-  margin-top: 2px;
-
-  color: var(--muted);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 9px;
-}
-
-
-.routeLiveDot,
-.routeOfflineDot {
-  margin-left: auto;
-
-  width: 7px;
-  height: 7px;
-
-  border-radius: 50%;
-}
-
-
-.routeLiveDot {
-  background: var(--green);
-
-  box-shadow:
-    0 0 10px
-    rgba(85, 215, 232, 0.50);
-
-  animation:
-    livePulse 1.8s
-    ease-in-out infinite;
-}
-
-
-.routeOfflineDot {
-  background: var(--red);
-}
-
-
-@keyframes livePulse {
-
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.45;
-    transform: scale(0.75);
-  }
-
-}
-
-
-.scannerRoute {
-  margin-top: 8px;
-
-  padding:
-    12px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 9px;
-
-  color: var(--blue-bright);
-
   border-radius: 9px;
 
-  background:
-    rgba(79, 174, 232, 0.07);
-
-  border:
-    1px solid
-    rgba(79, 174, 232, 0.10);
-}
-
-
-.scannerRoute strong {
-  font-size: 12px;
-}
-
-
-.sidebarBottom {
-  margin-top: 20px;
-}
-
-
-.systemTitle {
-  margin-bottom: 9px;
-}
-
-
-.systemHealth {
-  padding:
-    11px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  border:
-    1px solid var(--border-soft);
-
-  border-radius: 9px;
+  color: #08131b;
 
   background:
-    rgba(255, 255, 255, 0.02);
+    linear-gradient(
+      135deg,
+      var(--blue),
+      var(--cyan)
+    );
+
+  font-size: 13px;
+  font-weight: 800;
 }
 
 
-.healthPulse {
-  position: relative;
-
-  width: 9px;
-  height: 9px;
-
-  border-radius: 50%;
-
-  background: var(--green);
-}
-
-
-.healthPulse::after {
-  content: "";
-
-  position: absolute;
-
-  inset: -5px;
-
-  border:
-    1px solid
-    rgba(82, 204, 131, 0.35);
-
-  border-radius: 50%;
-
-  animation:
-    healthRing 2s
-    ease-out infinite;
-}
-
-
-@keyframes healthRing {
-
-  from {
-    opacity: 0.8;
-    transform: scale(0.5);
-  }
-
-  to {
-    opacity: 0;
-    transform: scale(1.5);
-  }
-
-}
-
-
-.healthPulse.danger {
-  background: var(--red);
-}
-
-
-.systemHealth span {
+.brand strong {
   display: block;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+.brand span {
+  display: block;
+
+  margin-top: 3px;
 
   color: var(--muted);
-
-  font-size: 8px;
-
-  letter-spacing: 0.12em;
-}
-
-
-.systemHealth strong {
-  display: block;
-
-  margin-top: 2px;
 
   font-size: 11px;
 }
 
 
-.pirateSilhouette {
-  margin-top: 15px;
+.topbarStatus {
+  display: flex;
+  align-items: center;
 
-  padding:
-    18px 10px 12px;
-
-  text-align: center;
-
-  border-radius: 10px;
-
-  background:
-    radial-gradient(
-      circle at center,
-      rgba(79, 174, 232, 0.10),
-      transparent 60%
-    );
+  gap: 9px;
 }
 
 
-.pirateSilhouette span {
+.topbarStatus small,
+.scanStatus small {
   display: block;
-
-  color:
-    rgba(85, 215, 232, 0.35);
-
-  font-size: 32px;
-}
-
-
-.pirateSilhouette strong {
-  display: block;
-
-  margin-top: 4px;
-
-  color: var(--cyan);
-
-  font-size: 9px;
-
-  letter-spacing: 0.12em;
-}
-
-
-.copyright {
-  display: block;
-
-  margin-top: 12px;
 
   color: var(--muted);
 
-  font-size: 8px;
+  font-size: 9px;
+  font-weight: 600;
 
-  text-align: center;
+  letter-spacing: 0.08em;
+}
+
+
+.topbarStatus strong,
+.scanStatus strong {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+
+  flex: 0 0 8px;
+
+  border-radius: 50%;
+}
+
+
+.statusDot.online {
+  background: var(--green);
+}
+
+
+.statusDot.offline {
+  background: var(--red);
+}
+
+
+.statusDot.scanning {
+  background: var(--cyan);
 }
 
 
 /* =====================================================
-   MAIN
+   DASHBOARD
 ===================================================== */
 
-.grandMain {
-  position: relative;
+.dashboard {
+  width: min(
+    1500px,
+    calc(100% - 40px)
+  );
 
-  z-index: 2;
+  margin: 0 auto;
 
-  width:
-    calc(
-      100% -
-      var(--sidebar-width)
-    );
-
-  min-height: 100vh;
-
-  margin-left:
-    var(--sidebar-width);
-
-  padding:
-    28px 28px 36px;
+  padding: 30px 0 40px;
 }
 
 
 /* =====================================================
-   HERO
+   HEADER
 ===================================================== */
 
-.grandHero {
-  position: relative;
+.dashboardHeader {
+  padding: 25px;
 
   display: flex;
   justify-content: space-between;
@@ -958,556 +254,201 @@ button {
 
   gap: 25px;
 
-  padding:
-    25px 25px 23px;
-
-  overflow: hidden;
-
   border:
     1px solid var(--border);
 
-  border-radius: 15px;
+  border-radius: 12px;
 
-  background:
-    linear-gradient(
-      135deg,
-      rgba(8, 31, 46, 0.95),
-      rgba(4, 20, 30, 0.97)
-    );
-
-  box-shadow:
-    inset 0 0 35px
-    rgba(0, 0, 0, 0.4);
-
-  animation:
-    heroEntrance 550ms
-    ease both;
+  background: var(--panel);
 }
 
 
-.grandHero::before {
-  content: "";
+.sectionLabel {
+  display: block;
 
-  position: absolute;
-
-  right: 8%;
-  top: -80px;
-
-  width: 380px;
-  height: 260px;
-
-  border-radius: 50%;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(85, 215, 232, 0.12),
-      transparent 67%
-    );
-
-  pointer-events: none;
-}
-
-
-@keyframes heroEntrance {
-
-  from {
-    opacity: 0;
-    transform:
-      translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform:
-      translateY(0);
-  }
-
-}
-
-
-.heroCopy {
-  position: relative;
-  z-index: 2;
-
-  max-width: 700px;
-}
-
-
-.heroEyebrow {
   color: var(--cyan);
 
   font-size: 9px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.18em;
-}
-
-
-.heroCopy h1 {
-  margin:
-    9px 0 8px;
-
-  max-width: 680px;
-
-  color: #e8f7fb;
-
-  font-size:
-    clamp(
-      32px,
-      5vw,
-      52px
-    );
-
-  line-height: 0.97;
-
-  letter-spacing: -0.035em;
-
-  text-shadow:
-    0 2px 0
-    rgba(0, 0, 0, 0.25);
-}
-
-
-.heroCopy h1 span {
-  color: var(--blue-bright);
-}
-
-
-.heroCopy p {
-  max-width: 650px;
-
-  margin: 0;
-
-  color: var(--text-soft);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 12px;
-
-  line-height: 1.65;
-}
-
-
-.heroCoordinates {
-  margin-top: 15px;
-
-  display: flex;
-  flex-wrap: wrap;
-
-  gap: 8px;
-}
-
-
-.heroCoordinates span {
-  padding:
-    5px 8px;
-
-  border:
-    1px solid
-    rgba(79, 174, 232, 0.12);
-
-  border-radius: 999px;
-
-  background:
-    rgba(79, 174, 232, 0.05);
-
-  color: var(--text-soft);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 9px;
-}
-
-
-.heroControls {
-  position: relative;
-  z-index: 2;
-
-  display: flex;
-
-  align-items: stretch;
-
-  gap: 10px;
-}
-
-
-.liveWantedCard {
-  width: 145px;
-
-  padding:
-    11px 12px;
-
-  text-align: center;
-
-  border:
-    1px solid
-    rgba(82, 204, 131, 0.12);
-
-  border-radius: 10px;
-
-  background:
-    rgba(5, 14, 12, 0.75);
-}
-
-
-.wantedLabel {
-  display: block;
-
-  color: var(--green);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 8px;
-
   font-weight: 700;
 
   letter-spacing: 0.12em;
 }
 
 
-.wantedSkull {
-  margin:
-    5px 0 2px;
+.dashboardHeader h1 {
+  margin: 6px 0 7px;
 
-  color:
-    rgba(82, 204, 131, 0.7);
+  font-size:
+    clamp(
+      28px,
+      4vw,
+      40px
+    );
 
-  font-size: 24px;
+  line-height: 1.05;
 
-  animation:
-    skullFloat 3s ease-in-out infinite;
+  letter-spacing: -0.025em;
 }
 
 
-@keyframes skullFloat {
+.dashboardHeader p {
+  max-width: 610px;
 
-  0%,
-  100% {
-    transform:
-      translateY(0);
-  }
+  margin: 0;
 
-  50% {
-    transform:
-      translateY(-3px);
-  }
+  color: var(--text-secondary);
 
+  font-size: 13px;
+
+  line-height: 1.6;
 }
 
 
-.liveWantedCard strong {
-  display: block;
-
-  color: var(--green);
-
-  font-size: 12px;
-}
-
-
-.liveWantedCard small {
-  display: block;
-
-  margin-top: 3px;
-
-  color: var(--muted);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 8px;
-}
-
-
-.liveWantedCard.scanning {
-  box-shadow:
-    inset 0 0 25px
-    rgba(85, 215, 232, 0.07);
-}
-
-
-/* =====================================================
-   SCAN BUTTON
-===================================================== */
-
-.pirateScanButton {
-  position: relative;
-
-  min-width: 170px;
-
-  padding:
-    12px 16px;
-
+.scanActions {
   display: flex;
-  align-items: center;
+  align-items: stretch;
 
   gap: 10px;
-
-  overflow: hidden;
-
-  border:
-    1px solid #863028;
-
-  border-radius: 10px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #a93c30,
-      #742319
-    );
-
-  color: #fff2d4;
-
-  box-shadow:
-    inset 0 1px 0
-    rgba(255, 255, 255, 0.14),
-    0 10px 26px
-    rgba(0, 0, 0, 0.22);
-
-  cursor: pointer;
-
-  transition:
-    transform 180ms ease,
-    filter 180ms ease,
-    box-shadow 180ms ease;
 }
 
 
-.pirateScanButton:hover:not(:disabled) {
-  transform:
-    translateY(-2px);
+.scanStatus {
+  min-width: 130px;
 
-  filter: brightness(1.08);
-
-  box-shadow:
-    0 14px 30px
-    rgba(0, 0, 0, 0.26);
-}
-
-
-.pirateScanButton:disabled {
-  opacity: 0.7;
-  cursor: default;
-}
-
-
-.scanButtonShine {
-  position: absolute;
-
-  top: -70%;
-  left: -50%;
-
-  width: 25%;
-  height: 250%;
-
-  transform:
-    rotate(22deg);
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.3),
-      transparent
-    );
-
-  animation:
-    buttonShine 4s
-    ease-in-out infinite;
-}
-
-
-@keyframes buttonShine {
-
-  0%,
-  30% {
-    left: -50%;
-  }
-
-  65%,
-  100% {
-    left: 130%;
-  }
-
-}
-
-
-.scanHatIcon {
-  position: relative;
-
-  z-index: 2;
-
-  width: 34px;
-  height: 34px;
-
-  display: grid;
-  place-items: center;
-
-  border-radius: 50%;
-
-  background:
-    rgba(0, 0, 0, 0.16);
-
-  font-size: 18px;
-}
-
-
-.pirateScanButton > span:last-child {
-  position: relative;
-
-  z-index: 2;
-
-  display: grid;
-
-  text-align: left;
-}
-
-
-.pirateScanButton strong {
-  font-size: 12px;
-
-  letter-spacing: 0.06em;
-}
-
-
-.pirateScanButton small {
-  margin-top: 2px;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 8px;
-
-  opacity: 0.75;
-}
-
-
-.pirateScanButton.scanning .scanHatIcon {
-  animation:
-    wheelSpin 1.2s linear infinite;
-}
-
-
-@keyframes wheelSpin {
-
-  to {
-    transform: rotate(360deg);
-  }
-
-}
-
-
-/* =====================================================
-   TOAST / ERROR
-===================================================== */
-
-.pirateToast {
-  position: fixed;
-
-  top: 18px;
-  right: 20px;
-
-  z-index: 100;
-
-  padding:
-    11px 14px;
+  padding: 12px 15px;
 
   display: flex;
   align-items: center;
 
-  gap: 8px;
+  gap: 9px;
 
   border:
     1px solid var(--border);
 
-  border-radius: 9px;
+  border-radius: 8px;
+
+  background: var(--bg-secondary);
+}
+
+
+.scanStatus.running {
+  border-color:
+    rgba(87, 201, 223, 0.32);
+}
+
+
+.scanButton {
+  min-width: 165px;
+
+  padding: 12px 18px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  border:
+    1px solid #9a3a31;
+
+  border-radius: 8px;
 
   background:
-    rgba(5, 23, 34, 0.97);
+    linear-gradient(
+      135deg,
+      #a83d32,
+      #75261e
+    );
 
-  color: var(--text);
+  color: #fff4ed;
 
-  font-size: 11px;
+  cursor: pointer;
 
-  box-shadow:
-    0 18px 45px
-    rgba(0, 0, 0, 0.34);
-
-  animation:
-    toastIn 220ms ease both;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
 }
 
 
-@keyframes toastIn {
-
-  from {
-    opacity: 0;
-    transform:
-      translateY(-8px);
-  }
-
-  to {
-    opacity: 1;
-    transform:
-      translateY(0);
-  }
-
+.scanButton:hover:not(:disabled) {
+  transform:
+    translateY(-1px);
 }
 
 
-.grandError {
-  margin-top: 13px;
+.scanButton:disabled {
+  opacity: 0.6;
 
-  padding:
-    12px 14px;
+  cursor: default;
+}
+
+
+.scanButton strong {
+  font-size: 12px;
+  font-weight: 700;
+
+  letter-spacing: 0.04em;
+}
+
+
+.scanButton small {
+  margin-top: 3px;
+
+  opacity: 0.7;
+
+  font-size: 9px;
+}
+
+
+/* =====================================================
+   NOTICE / ERROR
+===================================================== */
+
+.notice {
+  margin-top: 12px;
+
+  padding: 11px 14px;
 
   border:
     1px solid
-    rgba(215, 79, 70, 0.18);
+    rgba(66, 165, 217, 0.25);
 
-  border-radius: 9px;
+  border-radius: 8px;
 
-  background:
-    var(--red-soft);
+  background: var(--blue-soft);
+
+  color: var(--text-secondary);
+
+  font-size: 11px;
 }
 
 
-.grandError strong,
-.grandError span {
+.errorBox {
+  margin-top: 12px;
+
+  padding: 12px 14px;
+
+  border:
+    1px solid
+    rgba(214, 83, 76, 0.25);
+
+  border-radius: 8px;
+
+  background: var(--red-soft);
+}
+
+
+.errorBox strong {
   display: block;
+
+  font-size: 11px;
 }
 
 
-.grandError span {
+.errorBox span {
+  display: block;
+
   margin-top: 3px;
 
-  color: var(--text-soft);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  color: var(--text-secondary);
 
   font-size: 10px;
 }
@@ -1517,8 +458,8 @@ button {
    METRICS
 ===================================================== */
 
-.treasureMetrics {
-  margin-top: 14px;
+.metricsGrid {
+  margin-top: 12px;
 
   display: grid;
 
@@ -1528,193 +469,102 @@ button {
       minmax(0, 1fr)
     );
 
-  gap: 9px;
+  gap: 10px;
 }
 
 
-.treasureMetric {
+.metricCard {
   min-height: 105px;
 
-  padding:
-    14px;
+  padding: 15px;
 
   display: flex;
-  align-items: center;
-
-  gap: 11px;
+  flex-direction: column;
+  justify-content: center;
 
   border:
     1px solid var(--border);
 
-  border-radius: 10px;
+  border-radius: 9px;
 
-  background:
-    linear-gradient(
-      145deg,
-      rgba(10, 37, 54, 0.95),
-      rgba(5, 23, 34, 0.96)
-    );
-
-  transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
-
-  animation:
-    treasureEntrance 500ms ease both;
+  background: var(--panel);
 }
 
 
-.treasureMetric:hover {
-  transform:
-    translateY(-3px);
+.metricCard > span {
+  color: var(--muted);
 
-  border-color:
-    rgba(85, 215, 232, 0.34);
+  font-size: 9px;
+  font-weight: 600;
 
-  box-shadow:
-    0 14px 28px
-    rgba(0, 0, 0, 0.18);
+  letter-spacing: 0.07em;
 }
 
 
-@keyframes treasureEntrance {
+.metricCard > strong {
+  margin-top: 5px;
 
-  from {
-    opacity: 0;
-    transform:
-      translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform:
-      translateY(0);
-  }
-
-}
-
-
-.metricIcon {
-  width: 40px;
-  height: 40px;
-
-  flex:
-    0 0 40px;
-
-  display: grid;
-  place-items: center;
-
-  border-radius: 50%;
-
-  color: var(--blue-bright);
-
-  background:
-    rgba(79, 174, 232, 0.08);
-
-  border:
-    1px solid
-    rgba(79, 174, 232, 0.14);
-
-  font-size: 17px;
-}
-
-
-.metricIcon.danger {
-  color: var(--red);
-}
-
-
-.treasureMetric span {
-  display: block;
-
-  color: var(--text-soft);
-
-  font-size: 8px;
-
+  font-size: 26px;
   font-weight: 700;
-
-  letter-spacing: 0.08em;
-}
-
-
-.treasureMetric strong {
-  display: block;
-
-  margin-top: 3px;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 25px;
-
-  font-weight: 650;
 
   font-variant-numeric:
     tabular-nums;
 }
 
 
-.treasureMetric small {
-  display: block;
+.metricCard > small {
+  margin-top: 3px;
 
-  margin-top: 2px;
+  color: var(--text-secondary);
 
-  color: var(--muted);
+  font-size: 9px;
+}
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
 
-  font-size: 8px;
+.dangerText {
+  color: var(--red);
 }
 
 
 /* =====================================================
-   NAVIGATION
+   TOOLBAR
 ===================================================== */
 
-.navigationMap {
+.toolbar {
   margin-top: 12px;
 
-  padding:
-    12px 14px;
+  padding: 13px 15px;
 
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
 
-  gap: 16px;
+  gap: 20px;
 
   border:
     1px solid var(--border);
 
-  border-radius: 10px;
+  border-radius: 9px;
 
-  background:
-    rgba(6, 25, 37, 0.92);
+  background: var(--panel);
 }
 
 
-.mapLabel {
+.toolbarLabel {
   display: block;
 
   margin-bottom: 8px;
 
-  color: var(--cyan);
+  color: var(--muted);
 
   font-size: 8px;
+  font-weight: 700;
 
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
 }
 
 
-.timeframeNav {
+.timeframeButtons {
   display: flex;
   flex-wrap: wrap;
 
@@ -1725,507 +575,251 @@ button {
 .timeframeButton {
   min-width: 42px;
 
-  padding:
-    7px 10px;
+  padding: 7px 10px;
 
   border:
-    1px solid
-    rgba(79, 174, 232, 0.10);
+    1px solid var(--border);
 
   border-radius: 6px;
 
-  background:
-    rgba(255, 255, 255, 0.02);
+  background: var(--bg-secondary);
 
-  color: var(--text-soft);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  color: var(--text-secondary);
 
   font-size: 10px;
+  font-weight: 600;
 
   cursor: pointer;
-
-  transition:
-    background 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
-}
-
-
-.timeframeButton:hover {
-  transform:
-    translateY(-1px);
-
-  color: var(--blue-bright);
 }
 
 
 .timeframeButton.active {
-  background:
-    linear-gradient(
-      135deg,
-      #2f87b8,
-      #55d7e8
-    );
+  border-color: var(--blue);
 
-  color: #241706;
+  background: var(--blue);
 
-  font-weight: 700;
+  color: #071018;
 }
 
 
-.pirateSearch {
-  position: relative;
-
-  width: 220px;
+.searchBox {
+  width: 230px;
 }
 
 
-.pirateSearch span {
-  position: absolute;
+.searchBox span {
+  display: block;
 
-  left: 11px;
-  top: 50%;
+  margin-bottom: 6px;
 
-  transform:
-    translateY(-50%);
-
-  font-size: 12px;
-}
-
-
-.pirateSearch input {
-  width: 100%;
-
-  padding:
-    9px 11px 9px 34px;
-
-  border:
-    1px solid var(--border);
-
-  border-radius: 7px;
-
-  background:
-    rgba(255, 255, 255, 0.02);
-
-  color: var(--text);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 10px;
-}
-
-
-.pirateSearch input::placeholder {
   color: var(--muted);
-}
-
-
-/* =====================================================
-   GRAND OCEAN PANEL
-===================================================== */
-
-.grandOceanPanel {
-  margin-top: 12px;
-
-  min-height: 500px;
-
-  padding:
-    18px;
-
-  border:
-    1px solid var(--border);
-
-  border-radius: 14px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(8, 31, 45, 0.95),
-      rgba(3, 18, 27, 0.98)
-    );
-
-  overflow: hidden;
-}
-
-
-.panelHeading {
-  display: flex;
-  justify-content: space-between;
-
-  gap: 16px;
-}
-
-
-.panelEyebrow {
-  color: var(--cyan);
 
   font-size: 8px;
+  font-weight: 600;
 
-  font-weight: 700;
-
-  letter-spacing: 0.12em;
+  letter-spacing: 0.07em;
 }
 
 
-.panelHeading h2 {
-  margin:
-    4px 0 2px;
-
-  font-size: 20px;
-}
-
-
-.panelHeading p {
-  margin: 0;
-
-  color: var(--muted);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 10px;
-}
-
-
-.lastVoyage {
-  text-align: right;
-}
-
-
-.lastVoyage span {
-  display: block;
-
-  color: var(--muted);
-
-  font-size: 7px;
-
-  letter-spacing: 0.11em;
-}
-
-
-.lastVoyage strong {
-  display: block;
-
-  margin-top: 3px;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 10px;
-}
-
-
-/* =====================================================
-   RADAR
-===================================================== */
-
-.grandEmptyState {
-  min-height: 360px;
-
-  display: grid;
-  place-items: center;
-
-  align-content: center;
-
-  text-align: center;
-}
-
-
-.grandRadar {
-  position: relative;
-
-  width: 190px;
-  height: 190px;
-
-  margin-bottom: 20px;
-
-  overflow: hidden;
-
-  border-radius: 50%;
-
-  border:
-    1px solid
-    rgba(85, 215, 232, 0.16);
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(85, 215, 232, 0.07),
-      transparent 67%
-    );
-}
-
-
-.radarCircle {
-  position: absolute;
-
-  left: 50%;
-  top: 50%;
-
-  border:
-    1px solid
-    rgba(85, 215, 232, 0.12);
-
-  border-radius: 50%;
-
-  transform:
-    translate(-50%, -50%);
-}
-
-
-.circleOne {
-  width: 76%;
-  height: 76%;
-}
-
-
-.circleTwo {
-  width: 52%;
-  height: 52%;
-}
-
-
-.circleThree {
-  width: 27%;
-  height: 27%;
-}
-
-
-.radarCross {
-  position: absolute;
-
-  left: 50%;
-  top: 50%;
-
-  background:
-    rgba(85, 215, 232, 0.10);
-}
-
-
-.radarCross.horizontal {
+.searchBox input {
   width: 100%;
-  height: 1px;
 
-  transform:
-    translate(-50%, -50%);
-}
+  padding: 9px 11px;
 
+  outline: none;
 
-.radarCross.vertical {
-  width: 1px;
-  height: 100%;
+  border:
+    1px solid var(--border);
 
-  transform:
-    translate(-50%, -50%);
-}
+  border-radius: 6px;
 
-
-.radarSweep {
-  position: absolute;
-
-  left: 50%;
-  top: 50%;
-
-  width: 50%;
-  height: 50%;
-
-  transform-origin:
-    left top;
-
-  background:
-    conic-gradient(
-      from 0deg,
-      rgba(85, 215, 232, 0.28),
-      rgba(79, 174, 232, 0.06) 38deg,
-      transparent 78deg
-    );
-
-  animation:
-    radarSpin 3.2s linear infinite;
-}
-
-
-@keyframes radarSpin {
-
-  to {
-    transform: rotate(360deg);
-  }
-
-}
-
-
-.radarCenter {
-  position: absolute;
-
-  left: 50%;
-  top: 50%;
-
-  width: 9px;
-  height: 9px;
-
-  transform:
-    translate(-50%, -50%);
-
-  border-radius: 50%;
-
-  background: var(--cyan);
-
-  box-shadow:
-    0 0 14px
-    rgba(85, 215, 232, 0.50);
-
-  animation:
-    radarPulse 1.7s ease-in-out infinite;
-}
-
-
-@keyframes radarPulse {
-
-  0%,
-  100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1);
-  }
-
-  50% {
-    transform:
-      translate(-50%, -50%)
-      scale(1.3);
-  }
-
-}
-
-
-.radarTarget {
-  position: absolute;
-
-  width: 5px;
-  height: 5px;
-
-  border-radius: 50%;
-
-  background: var(--cyan);
-
-  box-shadow:
-    0 0 8px
-    rgba(85, 215, 232, 0.55);
-
-  animation:
-    targetBlink 2.6s
-    ease-in-out infinite;
-}
-
-
-.targetOne {
-  left: 62%;
-  top: 31%;
-}
-
-
-.targetTwo {
-  left: 36%;
-  top: 64%;
-
-  animation-delay:
-    1s;
-}
-
-
-@keyframes targetBlink {
-
-  0%,
-  60%,
-  100% {
-    opacity: 0.15;
-  }
-
-  70% {
-    opacity: 1;
-  }
-
-}
-
-
-.grandEmptyState h3 {
-  margin: 0;
+  background: var(--bg-secondary);
 
   color: var(--text);
-
-  font-size: 17px;
-}
-
-
-.grandEmptyState p {
-  margin:
-    6px 0 0;
-
-  color: var(--text-soft);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
 
   font-size: 11px;
 }
 
 
-.voyageIndicator {
+.searchBox input:focus {
+  border-color: var(--blue);
+}
+
+
+.searchBox input::placeholder {
+  color: #59707e;
+}
+
+
+/* =====================================================
+   SIGNAL PANEL
+===================================================== */
+
+.signalsPanel {
   margin-top: 12px;
 
-  display: inline-flex;
-  align-items: center;
+  min-height: 470px;
 
-  gap: 7px;
+  padding: 20px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 11px;
+
+  background: var(--panel);
+}
+
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+
+.panelHeader h2 {
+  margin: 5px 0 3px;
+
+  font-size: 20px;
+}
+
+
+.panelHeader p {
+  margin: 0;
 
   color: var(--muted);
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-size: 10px;
+}
+
+
+.lastCompleted {
+  text-align: right;
+}
+
+
+.lastCompleted span {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 8px;
+  font-weight: 600;
+
+  letter-spacing: 0.07em;
+}
+
+
+.lastCompleted strong {
+  display: block;
+
+  margin-top: 4px;
+
+  color: var(--text-secondary);
+
+  font-family: var(--mono);
+
+  font-size: 10px;
+  font-weight: 500;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.emptyState {
+  min-height: 320px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+
+.loadingIndicator {
+  width: 30px;
+  height: 30px;
+
+  margin-bottom: 15px;
+
+  border:
+    3px solid var(--border);
+
+  border-top-color:
+    var(--cyan);
+
+  border-radius: 50%;
+
+  animation:
+    spin 800ms linear infinite;
+}
+
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  margin-bottom: 14px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 10px;
+
+  background: var(--blue-soft);
+
+  color: var(--cyan);
+
+  font-size: 22px;
+}
+
+
+.emptyState h3 {
+  margin: 0;
+
+  font-size: 17px;
+}
+
+
+.emptyState p {
+  margin: 6px 0 0;
+
+  color: var(--text-secondary);
+
+  font-size: 11px;
+}
+
+
+.monitoringText {
+  margin-top: 12px;
+
+  color: var(--green);
 
   font-size: 9px;
 }
 
 
-.voyageIndicator span {
-  width: 6px;
-  height: 6px;
-
-  border-radius: 50%;
-
-  background: var(--green);
-
-  animation:
-    livePulse 1.8s
-    ease-in-out infinite;
-}
-
-
 /* =====================================================
-   SIGNAL GRID
+   SIGNAL CARDS
 ===================================================== */
 
-.wantedGrid {
+.signalsGrid {
   margin-top: 18px;
 
   display: grid;
@@ -2240,137 +834,33 @@ button {
 }
 
 
-.wantedSetupCard {
-  position: relative;
-
-  padding:
-    16px;
-
-  overflow: hidden;
+.signalCard {
+  padding: 16px;
 
   border:
-    1px solid
-    rgba(79, 174, 232, 0.18);
+    1px solid var(--border);
 
-  border-radius: 10px;
+  border-radius: 9px;
 
-  background:
-    linear-gradient(
-      145deg,
-      rgba(9, 34, 49, 0.95),
-      rgba(4, 20, 30, 0.97)
-    );
-
-  box-shadow:
-    inset 0 0 30px
-    rgba(0, 0, 0, 0.25);
-
-  animation:
-    wantedEntrance 450ms ease both;
-
-  animation-delay:
-    var(--delay);
-
-  transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+  background: var(--bg-secondary);
 }
 
 
-@keyframes wantedEntrance {
-
-  from {
-    opacity: 0;
-    transform:
-      translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform:
-      translateY(0);
-  }
-
+.signalCard:hover {
+  border-color: var(--border-light);
 }
 
 
-.wantedSetupCard:hover {
-  transform:
-    translateY(-4px);
-
-  border-color:
-    rgba(85, 215, 232, 0.34);
-
-  box-shadow:
-    0 18px 32px
-    rgba(0, 0, 0, 0.22);
-}
-
-
-.wantedRibbon {
-  position: absolute;
-
-  left: 0;
-  top: 0;
-
-  padding:
-    5px 12px;
-
-  border-radius:
-    0 0 8px 0;
-
-  font-size: 8px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.06em;
-}
-
-
-.wantedRibbon.live {
-  color: #d8f6e4;
-
-  background:
-    #246c47;
-}
-
-
-.wantedRibbon.aging {
-  color: #241606;
-
-  background:
-    var(--gold);
-}
-
-
-.wantedRibbon.expired {
-  color: white;
-
-  background:
-    var(--red);
-}
-
-
-.wantedRibbon.waiting {
-  color: white;
-
-  background:
-    #2d7fac;
-}
-
-
-.wantedCardHeader {
-  margin-top: 8px;
-
+.signalCardHeader {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
 
-  gap: 12px;
+  gap: 15px;
 }
 
 
-.wantedAsset {
+.assetInfo {
   min-width: 0;
 
   display: flex;
@@ -2380,131 +870,124 @@ button {
 }
 
 
-.coinMedallion {
-  width: 42px;
-  height: 42px;
+.coinBadge {
+  width: 40px;
+  height: 40px;
 
-  flex:
-    0 0 42px;
+  flex: 0 0 40px;
 
   display: grid;
   place-items: center;
 
-  border-radius: 50%;
-
-  color: var(--blue-bright);
-
-  background:
-    rgba(79, 174, 232, 0.08);
-
   border:
     1px solid
-    rgba(79, 174, 232, 0.20);
+    rgba(66, 165, 217, 0.25);
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  border-radius: 9px;
 
-  font-size: 18px;
+  background: var(--blue-soft);
 
+  color: var(--cyan);
+
+  font-size: 16px;
   font-weight: 700;
 }
 
 
-.wantedAsset span {
+.assetInfo strong {
   display: block;
-
-  color: var(--blue-bright);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 9px;
-
-  font-weight: 700;
-}
-
-
-.wantedAsset strong {
-  display: block;
-
-  margin-top: 2px;
-
-  overflow: hidden;
 
   font-size: 14px;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
 }
 
 
-.wantedAsset small {
+.assetInfo span {
   display: block;
 
-  margin-top: 2px;
+  margin-top: 3px;
 
   color: var(--muted);
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 7px;
+  font-size: 9px;
 }
 
 
-.wantedTags {
+.signalTags {
   display: flex;
 
   gap: 5px;
-
-  align-items: flex-start;
 }
 
 
-.tfTag,
-.phaseTag {
-  padding:
-    5px 7px;
+.timeframeTag,
+.lifecycleTag {
+  padding: 5px 7px;
 
-  border-radius: 6px;
-
-  white-space: nowrap;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  border-radius: 5px;
 
   font-size: 8px;
-
   font-weight: 700;
+
+  white-space: nowrap;
 }
 
 
-.tfTag {
-  color: var(--text);
+.timeframeTag {
+  color: var(--text-secondary);
 
-  background:
-    rgba(255, 255, 255, 0.04);
+  background: #162733;
 }
 
 
-.phaseTag {
-  color: #2d1d07;
+.lifecycleTag.live {
+  color: var(--green);
 
-  background:
-    var(--gold);
+  background: var(--green-soft);
+}
+
+
+.lifecycleTag.aging {
+  color: var(--yellow);
+
+  background: var(--yellow-soft);
+}
+
+
+.lifecycleTag.expired {
+  color: var(--red);
+
+  background: var(--red-soft);
+}
+
+
+.lifecycleTag.waiting {
+  color: var(--cyan);
+
+  background: var(--blue-soft);
+}
+
+
+.phaseBadge {
+  display: inline-block;
+
+  margin-top: 12px;
+
+  padding: 5px 8px;
+
+  border:
+    1px solid
+    rgba(66, 165, 217, 0.2);
+
+  border-radius: 5px;
+
+  background: var(--blue-soft);
+
+  color: var(--cyan);
+
+  font-size: 8px;
+  font-weight: 700;
+
+  letter-spacing: 0.05em;
 }
 
 
@@ -2512,212 +995,84 @@ button {
    TIMELINE
 ===================================================== */
 
-.pirateTimeline {
-  margin-top: 16px;
+.timeline {
+  margin-top: 13px;
 
-  padding:
-    12px;
+  padding: 12px;
 
   display: grid;
 
   grid-template-columns:
-    1fr
-    38px
-    1fr
-    38px
-    1fr;
+    1fr auto 1fr auto 1fr;
 
   align-items: center;
 
+  gap: 8px;
+
   border:
-    1px solid
-    rgba(79, 174, 232, 0.10);
+    1px solid var(--border);
 
-  border-radius: 9px;
+  border-radius: 7px;
 
-  background:
-    rgba(255, 255, 255, 0.015);
+  background: #09141d;
 }
 
 
-.timelineStage {
+.timelineItem {
+  min-width: 0;
+
   text-align: center;
 }
 
 
-.timelineTime {
+.timelineItem span {
   display: block;
-
-  min-height: 13px;
 
   color: var(--muted);
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-size: 7px;
+  font-weight: 600;
+
+  letter-spacing: 0.07em;
+}
+
+
+.timelineItem strong {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 9px;
+}
+
+
+.timelineItem small {
+  display: block;
+
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-family: var(--mono);
 
   font-size: 7px;
 }
 
 
-.timelineIcon {
-  width: 29px;
-  height: 29px;
+.timelineArrow {
+  color: #456170;
 
-  margin:
-    6px auto;
-
-  display: grid;
-  place-items: center;
-
-  border-radius: 50%;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-weight: 700;
+  font-size: 11px;
 }
 
 
-.timelineIcon.sell {
-  color: var(--red);
-
-  background:
-    var(--red-soft);
-
-  border:
-    1px solid
-    rgba(215, 79, 70, 0.16);
-}
-
-
-.timelineIcon.base {
-  color: var(--blue-bright);
-
-  background:
-    var(--gold-soft);
-
-  border:
-    1px solid
-    rgba(79, 174, 232, 0.18);
-}
-
-
-.timelineIcon.confirmed {
-  color: var(--green);
-
-  background:
-    var(--green-soft);
-
-  border:
-    1px solid
-    rgba(85, 215, 232, 0.18);
-}
-
-
-.timelineStage strong {
-  display: block;
-
-  font-size: 8px;
-
-  letter-spacing: 0.04em;
-}
-
-
-.timelineStage small {
-  display: block;
-
-  margin-top: 2px;
-
-  color: var(--muted);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 7px;
-}
-
-
-.timelineStage .sellText {
+.sellValue {
   color: var(--red);
 }
 
 
-.timelineStage .confirmedText {
+.confirmedValue {
   color: var(--green);
-}
-
-
-.timelineRope {
-  position: relative;
-
-  height: 1px;
-
-  overflow: hidden;
-
-  background:
-    rgba(79, 174, 232, 0.14);
-}
-
-
-.timelineRope::before {
-  content: "◆";
-
-  position: absolute;
-
-  left: 50%;
-  top: 50%;
-
-  transform:
-    translate(-50%, -50%);
-
-  color:
-    rgba(85, 215, 232, 0.55);
-
-  font-size: 6px;
-}
-
-
-.timelineRope span {
-  display: block;
-
-  width: 38%;
-  height: 100%;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      var(--gold),
-      transparent
-    );
-
-  animation:
-    ropeFlow 2.8s
-    ease-in-out infinite;
-}
-
-
-@keyframes ropeFlow {
-
-  from {
-    transform:
-      translateX(-130%);
-  }
-
-  to {
-    transform:
-      translateX(310%);
-  }
-
 }
 
 
@@ -2725,94 +1080,75 @@ button {
    AGE
 ===================================================== */
 
-.setupAge {
+.ageSection {
   margin-top: 13px;
 }
 
 
-.ageHeading {
+.ageHeader {
   display: flex;
   justify-content: space-between;
-
   align-items: flex-end;
 }
 
 
-.ageHeading span {
+.ageHeader span {
   display: block;
 
   color: var(--muted);
 
   font-size: 7px;
+  font-weight: 600;
 
-  letter-spacing: 0.1em;
+  letter-spacing: 0.07em;
 }
 
 
-.ageHeading strong {
+.ageHeader strong {
   display: block;
 
-  margin-top: 2px;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  margin-top: 3px;
 
   font-size: 9px;
 }
 
 
-.agePercentage {
-  color: var(--blue-bright);
-
-  font-size: 10px !important;
-}
-
-
-.pirateProgress {
+.progressTrack {
   height: 5px;
 
-  margin-top: 6px;
+  margin-top: 7px;
 
   overflow: hidden;
 
-  border-radius: 999px;
+  border-radius: 99px;
 
-  background:
-    rgba(255, 255, 255, 0.04);
+  background: #182834;
 }
 
 
-.pirateProgress span {
+.progressTrack span {
   display: block;
 
   height: 100%;
-
-  border-radius: inherit;
-
-  transition:
-    width 400ms ease;
 }
 
 
-.pirateProgress span.live {
+.progressTrack span.live {
   background: var(--green);
 }
 
 
-.pirateProgress span.aging {
-  background: var(--blue);
+.progressTrack span.aging {
+  background: var(--yellow);
 }
 
 
-.pirateProgress span.expired {
+.progressTrack span.expired {
   background: var(--red);
 }
 
 
-.pirateProgress span.waiting {
+.progressTrack span.waiting {
   background: var(--blue);
 }
 
@@ -2821,183 +1157,120 @@ button {
    STRUCTURE
 ===================================================== */
 
-.structureMap {
+.structureSection {
   margin-top: 13px;
 
-  padding:
-    11px;
-
-  display: flex;
-  justify-content: space-between;
-
-  align-items: center;
-
-  gap: 12px;
-
-  border:
-    1px solid
-    rgba(79, 174, 232, 0.10);
-
-  border-radius: 8px;
-
-  background:
-    rgba(79, 174, 232, 0.035);
-}
-
-
-.structureIdentity {
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-}
-
-
-.structureIcon {
-  width: 29px;
-  height: 29px;
+  padding: 11px;
 
   display: grid;
-  place-items: center;
 
-  border-radius: 50%;
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
 
-  color: var(--blue-bright);
+  gap: 10px;
 
-  background:
-    var(--gold-soft);
+  border:
+    1px solid var(--border);
+
+  border-radius: 7px;
+
+  background: #09141d;
 }
 
 
-.structureIdentity span,
-.structureStats span {
+.structureSection span {
   display: block;
 
   color: var(--muted);
 
-  font-size: 6px;
+  font-size: 7px;
+  font-weight: 600;
 
-  letter-spacing: 0.09em;
+  letter-spacing: 0.06em;
 }
 
 
-.structureIdentity strong,
-.structureStats strong {
+.structureSection strong {
   display: block;
 
-  margin-top: 2px;
+  margin-top: 4px;
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  color: var(--text-secondary);
+
+  font-size: 9px;
+}
+
+
+/* =====================================================
+   SIGNAL FOOTER
+===================================================== */
+
+.signalFooter {
+  margin-top: 12px;
+
+  padding-top: 10px;
+
+  display: flex;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  border-top:
+    1px solid var(--border);
+
+  color: var(--muted);
 
   font-size: 8px;
 }
 
 
-.structureStats {
+.signalFooter span {
   display: flex;
+  flex-direction: column;
 
-  gap: 14px;
-
-  text-align: right;
+  gap: 3px;
 }
 
 
-/* =====================================================
-   CARD FOOTER
-===================================================== */
+.signalFooter strong {
+  color: var(--text-secondary);
 
-.wantedFooter {
-  margin-top: 11px;
+  font-family: var(--mono);
 
-  display: flex;
-  justify-content: space-between;
-
-  gap: 10px;
-
-  color: var(--muted);
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 7px;
-}
-
-
-.wantedFooter strong {
-  color: var(--text-soft);
-
+  font-size: 8px;
   font-weight: 500;
 }
 
 
 /* =====================================================
-   FOOTER
+   PANEL FOOTER
 ===================================================== */
 
-.grandOceanFooter {
-  margin-top: 16px;
+.panelFooter {
+  margin-top: 18px;
 
   display: flex;
-
   justify-content: center;
   align-items: center;
 
-  gap: 13px;
+  gap: 7px;
 
   color: var(--muted);
 
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 8px;
-}
-
-
-.grandOceanFooter > span {
-  color:
-    rgba(85, 215, 232, 0.40);
-}
-
-
-.grandOceanFooter div {
-  display: flex;
-  align-items: center;
-
-  gap: 6px;
-}
-
-
-.grandOceanFooter i {
-  width: 5px;
-  height: 5px;
-
-  border-radius: 50%;
-
-  background: var(--green);
-
-  animation:
-    livePulse 1.8s
-    ease-in-out infinite;
+  font-size: 9px;
 }
 
 
 /* =====================================================
-   LAPTOP
+   RESPONSIVE
 ===================================================== */
 
-@media (max-width: 1200px) {
+@media (max-width: 1150px) {
 
-  .treasureMetrics {
+  .metricsGrid {
     grid-template-columns:
       repeat(
         3,
@@ -3006,282 +1279,128 @@ button {
   }
 
 
-  .wantedGrid {
-    grid-template-columns:
-      1fr;
-  }
-
-
-  .grandHero {
-    align-items: flex-start;
-  }
-
-
-  .heroControls {
-    flex-direction: column;
+  .signalsGrid {
+    grid-template-columns: 1fr;
   }
 
 }
 
 
-/* =====================================================
-   TABLET
-===================================================== */
+@media (max-width: 800px) {
 
-@media (max-width: 960px) {
-
-  :root {
-    --sidebar-width: 0px;
-  }
-
-
-  .grandSidebar {
-    position: relative;
-
-    width: 100%;
+  .topbar {
     height: auto;
 
-    padding:
-      12px 16px;
-
-    flex-direction: row;
-
-    border-right: 0;
-
-    border-bottom:
-      1px solid var(--border);
+    padding: 14px 18px;
   }
 
 
-  .grandSidebar > div:first-child {
-    width: 100%;
-  }
-
-
-  .sidebarRope,
-  .parchmentBlock,
-  .marketRoute,
-  .scannerRoute,
-  .sidebarBottom {
-    display: none;
-  }
-
-
-  .grandMain {
-    width: 100%;
-
-    margin-left: 0;
+  .dashboard {
+    width:
+      calc(100% - 24px);
 
     padding:
-      20px;
+      18px 0 30px;
   }
 
 
-  .grandHero {
+  .dashboardHeader {
     flex-direction: column;
+    align-items: stretch;
+
+    padding: 18px;
   }
 
 
-  .heroControls {
+  .scanActions {
     width: 100%;
-
-    flex-direction: row;
   }
 
 
-  .liveWantedCard,
-  .pirateScanButton {
+  .scanStatus,
+  .scanButton {
     flex: 1;
   }
 
-}
 
-
-/* =====================================================
-   MOBILE
-===================================================== */
-
-@media (max-width: 720px) {
-
-  .mapGrid {
-    animation: none;
-
-    opacity: 0.025;
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
   }
 
 
-  .floatingCompass {
+  .searchBox {
+    width: 100%;
+  }
+
+
+  .signalsPanel {
+    padding: 15px;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .topbarStatus {
     display: none;
   }
 
 
-  .wave {
-    opacity: 0.12;
+  .brand strong {
+    font-size: 13px;
   }
 
 
-  .grandSidebar {
-    padding:
-      10px 12px;
+  .brand span {
+    font-size: 9px;
   }
 
 
-  .strawHatLogo {
-    width: 45px;
-    height: 38px;
-
-    flex-basis: 45px;
-
-    transform:
-      scale(0.88);
+  .dashboardHeader h1 {
+    font-size: 29px;
   }
 
 
-  .brandText span {
-    font-size: 14px;
-  }
-
-
-  .brandText strong {
-    font-size: 7px;
-  }
-
-
-  .grandMain {
-    padding:
-      14px 11px 25px;
-  }
-
-
-  .grandHero {
-    padding:
-      17px 14px;
-
-    gap: 17px;
-  }
-
-
-  .heroCopy h1 {
-    font-size: 31px;
-
-    line-height: 1.02;
-  }
-
-
-  .heroCopy p {
+  .dashboardHeader p {
     font-size: 11px;
   }
 
 
-  .heroCoordinates {
-    gap: 5px;
-  }
-
-
-  .heroCoordinates span {
-    font-size: 7px;
-  }
-
-
-  .heroControls {
+  .scanActions {
     display: grid;
-
-    grid-template-columns:
-      0.9fr 1.1fr;
-
-    gap: 7px;
+    grid-template-columns: 1fr;
   }
 
 
-  .liveWantedCard,
-  .pirateScanButton {
-    width: 100%;
-    min-width: 0;
-  }
-
-
-  .liveWantedCard {
-    padding:
-      9px;
-  }
-
-
-  .wantedSkull {
-    font-size: 19px;
-  }
-
-
-  .pirateScanButton {
-    padding:
-      10px;
-  }
-
-
-  .treasureMetrics {
-    margin-top: 9px;
-
+  .metricsGrid {
     grid-template-columns:
       repeat(
         2,
         minmax(0, 1fr)
       );
-
-    gap: 7px;
   }
 
 
-  .treasureMetric {
-    min-height: 92px;
+  .metricCard {
+    min-height: 95px;
 
-    padding:
-      10px;
-
-    gap: 8px;
+    padding: 12px;
   }
 
 
-  .treasureMetric:last-child {
-    grid-column:
-      1 / -1;
-  }
-
-
-  .metricIcon {
-    width: 32px;
-    height: 32px;
-
-    flex-basis: 32px;
-
-    font-size: 13px;
-  }
-
-
-  .treasureMetric strong {
+  .metricCard > strong {
     font-size: 21px;
   }
 
 
-  .treasureMetric span {
-    font-size: 6px;
+  .metricCard:last-child {
+    grid-column: 1 / -1;
   }
 
 
-  .treasureMetric small {
-    font-size: 7px;
-  }
-
-
-  .navigationMap {
-    flex-direction: column;
-
-    align-items: stretch;
-
-    padding:
-      10px;
-  }
-
-
-  .timeframeNav {
+  .timeframeButtons {
     display: grid;
 
     grid-template-columns:
@@ -3293,820 +1412,80 @@ button {
 
 
   .timeframeButton {
-    width: 100%;
     min-width: 0;
-
-    padding:
-      8px 3px;
   }
 
 
-  .pirateSearch {
-    width: 100%;
-  }
-
-
-  .pirateSearch input {
-    min-height: 40px;
-  }
-
-
-  .grandOceanPanel {
-    padding:
-      13px 10px;
-
-    border-radius: 11px;
-  }
-
-
-  .panelHeading {
+  .panelHeader {
     flex-direction: column;
+  }
+
+
+  .lastCompleted {
+    text-align: left;
+  }
+
+
+  .signalCardHeader {
+    flex-direction: column;
+  }
+
+
+  .timeline {
+    grid-template-columns: 1fr;
 
     gap: 8px;
   }
 
 
-  .lastVoyage {
-    text-align: left;
+  .timelineArrow {
+    transform: rotate(90deg);
   }
 
 
-  .grandRadar {
-    width: 150px;
-    height: 150px;
-  }
-
-
-  .wantedGrid {
-    gap: 9px;
-  }
-
-
-  .wantedSetupCard {
-    padding:
-      12px 10px;
-  }
-
-
-  .wantedCardHeader {
-    flex-direction: column;
-  }
-
-
-  .wantedTags {
-    align-self: flex-start;
-  }
-
-
-  .pirateTimeline {
-    padding:
-      10px 6px;
-
-    grid-template-columns:
-      1fr
-      20px
-      1fr
-      20px
-      1fr;
-  }
-
-
-  .timelineTime {
-    font-size: 6px;
-  }
-
-
-  .timelineIcon {
-    width: 25px;
-    height: 25px;
-  }
-
-
-  .timelineStage strong {
-    font-size: 6px;
-  }
-
-
-  .timelineStage small {
-    font-size: 6px;
-  }
-
-
-  .structureMap {
-    flex-direction: column;
-
-    align-items: stretch;
-  }
-
-
-  .structureStats {
-    justify-content: space-between;
-
-    text-align: left;
-  }
-
-
-  .wantedFooter {
-    flex-direction: column;
-
-    gap: 3px;
-  }
-
-
-  .pirateToast {
-    left: 11px;
-    right: 11px;
-    top: 11px;
-
-    justify-content: center;
-  }
-
-}
-
-
-/* =====================================================
-   SMALL PHONES
-===================================================== */
-
-@media (max-width: 430px) {
-
-  .grandMain {
-    padding:
-      12px 8px 22px;
-  }
-
-
-  .heroCopy h1 {
-    font-size: 27px;
-  }
-
-
-  .heroControls {
+  .structureSection {
     grid-template-columns: 1fr;
   }
 
 
-  .liveWantedCard {
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    gap: 8px;
-  }
-
-
-  .wantedSkull {
-    margin: 0;
-  }
-
-
-  .pirateScanButton {
-    justify-content: center;
-  }
-
-
-  .treasureMetrics {
-    grid-template-columns:
-      1fr 1fr;
-  }
-
-
-  .treasureMetric {
-    min-width: 0;
-  }
-
-
-  .treasureMetric strong {
-    font-size: 19px;
-  }
-
-
-  .grandOceanPanel {
-    padding:
-      12px 8px;
-  }
-
-
-  .pirateTimeline {
-    grid-template-columns: 1fr;
-
-    gap: 5px;
-  }
-
-
-  .timelineRope {
-    width: 1px;
-    height: 18px;
-
-    margin: 0 auto;
-  }
-
-
-  .timelineRope::before {
-    display: none;
-  }
-
-
-  .timelineRope span {
-    width: 100%;
-    height: 40%;
-
-    background:
-      linear-gradient(
-        180deg,
-        transparent,
-        var(--gold),
-        transparent
-      );
-
-    animation:
-      verticalRopeFlow 2.8s
-      ease-in-out infinite;
-  }
-
-
-  @keyframes verticalRopeFlow {
-
-    from {
-      transform:
-        translateY(-120%);
-    }
-
-    to {
-      transform:
-        translateY(300%);
-    }
-
-  }
-
-
-  .timelineTime {
-    font-size: 7px;
-  }
-
-
-  .timelineStage strong {
-    font-size: 8px;
-  }
-
-
-  .timelineStage small {
-    font-size: 7px;
+  .signalFooter {
+    flex-direction: column;
   }
 
 }
 
 
-/* =====================================================
-   TOUCH
-===================================================== */
+@media (max-width: 400px) {
 
-@media (hover: none) {
-
-  .wantedSetupCard:hover,
-  .treasureMetric:hover,
-  .marketRoute.active:hover,
-  .pirateScanButton:hover:not(:disabled),
-  .timeframeButton:hover {
-    transform: none;
+  .dashboard {
+    width:
+      calc(100% - 16px);
   }
 
-}
 
-
-/* =====================================================
-   REDUCED MOTION
-===================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    animation-duration:
-      0.01ms !important;
-
-    animation-iteration-count:
-      1 !important;
-
-    transition-duration:
-      0.01ms !important;
-
-    scroll-behavior:
-      auto !important;
+  .topbar {
+    padding: 12px;
   }
 
-}
-/* =====================================================
-   CRISP PROFESSIONAL TYPOGRAPHY
-   Native system fonts — no external font dependency
-===================================================== */
 
-:root {
-  --font-ui:
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Text",
-    "Helvetica Neue",
-    "Segoe UI",
-    Arial,
-    sans-serif;
-
-  --font-display:
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Display",
-    "Helvetica Neue",
-    "Segoe UI",
-    Arial,
-    sans-serif;
-
-  --font-data:
-    "SF Mono",
-    Menlo,
-    Monaco,
-    Consolas,
-    "Liberation Mono",
-    monospace;
-}
-
-html,
-body,
-button,
-input {
-  font-family: var(--font-ui);
-}
-
-body {
-  font-weight: 400;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-button,
-input {
-  -webkit-font-smoothing: antialiased;
-}
-
-.brandText span {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.025em;
-}
-
-.brandText strong {
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.parchmentBlock strong,
-.marketRoute strong,
-.marketRoute small,
-.scannerRoute strong,
-.systemHealth span,
-.systemHealth strong,
-.pirateSilhouette strong,
-.copyright {
-  font-family: var(--font-ui);
-}
-
-.parchmentBlock strong {
-  font-weight: 700;
-}
-
-.marketRoute strong {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.marketRoute small {
-  font-size: 10px;
-  font-weight: 400;
-}
-
-.scannerRoute strong {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.systemHealth span {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-
-.systemHealth strong {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.pirateSilhouette strong {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.copyright {
-  font-size: 9px;
-}
-
-.heroEyebrow {
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.heroCopy h1 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.02;
-  text-shadow: none;
-}
-
-.heroCopy h1 span {
-  font-weight: 700;
-}
-
-.heroCopy p {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.65;
-  letter-spacing: 0;
-}
-
-.heroCoordinates span {
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0;
-}
-
-.wantedLabel {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-}
-
-.liveWantedCard strong {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.liveWantedCard small {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 400;
-}
-
-.pirateScanButton strong {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
-}
-
-.pirateScanButton small {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-
-.pirateToast {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.grandError strong {
-  font-family: var(--font-ui);
-  font-weight: 600;
-}
-
-.grandError span {
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 400;
-}
-
-.treasureMetric span {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.treasureMetric strong {
-  font-family: var(--font-display);
-  font-size: 25px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-
-.treasureMetric small {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-
-.mapLabel {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.timeframeButton {
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-.timeframeButton.active {
-  font-weight: 700;
-}
-
-.pirateSearch input {
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 400;
-}
-
-.panelEyebrow {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.panelHeading h2 {
-  font-family: var(--font-display);
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-}
-
-.panelHeading p {
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 400;
-}
-
-.lastVoyage span {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-}
-
-.lastVoyage strong {
-  font-family: var(--font-data);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.grandEmptyState h3 {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.grandEmptyState p {
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 400;
-}
-
-.voyageIndicator {
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.wantedRibbon {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.045em;
-}
-
-.coinMedallion {
-  font-family: var(--font-display);
-  font-weight: 700;
-}
-
-.wantedAsset span {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.055em;
-}
-
-.wantedAsset strong {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.wantedAsset small {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 400;
-}
-
-.tfTag,
-.phaseTag {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.025em;
-}
-
-.timelineTime {
-  font-family: var(--font-data);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.timelineStage strong {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.035em;
-}
-
-.timelineStage small {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 400;
-}
-
-.ageHeading span {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-}
-
-.ageHeading strong {
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.agePercentage {
-  font-family: var(--font-data);
-  font-size: 10px !important;
-  font-weight: 600;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.structureIdentity span,
-.structureStats span {
-  font-family: var(--font-ui);
-  font-size: 8px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-}
-
-.structureIdentity strong {
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.structureStats strong {
-  font-family: var(--font-data);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.wantedFooter {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 400;
-}
-
-.wantedFooter strong {
-  font-family: var(--font-data);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-.grandOceanFooter {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-
-@media (max-width: 720px) {
-  .brandText span {
-    font-size: 15px;
+  .brandMark {
+    width: 36px;
+    height: 36px;
   }
 
-  .brandText strong {
-    font-size: 9px;
+
+  .dashboardHeader {
+    padding: 15px;
   }
 
-  .heroEyebrow {
-    font-size: 9px;
+
+  .metricsGrid {
+    gap: 7px;
   }
 
-  .heroCopy h1 {
-    font-size: 31px;
-    line-height: 1.04;
-    letter-spacing: -0.02em;
+
+  .signalsPanel {
+    padding: 12px;
   }
 
-  .heroCopy p {
-    font-size: 12px;
-    line-height: 1.6;
-  }
-
-  .heroCoordinates span {
-    font-size: 9px;
-  }
-
-  .treasureMetric span {
-    font-size: 8px;
-  }
-
-  .treasureMetric strong {
-    font-size: 21px;
-  }
-
-  .treasureMetric small {
-    font-size: 8px;
-  }
-
-  .panelHeading h2 {
-    font-size: 19px;
-  }
-
-  .timelineTime {
-    font-size: 8px;
-  }
-
-  .timelineStage strong {
-    font-size: 8px;
-  }
-
-  .timelineStage small {
-    font-size: 8px;
-  }
-}
-
-@media (max-width: 430px) {
-  .heroCopy h1 {
-    font-size: 28px;
-  }
-
-  .brandText span {
-    font-size: 15px;
-  }
-
-  .treasureMetric strong {
-    font-size: 20px;
-  }
-
-  .timelineTime {
-    font-size: 8px;
-  }
-
-  .timelineStage strong {
-    font-size: 9px;
-  }
-
-  .timelineStage small {
-    font-size: 8px;
-  }
 }
