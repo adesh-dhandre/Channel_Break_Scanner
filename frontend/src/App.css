@@ -38,9 +38,13 @@
   --sidebar-width: 250px;
 
   font-family:
-    Georgia,
-    "Times New Roman",
-    serif;
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
+    "Segoe UI",
+    Arial,
+    sans-serif;
 
   color: var(--text);
   background: var(--black);
@@ -3595,310 +3599,495 @@ button {
 
 }
 /* =====================================================
-   PREMIUM PROFESSIONAL TYPOGRAPHY
-   Matched to the current App.jsx selectors
+   CRISP PROFESSIONAL TYPOGRAPHY
+   Native system fonts — no external font dependency
 ===================================================== */
 
 :root {
   --font-ui:
-    Inter,
-    "SF Pro Text",
-    "Avenir Next",
     -apple-system,
     BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
     "Segoe UI",
+    Arial,
     sans-serif;
 
   --font-display:
-    "Avenir Next",
-    "SF Pro Display",
-    "Trebuchet MS",
     -apple-system,
     BlinkMacSystemFont,
+    "SF Pro Display",
+    "Helvetica Neue",
     "Segoe UI",
+    Arial,
     sans-serif;
 
   --font-data:
     "SF Mono",
-    "Roboto Mono",
-    "IBM Plex Mono",
     Menlo,
     Monaco,
+    Consolas,
+    "Liberation Mono",
     monospace;
 }
 
+html,
 body,
 button,
 input {
   font-family: var(--font-ui);
 }
 
-.brandText span,
-.brandText strong,
-.parchmentBlock strong,
-.scannerRoute strong,
-.heroEyebrow,
-.wantedLabel,
-.mapLabel,
-.panelEyebrow,
-.wantedRibbon,
-.tfTag,
-.phaseTag,
-.timelineStage strong,
-.structureIdentity > div > span,
-.structureStats span,
-.setupAge .ageHeading span,
-.lastVoyage span,
-.treasureMetric span {
-  font-family: var(--font-ui);
-  text-transform: uppercase;
+body {
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+  -webkit-font-smoothing: antialiased;
 }
 
 .brandText span {
   font-family: var(--font-display);
-  font-weight: 850;
-  letter-spacing: 0.045em;
-}
-
-.brandText strong {
-  font-weight: 800;
-  letter-spacing: 0.15em;
-}
-
-.heroCopy h1 {
-  font-family: var(--font-display);
-  font-weight: 900;
-  letter-spacing: -0.045em;
-  line-height: 0.96;
-}
-
-.heroCopy h1 span {
-  font-weight: 900;
-}
-
-.heroEyebrow {
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: 0.2em;
-}
-
-.heroCopy p {
-  font-family: var(--font-ui);
-  font-weight: 430;
-  letter-spacing: 0.005em;
-  line-height: 1.7;
-}
-
-.heroCoordinates span {
-  font-family: var(--font-ui);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.marketRoute strong,
-.systemHealth strong,
-.liveWantedCard strong {
-  font-family: var(--font-ui);
-  font-weight: 750;
-  letter-spacing: -0.01em;
-}
-
-.marketRoute small,
-.systemHealth span,
-.liveWantedCard small,
-.grandError span,
-.panelHeading p,
-.grandEmptyState p,
-.voyageIndicator,
-.copyright {
-  font-family: var(--font-ui);
-}
-
-.treasureMetric span {
-  font-size: 7px;
-  font-weight: 850;
-  letter-spacing: 0.13em;
-}
-
-.treasureMetric strong {
-  font-family: var(--font-display);
-  font-weight: 850;
-  letter-spacing: -0.045em;
-  font-variant-numeric: tabular-nums;
-}
-
-.treasureMetric small {
-  font-family: var(--font-ui);
-  font-weight: 520;
-  letter-spacing: 0.01em;
-}
-
-.mapLabel,
-.panelEyebrow,
-.wantedLabel {
-  font-weight: 850;
-  letter-spacing: 0.16em;
-}
-
-.timeframeButton {
-  font-family: var(--font-ui);
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.025em;
 }
 
-.timeframeButton.active {
-  font-weight: 850;
-}
-
-.pirateSearch input {
+.brandText strong {
   font-family: var(--font-ui);
   font-size: 10px;
-  font-weight: 520;
-}
-
-.panelHeading h2,
-.grandEmptyState h3,
-.wantedAsset strong,
-.structureIdentity strong {
-  font-family: var(--font-display);
-  font-weight: 850;
-  letter-spacing: -0.025em;
-}
-
-.panelHeading h2 {
-  font-size: 21px;
-}
-
-.wantedAsset > div:last-child > span {
-  font-family: var(--font-ui);
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: 0.105em;
-}
-
-.wantedAsset strong {
-  letter-spacing: -0.015em;
-}
-
-.wantedAsset small {
-  font-family: var(--font-ui);
-  font-weight: 500;
-}
-
-.coinMedallion {
-  font-family: var(--font-display);
-  font-weight: 900;
-  letter-spacing: -0.04em;
-}
-
-.wantedRibbon,
-.tfTag,
-.phaseTag {
-  font-family: var(--font-ui);
-  font-weight: 850;
-  letter-spacing: 0.055em;
-}
-
-.timelineTime,
-.lastVoyage strong,
-.agePercentage,
-.structureStats strong,
-.wantedFooter strong {
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-}
-
-.timelineTime {
-  font-weight: 550;
-  letter-spacing: -0.02em;
-}
-
-.timelineStage strong {
-  font-family: var(--font-ui);
-  font-weight: 850;
-  letter-spacing: 0.06em;
-}
-
-.timelineStage small {
-  font-family: var(--font-ui);
-  font-weight: 520;
-}
-
-.setupAge .ageHeading span,
-.structureIdentity > div > span,
-.structureStats span,
-.lastVoyage span {
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.11em;
+  text-transform: uppercase;
 }
 
-.setupAge .ageHeading strong,
-.structureIdentity strong {
+.parchmentBlock strong,
+.marketRoute strong,
+.marketRoute small,
+.scannerRoute strong,
+.systemHealth span,
+.systemHealth strong,
+.pirateSilhouette strong,
+.copyright {
   font-family: var(--font-ui);
-  font-weight: 750;
 }
 
-.agePercentage {
-  font-weight: 800;
+.parchmentBlock strong {
+  font-weight: 700;
+}
+
+.marketRoute strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.marketRoute small {
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.scannerRoute strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.systemHealth span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.systemHealth strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pirateSilhouette strong {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.copyright {
+  font-size: 9px;
+}
+
+.heroEyebrow {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.heroCopy h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
   letter-spacing: -0.025em;
+  line-height: 1.02;
+  text-shadow: none;
 }
 
-.structureStats strong {
-  font-weight: 750;
+.heroCopy h1 span {
+  font-weight: 700;
 }
 
-.wantedFooter,
-.wantedFooter strong {
+.heroCopy p {
   font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: 0;
 }
 
-.wantedFooter strong {
-  font-family: var(--font-data);
-  font-weight: 650;
+.heroCoordinates span {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.wantedLabel {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+.liveWantedCard strong {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.liveWantedCard small {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 400;
 }
 
 .pirateScanButton strong {
   font-family: var(--font-ui);
   font-size: 12px;
-  font-weight: 850;
-  letter-spacing: 0.075em;
+  font-weight: 700;
+  letter-spacing: 0.055em;
   text-transform: uppercase;
 }
 
 .pirateScanButton small {
   font-family: var(--font-ui);
-  font-weight: 520;
-  letter-spacing: 0.015em;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.pirateToast {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.grandError strong {
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
+.grandError span {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.treasureMetric span {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.treasureMetric strong {
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.treasureMetric small {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.mapLabel {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.timeframeButton {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.timeframeButton.active {
+  font-weight: 700;
+}
+
+.pirateSearch input {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.panelEyebrow {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.panelHeading h2 {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.panelHeading p {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.lastVoyage span {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
 }
 
 .lastVoyage strong {
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.grandEmptyState h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.grandEmptyState p {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.voyageIndicator {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.wantedRibbon {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+}
+
+.coinMedallion {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.wantedAsset span {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+}
+
+.wantedAsset strong {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.wantedAsset small {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.tfTag,
+.phaseTag {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.timelineTime {
+  font-family: var(--font-data);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.timelineStage strong {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+.timelineStage small {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.ageHeading span {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.ageHeading strong {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.agePercentage {
+  font-family: var(--font-data);
+  font-size: 10px !important;
+  font-weight: 600;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.structureIdentity span,
+.structureStats span {
+  font-family: var(--font-ui);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.structureIdentity strong {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.structureStats strong {
+  font-family: var(--font-data);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.wantedFooter {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.wantedFooter strong {
+  font-family: var(--font-data);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .grandOceanFooter {
   font-family: var(--font-ui);
-  font-weight: 520;
-  letter-spacing: 0.02em;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 720px) {
+  .brandText span {
+    font-size: 15px;
+  }
+
+  .brandText strong {
+    font-size: 9px;
+  }
+
+  .heroEyebrow {
+    font-size: 9px;
+  }
+
   .heroCopy h1 {
-    letter-spacing: -0.04em;
+    font-size: 31px;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+  }
+
+  .heroCopy p {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .heroCoordinates span {
+    font-size: 9px;
+  }
+
+  .treasureMetric span {
+    font-size: 8px;
+  }
+
+  .treasureMetric strong {
+    font-size: 21px;
+  }
+
+  .treasureMetric small {
+    font-size: 8px;
   }
 
   .panelHeading h2 {
     font-size: 19px;
   }
 
-  .treasureMetric strong {
-    font-size: 21px;
+  .timelineTime {
+    font-size: 8px;
+  }
+
+  .timelineStage strong {
+    font-size: 8px;
+  }
+
+  .timelineStage small {
+    font-size: 8px;
   }
 }
 
 @media (max-width: 430px) {
   .heroCopy h1 {
-    font-size: 27px;
+    font-size: 28px;
   }
 
   .brandText span {
@@ -3906,6 +4095,18 @@ input {
   }
 
   .treasureMetric strong {
-    font-size: 19px;
+    font-size: 20px;
+  }
+
+  .timelineTime {
+    font-size: 8px;
+  }
+
+  .timelineStage strong {
+    font-size: 9px;
+  }
+
+  .timelineStage small {
+    font-size: 8px;
   }
 }

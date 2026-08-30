@@ -9,12 +9,29 @@ const {
 // ======================================================
 // CONFIG
 // ======================================================
+//
+// Local development:
+//     <project>/data
+//
+// Production / Hostless:
+//     /tmp/channel-break-scanner/data
+//
+// Hostless mounts /app as read-only, so runtime-generated
+// signal history must be stored inside the writable /tmp
+// filesystem.
+// ======================================================
 
 const DATA_DIR =
-    path.join(
-        __dirname,
-        "../data"
-    );
+    process.env.NODE_ENV === "production"
+        ? path.join(
+            "/tmp",
+            "channel-break-scanner",
+            "data"
+        )
+        : path.join(
+            __dirname,
+            "../data"
+        );
 
 
 const SENT_SIGNALS_FILE =
