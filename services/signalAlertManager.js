@@ -16,20 +16,85 @@ const {
 // Hostless / read-only environments:
 //     /tmp/channel-break-scanner/data
 //
-// Hostless mounts /app as read-only.
+// Hostless can report /app/data as writable even when
+// actual writes fail with EROFS.
 //
-// Instead of depending on NODE_ENV, the application checks
-// whether the normal project data directory is writable.
+// Therefore we perform a real write test.
 //
-// If it is writable:
-//     use <project>/data
+// If project/data accepts an actual write:
+//     use project/data
 //
-// If it is not writable:
-//     automatically fall back to /tmp/channel-break-scanner/data
-//
-// This keeps local development unchanged while fixing
-// read-only production environments.
+// Otherwise:
+//     use /tmp/channel-break-scanner/data
 // ======================================================
+
+function canActuallyWriteToDirectory(
+    directory
+) {
+
+    const testFile =
+        path.join(
+            directory,
+            `.write-test-${process.pid}-${Date.now()}`
+        );
+
+
+    try {
+
+        if (
+            !fs.existsSync(
+                directory
+            )
+        ) {
+
+            fs.mkdirSync(
+                directory,
+                {
+                    recursive: true
+                }
+            );
+        }
+
+
+        fs.writeFileSync(
+            testFile,
+            "test",
+            "utf8"
+        );
+
+
+        fs.unlinkSync(
+            testFile
+        );
+
+
+        return true;
+
+
+    } catch (error) {
+
+        try {
+
+            if (
+                fs.existsSync(
+                    testFile
+                )
+            ) {
+
+                fs.unlinkSync(
+                    testFile
+                );
+            }
+
+        } catch (_) {
+            // Ignore cleanup failure.
+        }
+
+
+        return false;
+    }
+}
+
 
 function resolveDataDirectory() {
 
@@ -48,72 +113,39 @@ function resolveDataDirectory() {
         );
 
 
-    try {
+    if (
+        canActuallyWriteToDirectory(
+            localDataDirectory
+        )
+    ) {
 
-        if (
-            !fs.existsSync(
-                localDataDirectory
-            )
-        ) {
-
-            fs.mkdirSync(
-                localDataDirectory,
-                {
-                    recursive: true
-                }
-            );
-        }
-
-
-        fs.accessSync(
-            localDataDirectory,
-            fs.constants.W_OK
+        console.log(
+            `Signal history directory: ${localDataDirectory}`
         );
 
 
         return localDataDirectory;
-
-
-    } catch (error) {
-
-        try {
-
-            if (
-                !fs.existsSync(
-                    temporaryDataDirectory
-                )
-            ) {
-
-                fs.mkdirSync(
-                    temporaryDataDirectory,
-                    {
-                        recursive: true
-                    }
-                );
-            }
-
-
-            fs.accessSync(
-                temporaryDataDirectory,
-                fs.constants.W_OK
-            );
-
-
-            console.log(
-                `Primary data directory is not writable. Using temporary data directory: ${temporaryDataDirectory}`
-            );
-
-
-            return temporaryDataDirectory;
-
-
-        } catch (temporaryError) {
-
-            throw new Error(
-                `No writable signal history directory available. Primary: ${error.message}. Temporary: ${temporaryError.message}`
-            );
-        }
     }
+
+
+    if (
+        canActuallyWriteToDirectory(
+            temporaryDataDirectory
+        )
+    ) {
+
+        console.log(
+            `Primary data directory is read-only. Using temporary data directory: ${temporaryDataDirectory}`
+        );
+
+
+        return temporaryDataDirectory;
+    }
+
+
+    throw new Error(
+        "No writable directory available for signal history."
+    );
 }
 
 
@@ -951,8 +983,6 @@ async function processSetupAlert(
     }
 
 
-    // Always record scanner discovery first.
-
     const detection =
         trackSetupDetection(
             setup
@@ -964,8 +994,6 @@ async function processSetupAlert(
             setup
         );
 
-
-    // Duplicate protection.
 
     if (
         sentSignals.has(
@@ -1017,8 +1045,6 @@ async function processSetupAlert(
         );
 
 
-        // Mark only after successful Discord response.
-
         markSignalSent(
             setup
         );
@@ -1056,10 +1082,6 @@ async function processSetupAlert(
 
 
     } catch (error) {
-
-        // Failed webhook is NOT marked as sent.
-        //
-        // Next scanner cycle can retry.
 
         console.error(
             `Discord alert failed for ${key}:`,
@@ -1152,11 +1174,6 @@ async function processSetupAlerts(
     let failed =
         0;
 
-
-    // Sequential intentionally.
-    //
-    // Signal volume is low and this prevents unnecessary
-    // Discord webhook bursts.
 
     for (
         const setup
