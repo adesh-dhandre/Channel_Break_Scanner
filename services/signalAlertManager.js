@@ -13,25 +13,112 @@ const {
 // Local development:
 //     <project>/data
 //
-// Production / Hostless:
+// Hostless / read-only environments:
 //     /tmp/channel-break-scanner/data
 //
-// Hostless mounts /app as read-only, so runtime-generated
-// signal history must be stored inside the writable /tmp
-// filesystem.
+// Hostless mounts /app as read-only.
+//
+// Instead of depending on NODE_ENV, the application checks
+// whether the normal project data directory is writable.
+//
+// If it is writable:
+//     use <project>/data
+//
+// If it is not writable:
+//     automatically fall back to /tmp/channel-break-scanner/data
+//
+// This keeps local development unchanged while fixing
+// read-only production environments.
 // ======================================================
 
-const DATA_DIR =
-    process.env.NODE_ENV === "production"
-        ? path.join(
-            "/tmp",
-            "channel-break-scanner",
-            "data"
-        )
-        : path.join(
+function resolveDataDirectory() {
+
+    const localDataDirectory =
+        path.join(
             __dirname,
             "../data"
         );
+
+
+    const temporaryDataDirectory =
+        path.join(
+            "/tmp",
+            "channel-break-scanner",
+            "data"
+        );
+
+
+    try {
+
+        if (
+            !fs.existsSync(
+                localDataDirectory
+            )
+        ) {
+
+            fs.mkdirSync(
+                localDataDirectory,
+                {
+                    recursive: true
+                }
+            );
+        }
+
+
+        fs.accessSync(
+            localDataDirectory,
+            fs.constants.W_OK
+        );
+
+
+        return localDataDirectory;
+
+
+    } catch (error) {
+
+        try {
+
+            if (
+                !fs.existsSync(
+                    temporaryDataDirectory
+                )
+            ) {
+
+                fs.mkdirSync(
+                    temporaryDataDirectory,
+                    {
+                        recursive: true
+                    }
+                );
+            }
+
+
+            fs.accessSync(
+                temporaryDataDirectory,
+                fs.constants.W_OK
+            );
+
+
+            console.log(
+                `Primary data directory is not writable. Using temporary data directory: ${temporaryDataDirectory}`
+            );
+
+
+            return temporaryDataDirectory;
+
+
+        } catch (temporaryError) {
+
+            throw new Error(
+                `No writable signal history directory available. Primary: ${error.message}. Temporary: ${temporaryError.message}`
+            );
+        }
+    }
+}
+
+
+const DATA_DIR =
+    resolveDataDirectory();
 
 
 const SENT_SIGNALS_FILE =
