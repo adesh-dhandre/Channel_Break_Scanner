@@ -121,7 +121,7 @@ app.use(
 // REACT FALLBACK
 //
 // Express 5:
-// Do not use app.get("*").
+// Do not use app.get("/*splat").
 //
 // This middleware handles every remaining browser route
 // and returns the React application.
