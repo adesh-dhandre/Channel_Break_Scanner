@@ -27,6 +27,23 @@ const MANUAL_CRYPTO_SCAN_COOLDOWN_MS =
 
 
 // ======================================================
+// NSE ENABLE / DISABLE
+//
+// NSE scanner code is preserved.
+//
+// false:
+// - cron will NOT run NSE
+// - crypto continues normally
+//
+// Later, when NSE is ready for production,
+// change only this value to true.
+// ======================================================
+
+const NSE_CRON_ENABLED =
+    false;
+
+
+// ======================================================
 // MANUAL SCAN STATE
 // ======================================================
 
@@ -79,6 +96,37 @@ function getNseScanDecision(
     state
 ) {
 
+    // ==================================================
+    // NSE TEMPORARILY DISABLED
+    // ==================================================
+
+    if (
+        !NSE_CRON_ENABLED
+    ) {
+
+        return {
+
+            enabled: false,
+
+            marketOpen:
+                false,
+
+            due:
+                false,
+
+            requested:
+                false,
+
+            reason:
+                "NSE_DISABLED",
+
+            nextEligibleAt:
+                null
+
+        };
+    }
+
+
     const marketOpen =
         isNseMarketSession();
 
@@ -89,11 +137,15 @@ function getNseScanDecision(
 
         return {
 
+            enabled: true,
+
             marketOpen: false,
             due: false,
             requested: false,
+
             reason:
                 "MARKET_CLOSED",
+
             nextEligibleAt:
                 null
 
@@ -107,11 +159,15 @@ function getNseScanDecision(
 
         return {
 
+            enabled: true,
+
             marketOpen: true,
             due: false,
             requested: false,
+
             reason:
                 "NSE_ALREADY_RUNNING",
+
             nextEligibleAt:
                 null
 
@@ -125,11 +181,15 @@ function getNseScanDecision(
 
         return {
 
+            enabled: true,
+
             marketOpen: true,
             due: true,
             requested: true,
+
             reason:
                 "FIRST_SCAN",
+
             nextEligibleAt:
                 null
 
@@ -151,11 +211,15 @@ function getNseScanDecision(
 
         return {
 
+            enabled: true,
+
             marketOpen: true,
             due: true,
             requested: true,
+
             reason:
                 "INVALID_PREVIOUS_SCAN_TIME",
+
             nextEligibleAt:
                 null
 
@@ -175,14 +239,20 @@ function getNseScanDecision(
 
     return {
 
+        enabled: true,
+
         marketOpen: true,
+
         due,
+
         requested:
             due,
+
         reason:
             due
                 ? "NSE_SCAN_DUE"
                 : "NSE_10_MINUTE_INTERVAL",
+
         nextEligibleAt:
             new Date(
                 nextEligibleTime
@@ -240,6 +310,9 @@ router.get(
                 cryptoIntervalMinutes:
                     5,
 
+                nseEnabled:
+                    nseDecision.enabled,
+
                 nseIntervalMinutes:
                     10,
 
@@ -295,7 +368,8 @@ router.get(
 
             nse: {
 
-                enabled: false,
+                enabled:
+                    NSE_CRON_ENABLED,
 
                 count:
                     nseSetups.length,
@@ -483,6 +557,12 @@ router.post(
 // POST /api/live/trigger
 //
 // Protected using X-CRON-SECRET.
+//
+// CRYPTO:
+// ENABLED
+//
+// NSE:
+// TEMPORARILY DISABLED
 // ======================================================
 
 router.post(
@@ -545,6 +625,9 @@ router.post(
                 },
 
                 nse: {
+
+                    enabled:
+                        nseDecision.enabled,
 
                     intervalMinutes:
                         10,
@@ -627,6 +710,10 @@ router.post(
 
         // ----------------------------------------------
         // NSE
+        //
+        // Code is preserved.
+        // With NSE_CRON_ENABLED=false,
+        // nseDecision.requested is always false.
         // ----------------------------------------------
 
         if (
