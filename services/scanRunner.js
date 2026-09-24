@@ -10,6 +10,10 @@ const {
     processSetupAlerts
 } = require("./signalAlertManager");
 
+const {
+    processStrictSetupAlerts
+} = require("./strictAlertManager");
+
 
 // ======================================================
 // LIVE SCAN RUNNER
@@ -40,6 +44,8 @@ let runnerState = {
 
 // ======================================================
 // NSE LIVE SCAN
+//
+// NSE behavior is unchanged.
 // ======================================================
 
 async function runNseScan() {
@@ -52,17 +58,13 @@ async function runNseScan() {
             "NSE scan skipped: previous scan still running."
         );
 
+
         return {
-
             success: false,
-
             skipped: true,
-
             reason:
                 "NSE_SCAN_ALREADY_RUNNING",
-
             activeSetups: []
-
         };
     }
 
@@ -104,10 +106,6 @@ async function runNseScan() {
                 : [];
 
 
-        // ==============================================
-        // EMAIL NEW PRE_PHASE SIGNALS
-        // ==============================================
-
         const alertResult =
             await processSetupAlerts(
                 activeSetups
@@ -122,10 +120,6 @@ async function runNseScan() {
             `NSE alerts — new: ${alertResult.sent}, duplicates: ${alertResult.duplicates}, failed: ${alertResult.failed}`
         );
 
-
-        // ==============================================
-        // STORE LIVE RESULT
-        // ==============================================
 
         runnerState.lastNseResult = {
 
@@ -162,26 +156,18 @@ async function runNseScan() {
 
 
         return {
-
             success: true,
-
             market:
                 "NSE",
-
             scanned:
                 result?.scannedStocks || 0,
-
             successful:
                 result?.successfulStocks || 0,
-
             failed:
                 result?.failedStocks || 0,
-
             activeSetups,
-
             alerts:
                 alertResult
-
         };
 
 
@@ -201,17 +187,12 @@ async function runNseScan() {
 
 
         return {
-
             success: false,
-
             market:
                 "NSE",
-
             error:
                 error.message,
-
             activeSetups: []
-
         };
 
 
@@ -219,13 +200,15 @@ async function runNseScan() {
 
         runnerState.nseRunning =
             false;
-
     }
 }
 
 
 // ======================================================
 // CRYPTO LIVE SCAN
+//
+// Production crypto now uses STRICT_FLASH_TURN only.
+// Old PRE_PHASE crypto alerts are not processed here.
 // ======================================================
 
 async function runCryptoScan() {
@@ -240,16 +223,11 @@ async function runCryptoScan() {
 
 
         return {
-
             success: false,
-
             skipped: true,
-
             reason:
                 "CRYPTO_SCAN_ALREADY_RUNNING",
-
             activeSetups: []
-
         };
     }
 
@@ -269,7 +247,7 @@ async function runCryptoScan() {
     );
 
     console.log(
-        "LIVE CRYPTO SCAN STARTED"
+        "LIVE STRICT CRYPTO SCAN STARTED"
     );
 
     console.log(
@@ -291,13 +269,21 @@ async function runCryptoScan() {
                 : [];
 
 
-        // ==============================================
-        // EMAIL NEW PRE_PHASE SIGNALS
-        // ==============================================
+        const newSetups =
+            Array.isArray(
+                result?.newSetups
+            )
+                ? result.newSetups
+                : [];
+
+
+        // Only newly detected STRICT_FLASH_TURN setups
+        // are offered to Discord. Redis handles
+        // cross-instance duplicate protection.
 
         const alertResult =
-            await processSetupAlerts(
-                activeSetups
+            await processStrictSetupAlerts(
+                newSetups
             );
 
 
@@ -306,15 +292,14 @@ async function runCryptoScan() {
 
 
         console.log(
-            `Crypto alerts — new: ${alertResult.sent}, duplicates: ${alertResult.duplicates}, failed: ${alertResult.failed}`
+            `Strict crypto alerts — new: ${alertResult.sent}, duplicates: ${alertResult.duplicates}, failed: ${alertResult.failed}`
         );
 
 
-        // ==============================================
-        // STORE LIVE RESULT
-        // ==============================================
-
         runnerState.lastCryptoResult = {
+
+            strategy:
+                "STRICT_FLASH_TURN",
 
             scannedCoins:
                 result?.scannedCoins || 0,
@@ -334,6 +319,8 @@ async function runCryptoScan() {
             scanDurationSeconds:
                 result?.scanDurationSeconds || 0,
 
+            newSetups,
+
             activeSetups,
 
             alerts:
@@ -347,34 +334,28 @@ async function runCryptoScan() {
 
 
         console.log(
-            `Live crypto scan completed. Active setups: ${activeSetups.length}`
+            `Live strict crypto scan completed. New: ${newSetups.length}, Active: ${activeSetups.length}`
         );
 
 
         return {
-
             success: true,
-
             market:
                 "CRYPTO",
-
+            strategy:
+                "STRICT_FLASH_TURN",
             scanned:
                 result?.scannedCoins || 0,
-
             successful:
                 result?.successfulCoins || 0,
-
             failed:
                 result?.failedCoins || 0,
-
             scanDurationSeconds:
                 result?.scanDurationSeconds || 0,
-
+            newSetups,
             activeSetups,
-
             alerts:
                 alertResult
-
         };
 
 
@@ -388,23 +369,20 @@ async function runCryptoScan() {
 
 
         console.error(
-            "Live crypto scan failed:",
+            "Live strict crypto scan failed:",
             error
         );
 
 
         return {
-
             success: false,
-
             market:
                 "CRYPTO",
-
+            strategy:
+                "STRICT_FLASH_TURN",
             error:
                 error.message,
-
             activeSetups: []
-
         };
 
 
@@ -412,7 +390,6 @@ async function runCryptoScan() {
 
         runnerState.cryptoRunning =
             false;
-
     }
 }
 
@@ -432,11 +409,8 @@ async function runAllScans() {
         crypto
     ] =
         await Promise.all([
-
             runNseScan(),
-
             runCryptoScan()
-
         ]);
 
 
@@ -456,17 +430,14 @@ async function runAllScans() {
         crypto,
 
         activeSetups: [
-
             ...(
                 nse.activeSetups ||
                 []
             ),
-
             ...(
                 crypto.activeSetups ||
                 []
             )
-
         ]
 
     };
@@ -487,13 +458,11 @@ function getRunnerState() {
         cryptoRunning:
             runnerState.cryptoRunning,
 
-
         lastNseStartedAt:
             runnerState.lastNseStartedAt,
 
         lastNseCompletedAt:
             runnerState.lastNseCompletedAt,
-
 
         lastCryptoStartedAt:
             runnerState.lastCryptoStartedAt,
@@ -501,20 +470,17 @@ function getRunnerState() {
         lastCryptoCompletedAt:
             runnerState.lastCryptoCompletedAt,
 
-
         lastNseError:
             runnerState.lastNseError,
 
         lastCryptoError:
             runnerState.lastCryptoError,
 
-
         lastNseResult:
             runnerState.lastNseResult,
 
         lastCryptoResult:
             runnerState.lastCryptoResult,
-
 
         lastNseAlertResult:
             runnerState.lastNseAlertResult,
@@ -526,18 +492,9 @@ function getRunnerState() {
 }
 
 
-// ======================================================
-// EXPORTS
-// ======================================================
-
 module.exports = {
-
     runNseScan,
-
     runCryptoScan,
-
     runAllScans,
-
     getRunnerState
-
 };
