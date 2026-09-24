@@ -36,7 +36,6 @@ if (
                 REDIS_TOKEN
 
         });
-
 }
 
 
@@ -260,8 +259,13 @@ async function getStrictScanState() {
 // ======================================================
 // ALERT DEDUPLICATION
 //
-// Returns true only the FIRST time a setup is claimed.
-// Atomic SET NX prevents duplicate Discord alerts.
+// Flow:
+// 1. claimStrictAlert() creates a short atomic lock.
+// 2. Discord success -> markStrictAlertSent().
+// 3. Discord failure -> releaseStrictAlert().
+//
+// This prevents duplicates without permanently losing
+// an alert when Discord delivery fails.
 // ======================================================
 
 async function claimStrictAlert(
@@ -271,13 +275,6 @@ async function claimStrictAlert(
     if (
         !redis
     ) {
-
-        // Local environment:
-        // Redis disabled.
-        //
-        // Alert manager can choose its own
-        // local fallback behavior.
-
         return true;
     }
 
@@ -291,14 +288,13 @@ async function claimStrictAlert(
     const result =
         await redis.set(
             key,
-            new Date()
-                .toISOString(),
+            `PENDING:${new Date().toISOString()}`,
             {
                 nx: true,
 
-                // Keep dedup history for 30 days.
+                // Crash-safe temporary claim.
                 ex:
-                    30 * 24 * 60 * 60
+                    5 * 60
             }
         );
 
@@ -306,6 +302,72 @@ async function claimStrictAlert(
     return (
         result === "OK"
     );
+}
+
+
+// ======================================================
+// MARK ALERT SUCCESSFULLY SENT
+// ======================================================
+
+async function markStrictAlertSent(
+    setup
+) {
+
+    if (
+        !redis
+    ) {
+        return true;
+    }
+
+
+    const key =
+        createAlertKey(
+            setup
+        );
+
+
+    await redis.set(
+        key,
+        `SENT:${new Date().toISOString()}`,
+        {
+            // Keep successful dedup history for 30 days.
+            ex:
+                30 * 24 * 60 * 60
+        }
+    );
+
+
+    return true;
+}
+
+
+// ======================================================
+// RELEASE FAILED ALERT CLAIM
+// ======================================================
+
+async function releaseStrictAlert(
+    setup
+) {
+
+    if (
+        !redis
+    ) {
+        return true;
+    }
+
+
+    const key =
+        createAlertKey(
+            setup
+        );
+
+
+    await redis.del(
+        key
+    );
+
+
+    return true;
 }
 
 
@@ -387,6 +449,10 @@ module.exports = {
     getStrictScanState,
 
     claimStrictAlert,
+
+    markStrictAlertSent,
+
+    releaseStrictAlert,
 
     pingStrictRedis,
 
