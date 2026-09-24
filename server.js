@@ -18,6 +18,9 @@ const testRoutes =
 const liveRoutes =
     require("./routes/liveRoutes");
 
+const strictRoutes =
+    require("./routes/strictRoutes");
+
 
 const app =
     express();
@@ -81,6 +84,13 @@ app.use(
 );
 
 
+// Strict live crypto state/results from Redis
+app.use(
+    "/api/strict",
+    strictRoutes
+);
+
+
 // ======================================================
 // FRONTEND STATIC FILES
 // ======================================================
@@ -94,9 +104,6 @@ app.use(
 
 // ======================================================
 // API 404
-//
-// Prevent unknown /api routes from falling through
-// to React index.html.
 // ======================================================
 
 app.use(
@@ -106,12 +113,9 @@ app.use(
         return res
             .status(404)
             .json({
-
                 success: false,
-
                 error:
                     "API endpoint not found"
-
             });
     }
 );
@@ -119,12 +123,6 @@ app.use(
 
 // ======================================================
 // REACT FALLBACK
-//
-// Express 5:
-// Do not use app.get("*").
-//
-// This middleware handles every remaining browser route
-// and returns the React application.
 // ======================================================
 
 app.use(
@@ -143,13 +141,7 @@ app.use(
 // ======================================================
 // START SERVER
 //
-// No internal scheduler.
-//
-// cron-job.org will call:
-//
-// POST /api/live/trigger
-//
-// every 5 minutes.
+// External cron calls POST /api/live/trigger every 5m.
 // ======================================================
 
 app.listen(
@@ -165,8 +157,11 @@ app.listen(
         );
 
         console.log(
-            "Automation mode: external cron trigger"
+            "Crypto strategy: STRICT_FLASH_TURN"
         );
 
+        console.log(
+            "Automation mode: external cron trigger"
+        );
     }
 );
