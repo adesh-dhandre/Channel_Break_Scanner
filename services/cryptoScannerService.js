@@ -2,6 +2,11 @@ const {
     scanStrictLiveSetups
 } = require("./strictLiveScannerService");
 
+const {
+    isStrictRedisEnabled,
+    getStrictScanState
+} = require("./strictRedisService");
+
 
 // ======================================================
 // CONFIG
@@ -140,6 +145,49 @@ async function scanSingleCrypto(
 
 
 // ======================================================
+// FIRST LIVE REDIS BOOTSTRAP
+//
+// A fresh deployment may start halfway through a 1h,
+// 4h or 1d entry candle. On the first Redis-backed run,
+// scan all timeframes once so already-active setups are
+// populated immediately. Later cron runs scan only TFs
+// whose candle has just closed.
+// ======================================================
+
+async function shouldBootstrapAllTimeframes() {
+
+    if (
+        !isStrictRedisEnabled()
+    ) {
+        return false;
+    }
+
+
+    try {
+
+        const state =
+            await getStrictScanState();
+
+
+        return (
+            !state ||
+            !state.completedAt
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Could not read strict bootstrap state:",
+            error.message
+        );
+
+
+        return false;
+    }
+}
+
+
+// ======================================================
 // FULL CRYPTO FUTURES SCANNER
 //
 // IMPORTANT:
@@ -149,10 +197,30 @@ async function scanSingleCrypto(
 
 async function scanCryptoFutures() {
 
+    const bootstrap =
+        await shouldBootstrapAllTimeframes();
+
+
+    if (
+        bootstrap
+    ) {
+        console.log(
+            "Strict Redis bootstrap: scanning all timeframes once."
+        );
+    }
+
+
     const result =
         await scanStrictLiveSetups({
+
             concurrency:
-                CONCURRENCY
+                CONCURRENCY,
+
+            forceTimeframes:
+                bootstrap
+                    ? TARGET_TIMEFRAMES
+                    : null
+
         });
 
 
@@ -194,6 +262,8 @@ async function scanCryptoFutures() {
 
         strategy:
             "STRICT_FLASH_TURN",
+
+        bootstrap,
 
         scannedCoins,
 
