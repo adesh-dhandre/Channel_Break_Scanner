@@ -1,18 +1,6 @@
 const {
-    getScannableCryptoUniverse
-} = require("./cryptoUniverseService");
-
-const {
-    initializeSymbol
-} = require("./cryptoMarketDataCache");
-
-const {
-    buildTimeframes
-} = require("./timeframeService");
-
-const {
-    detectPrePhaseSetup
-} = require("../scanners/setupScanner");
+    scanStrictLiveSetups
+} = require("./strictLiveScannerService");
 
 
 // ======================================================
@@ -25,565 +13,189 @@ const TARGET_TIMEFRAMES = [
     "30m",
     "45m",
     "1h",
-    "2h"
+    "2h",
+    "4h",
+    "1d"
 ];
 
 
-const CONCURRENCY = 15;
+const CONCURRENCY =
+    15;
 
 
 // ======================================================
 // SCAN SINGLE CRYPTO
+//
+// Compatibility helper for existing callers/tests.
+// Uses the new strict strategy only.
 // ======================================================
 
-async function scanSingleCrypto(coin) {
+async function scanSingleCrypto(
+    coin
+) {
 
-    const {
-        rank,
-        symbol,
-        name,
-        tradingPair
-    } = coin;
+    const tradingPair =
+        String(
+            coin?.tradingPair ||
+            coin?.symbol ||
+            ""
+        ).toUpperCase();
 
 
-    console.log(
-        `Scanning ${tradingPair}...`
-    );
+    if (
+        !tradingPair
+    ) {
+
+        return {
+            symbol: null,
+            tradingPair: null,
+            success: false,
+            error:
+                "Missing trading pair",
+            scanSummary: [],
+            activeSetups: [],
+            newSetups: []
+        };
+    }
 
 
     try {
 
-        // ==============================================
-        // LOAD CLOSED 5M CANDLES
-        // ==============================================
+        const result =
+            await scanStrictLiveSetups({
 
-        const candles5m =
-            await initializeSymbol(
-                tradingPair
-            );
+                symbols: [
+                    tradingPair
+                ],
 
+                forceTimeframes:
+                    TARGET_TIMEFRAMES,
 
-        if (
-            !Array.isArray(
-                candles5m
-            ) ||
-            candles5m.length === 0
-        ) {
-
-            throw new Error(
-                "No 5m candle data"
-            );
-        }
-
-
-        // ==============================================
-        // BUILD TIMEFRAMES
-        // ==============================================
-
-        const timeframes =
-            buildTimeframes(
-                candles5m,
-                "CRYPTO"
-            );
-
-
-        const scanSummary = [];
-
-        const activeSetups = [];
-
-
-        // ==============================================
-        // SCAN EACH TIMEFRAME
-        // ==============================================
-
-        for (
-            const timeframe
-            of TARGET_TIMEFRAMES
-        ) {
-
-            const candles =
-                timeframes[
-                    timeframe
-                ];
-
-
-            if (
-                !Array.isArray(
-                    candles
-                ) ||
-                candles.length === 0
-            ) {
-
-                continue;
-            }
-
-
-            const result =
-                detectPrePhaseSetup(
-                    candles,
-                    timeframe
-                );
-
-
-            // ==========================================
-            // SUMMARY
-            // ==========================================
-
-            scanSummary.push({
-
-                rank,
-
-                symbol,
-
-                name,
-
-                tradingPair,
-
-                timeframe,
-
-                status:
-                    result.status,
-
-                isSetup:
-                    result.isSetup,
-
-                lifecycle:
-                    result.lifecycle ||
-                    null,
-
-                lifecycleLabel:
-                    result.lifecycleLabel ||
-                    null,
-
-                lifecycleTone:
-                    result.lifecycleTone ||
-                    null,
-
-                uptrend:
-                    result.uptrend,
-
-                uptrendScenario:
-                    result.uptrendScenario ||
-                    null,
-
-                flashSell:
-                    result.flashSell,
-
-                // TradingView candle OPEN time
-                flashSellDate:
-                    result.flashSellDate ||
-                    null,
-
-                flashSellAt:
-                    result.flashSellAt ||
-                    result.flashSellDate ||
-                    null,
-
-                // Actual flash candle CLOSE time
-                flashSellConfirmedAt:
-                    result.flashSellConfirmedAt ||
-                    null,
-
-                recent:
-                    result.isRecent === true,
-
-                baseForming:
-                    result.baseForming === true,
-
-                baseType:
-                    result.baseType ||
-                    null,
-
-                // TradingView base candle OPEN time
-                baseStartedAt:
-                    result.baseStartedAt ||
-                    null,
-
-                // Actual base candle CLOSE time
-                baseConfirmedAt:
-                    result.baseConfirmedAt ||
-                    null,
-
-                // Earliest valid PRE_PHASE time
-                prePhaseConfirmedAt:
-                    result.prePhaseConfirmedAt ||
-                    null,
-
-                // Earliest legal detection timestamp
-                detectedAt:
-                    result.detectedAt ||
-                    null
+                concurrency:
+                    1
 
             });
 
 
-            // ==========================================
-            // ACTIVE PRE-PHASE SETUP
-            // ==========================================
-
-            if (
-                result.isSetup === true
-            ) {
-
-                activeSetups.push({
-
-                    rank,
-
-                    symbol,
-
-                    name,
-
-                    tradingPair,
-
-                    timeframe,
-
-                    status:
-                        result.status,
-
-                    lifecycle:
-                        result.lifecycle ||
-                        null,
-
-                    lifecycleLabel:
-                        result.lifecycleLabel ||
-                        null,
-
-                    lifecycleTone:
-                        result.lifecycleTone ||
-                        null,
-
-                    uptrendScenario:
-                        result.uptrendScenario ||
-                        null,
-
-                    HH1:
-                        result.HH1 ||
-                        null,
-
-                    HL1:
-                        result.HL1 ||
-                        null,
-
-                    HH2:
-                        result.HH2 ||
-                        null,
-
-                    HL2:
-                        result.HL2 ||
-                        null,
-
-                    continuationHigh:
-                        result.continuationHigh ||
-                        null,
-
-                    // ==================================
-                    // FLASH SELL TIMES
-                    // ==================================
-
-                    flashSellDate:
-                        result.flashSellDate ||
-                        null,
-
-                    flashSellAt:
-                        result.flashSellAt ||
-                        result.flashSellDate ||
-                        null,
-
-                    flashSellConfirmedAt:
-                        result.flashSellConfirmedAt ||
-                        null,
-
-                    flashSellDropPercent:
-                        result.flashSellDropPercent,
-
-                    flashSellBodyRatio:
-                        result.flashSellBodyRatio,
-
-                    lowerChannelValue:
-                        result.lowerChannelValue,
-
-                    channelLookback:
-                        result.channelLookback,
-
-                    highSlopePercent:
-                        result.highSlopePercent,
-
-                    lowSlopePercent:
-                        result.lowSlopePercent,
-
-                    parallelRatio:
-                        result.parallelRatio,
-
-                    channelRespectRatio:
-                        result.channelRespectRatio,
-
-                    candlesSinceFlashSell:
-                        result.candlesSinceFlashSell,
-
-                    maxCandlesSinceFlashSell:
-                        result.maxCandlesSinceFlashSell,
-
-                    ageText:
-                        result.ageText ||
-                        null,
-
-                    // ==================================
-                    // BASE / PRE-PHASE
-                    // ==================================
-
-                    baseForming:
-                        result.baseForming === true,
-
-                    baseType:
-                        result.baseType ||
-                        null,
-
-                    // TradingView candle OPEN time
-                    baseStartedAt:
-                        result.baseStartedAt ||
-                        null,
-
-                    // Candle CLOSE time
-                    baseConfirmedAt:
-                        result.baseConfirmedAt ||
-                        null,
-
-                    // Actionable PRE_PHASE time
-                    prePhaseConfirmedAt:
-                        result.prePhaseConfirmedAt ||
-                        null,
-
-                    // Detection timestamp
-                    detectedAt:
-                        result.detectedAt ||
-                        null,
-
-                    baseCandlesFound:
-                        result.baseCandlesFound,
-
-                    market:
-                        "BINANCE_USDT_PERPETUAL"
-
-                });
-            }
-        }
+        const newSetups =
+            (
+                result.newSetups ||
+                []
+            ).filter(
+                setup =>
+                    setup.tradingPair ===
+                        tradingPair ||
+                    setup.symbol ===
+                        tradingPair
+            );
 
 
-        console.log(
-            `${tradingPair} completed.`
-        );
+        const activeSetups =
+            (
+                result.currentSetups ||
+                []
+            ).filter(
+                setup =>
+                    setup.tradingPair ===
+                        tradingPair ||
+                    setup.symbol ===
+                        tradingPair
+            );
 
 
         return {
-
-            symbol,
-
+            symbol:
+                coin?.symbol ||
+                tradingPair,
             tradingPair,
-
             success: true,
-
-            scanSummary,
-
-            activeSetups
-
+            scanSummary:
+                newSetups,
+            activeSetups,
+            newSetups
         };
 
 
     } catch (error) {
 
         console.error(
-            `${tradingPair} failed: ${error.message}`
+            `${tradingPair} strict scan failed: ${error.message}`
         );
 
 
         return {
-
-            symbol,
-
+            symbol:
+                coin?.symbol ||
+                tradingPair,
             tradingPair,
-
             success: false,
-
             error:
                 error.message,
-
             scanSummary: [],
-
-            activeSetups: []
-
+            activeSetups: [],
+            newSetups: []
         };
     }
 }
 
 
 // ======================================================
-// CREATE BATCHES
-// ======================================================
-
-function createBatches(
-    items,
-    batchSize
-) {
-
-    const batches = [];
-
-
-    for (
-        let i = 0;
-        i < items.length;
-        i += batchSize
-    ) {
-
-        batches.push(
-            items.slice(
-                i,
-                i + batchSize
-            )
-        );
-    }
-
-
-    return batches;
-}
-
-
-// ======================================================
 // FULL CRYPTO FUTURES SCANNER
+//
+// IMPORTANT:
+// This is now the production crypto strategy.
+// The old PRE_PHASE detector is no longer called here.
 // ======================================================
 
 async function scanCryptoFutures() {
 
-    const startedAt =
-        Date.now();
+    const result =
+        await scanStrictLiveSetups({
+            concurrency:
+                CONCURRENCY
+        });
 
 
-    const universe =
-        await getScannableCryptoUniverse();
+    const scannedCoins =
+        result.scannedSymbols ||
+        0;
 
 
-    const batches =
-        createBatches(
-            universe,
-            CONCURRENCY
+    const failedCoins =
+        result.failedSymbols ||
+        0;
+
+
+    const successfulCoins =
+        Math.max(
+            0,
+            scannedCoins -
+            failedCoins
         );
 
 
-    const activeSetups = [];
-
-    const scanSummary = [];
-
-
-    let successfulCoins = 0;
-
-    let failedCoins = 0;
+    const newSetups =
+        Array.isArray(
+            result.newSetups
+        )
+            ? result.newSetups
+            : [];
 
 
-    console.log(
-        "\n===================================="
-    );
-
-    console.log(
-        "CRYPTO FUTURES CHANNEL BREAK SCANNER"
-    );
-
-    console.log(
-        "===================================="
-    );
-
-    console.log(
-        `Coins: ${universe.length}`
-    );
-
-    console.log(
-        `Concurrency: ${CONCURRENCY}`
-    );
-
-    console.log(
-        `Batches: ${batches.length}`
-    );
+    const activeSetups =
+        Array.isArray(
+            result.currentSetups
+        )
+            ? result.currentSetups
+            : [];
 
 
-    // ==============================================
-    // PROCESS BATCHES
-    // ==============================================
+    return {
 
-    for (
-        let batchIndex = 0;
-        batchIndex < batches.length;
-        batchIndex++
-    ) {
+        strategy:
+            "STRICT_FLASH_TURN",
 
-        const batch =
-            batches[
-                batchIndex
-            ];
-
-
-        console.log(
-            `\nBatch ${batchIndex + 1}/${batches.length}`
-        );
-
-
-        const results =
-            await Promise.all(
-                batch.map(
-                    coin =>
-                        scanSingleCrypto(
-                            coin
-                        )
-                )
-            );
-
-
-        for (
-            const result
-            of results
-        ) {
-
-            if (
-                result.success
-            ) {
-
-                successfulCoins++;
-
-            } else {
-
-                failedCoins++;
-            }
-
-
-            scanSummary.push(
-                ...result.scanSummary
-            );
-
-
-            activeSetups.push(
-                ...result.activeSetups
-            );
-        }
-    }
-
-
-    // ==============================================
-    // FINAL RESULT
-    // ==============================================
-
-    const scanDurationSeconds =
-        Number(
-            (
-                (
-                    Date.now() -
-                    startedAt
-                ) /
-                1000
-            ).toFixed(2)
-        );
-
-
-    const finalResult = {
-
-        scannedCoins:
-            universe.length,
+        scannedCoins,
 
         successfulCoins,
 
@@ -593,66 +205,31 @@ async function scanCryptoFutures() {
             CONCURRENCY,
 
         timeframes:
-            TARGET_TIMEFRAMES,
+            result.dueTimeframes ||
+            [],
 
-        scanDurationSeconds,
+        scanDurationSeconds:
+            result.scanDurationSeconds ||
+            0,
 
-        scanSummary,
+        // Kept for API compatibility.
+        // Now contains strict setups discovered
+        // during the current scan only.
+        scanSummary:
+            newSetups,
 
+        // Used for Discord notifications.
+        newSetups,
+
+        // Used by /api/live/results and frontend.
         activeSetups
 
     };
-
-
-    console.log(
-        "\n===================================="
-    );
-
-    console.log(
-        "CRYPTO SCAN COMPLETED"
-    );
-
-    console.log(
-        "===================================="
-    );
-
-    console.log(
-        `Coins scanned: ${universe.length}`
-    );
-
-    console.log(
-        `Successful: ${successfulCoins}`
-    );
-
-    console.log(
-        `Failed: ${failedCoins}`
-    );
-
-    console.log(
-        `Active setups: ${activeSetups.length}`
-    );
-
-    console.log(
-        `Actual scan time: ${scanDurationSeconds} seconds`
-    );
-
-    console.log(
-        "===================================="
-    );
-
-
-    return finalResult;
 }
 
 
-// ======================================================
-// EXPORTS
-// ======================================================
-
 module.exports = {
-
+    TARGET_TIMEFRAMES,
     scanCryptoFutures,
-
     scanSingleCrypto
-
 };
